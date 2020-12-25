@@ -65,7 +65,7 @@ else:
 maxEvents = -1
 if args.small: 
     args.targetDir += "_small"
-    #maxEvents=100 
+    maxEvents       = 1000 
     sample.files=sample.files[:1]
 
 xsec = sample.xsec
@@ -155,42 +155,30 @@ variables += ["genJet[%s]"%jet_write_vars]
 variables += ["genBj0_%s"%var for var in jet_write_vars.split(',')]
 variables += ["genBj1_%s"%var for var in jet_write_vars.split(',')]
 # lepton vector 
-lep_vars       =  "pt/F,eta/F,phi/F,pdgId/I"
-lep_extra_vars =  "motherPdgId/I,grandmotherPdgId/I"
+lep_vars       =  "pt/F,eta/F,phi/F,pdgId/I,status/I"
+lep_extra_vars =  "mother_pdgId/I,grandmother_pdgId/I"
 lep_varnames   =  varnames( lep_vars ) 
 lep_all_varnames = lep_varnames + varnames(lep_extra_vars)
 variables     += ["genLep[%s]"%(','.join([lep_vars, lep_extra_vars]))]
-# associated jet indices
-variables += [ "genBjLeadlep_index/I", "genBjLeadhad_index/I" ]
-variables += [ "genBjNonZlep_index/I", "genBjNonZhad_index/I" ]
+## associated jet indices
+#variables += [ "genBjLeadlep_index/I", "genBjLeadhad_index/I" ]
+#variables += [ "genBjNonZlep_index/I", "genBjNonZhad_index/I" ]
 # top vector
 top_vars       =  "pt/F,eta/F,phi/F,pdgId/I,mass/F"
 top_varnames   =  varnames( top_vars ) 
 variables     += ["genTop[%s]"%top_vars]
 
 # to be stored for each boson
-boson_read_varnames= [ 'pt', 'phi', 'eta', 'mass']
+boson_varnames = [ 'pt', 'phi', 'eta', 'mass', 'status']
 # Z vector from gen collection
-variables     += ["genZ_pt/F", "genZ_phi/F", "genZ_eta/F", "genZ_mass/F", "genZ_cosThetaStar/F", "genZ_daughterPdg/I"]
+boson_all_varnames = boson_varnames + ['cosThetaStar', 'daughter_pdgId','l1_index', 'l2_index']
+variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,l1_index/I,l2_index/I]"]
+variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,l1_index/I,l2_index/I]"]
 # Z vector from genleps
-variables     += ["genLepZ_pt/F", "genLepZ_phi/F", "genLepZ_eta/F", "genLepZ_mass/F", "genLepZ_lldPhi/F", "genLepZ_lldR/F","genLepZ_cosThetaStar/F", "genLepZ_daughterPdg/I", "genLepNonZ_l1_index/I"]
-variables     += ["genLepZ_l1_index/I", "genLepZ_l2_index/I", "genLepNonZ_l1_index/I", "genLepNonZ_l2_index/I"]
-# W vector
-variables     += ["genW_pt/F", "genW_phi/F", "genW_eta/F", "genW_mass/F", "genW_daughterPdg/I"]
 # gamma vector
-gen_photon_vars = "pt/F,phi/F,eta/F,mass/F,motherPdgId/I,relIso04/F,minLeptonDR/F,minJetDR/F"
-variables     += ["genPhoton[%s]"%gen_photon_vars]
-gen_photon_varnames = varnames( gen_photon_vars )
-
-variables += ["signalZ/I"] #ttZ Signal
-
-variables += ["signalPhoton/I"] #cat a1
-variables += ["isrPhoton/I"] #cat a2
-variables += ["lepPhoton/I"] #cat b
-variables += ["nonIsoPhoton/I"] #cat c1
-variables += ["jetPhoton/I"] #cat c2
-variables += ["fakePhoton/I"] #cat d
-
+#gen_photon_vars = "pt/F,phi/F,eta/F,mass/F,mother_pdgId/I,relIso04/F,minLeptonDR/F,minJetDR/F"
+#variables     += ["genPhoton[%s]"%gen_photon_vars]
+#gen_photon_varnames = varnames( gen_photon_vars )
 
 if args.addReweights:
     variables.append('rw_nominal/F')
@@ -292,325 +280,335 @@ def filler( event ):
         # lumi weight / w0
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
 
-        # All gen particles
-        gp      = fwliteReader.products['gp']
+    # MET
+    genMet = {'pt':fwliteReader.products['genMET'][0].pt(), 'phi':fwliteReader.products['genMET'][0].phi()}
+    event.genMet_pt  = genMet['pt']
+    event.genMet_phi = genMet['phi'] 
 
-        # for searching
-        search  = GenSearch( gp )
+    # All gen particles
+    gp      = fwliteReader.products['gp']
 
-        # find heavy objects before they decay
-        genTops = map( lambda t:{var: getattr(t, var)() for var in top_varnames}, filter( lambda p:abs(p.pdgId())==6 and search.isLast(p),  gp) )
+    # for searching
+    search  = GenSearch( gp )
 
-        genTops.sort( key = lambda p:-p['pt'] )
-        fill_vector_collection( event, "genTop", top_varnames, genTops ) 
+    # find heavy objects before they decay
+    genTops = map( lambda t:{var: getattr(t, var)() for var in top_varnames}, filter( lambda p:abs(p.pdgId())==6 and search.isLast(p),  gp) )
 
-        # generated Z's
-        genZs = filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13], gp)
-        genZs.sort( key = lambda p: -p.pt() )
-        if len(genZs)>0: 
-            genZ = genZs[0]
-            for var in boson_read_varnames:
-               setattr( event, "genZ_"+var,  getattr(genZ, var)() )
+    genTops.sort( key = lambda p:-p['pt'] )
+    fill_vector_collection( event, "genTop", top_varnames, genTops ) 
+
+    # generated leptons
+    genLeps    = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId()) in [11, 12, 13, 14, 15, 16]  and abs(p.mother(0).pdgId()) in [22, 23, 24, 25], gp)]
+    genLeps.sort( key = lambda p: -p[1].pt() )
+    genLeps_from_bosons =  [first for first, last in genLeps]
+    genLeps_dict = [ {var: getattr(last, var)() for var in lep_varnames} for first, last in genLeps ]
+    addIndex( genLeps_dict )
+    for i_genLep, (first, last) in enumerate(genLeps):
+        mother = first.mother(0) if first.numberOfMothers()>0 else None
+        if mother is not None:
+            mother_pdgId      = mother.pdgId()
+            mother_ascend     = search.ascend(mother)
+            grandmother       = mother_ascend.mother(0) if mother_ascend.numberOfMothers()>0 else None
+            grandmother_pdgId = grandmother.pdgId() if grandmother is not None else 0
         else:
-            genZ = None
-        
-        event.signalZ = 0    #ttZ with Z from gluon or top
-        if genZ is not None:
+            mother_pdgId = 0
+            grandmother_pdgId = 0 
+        genLeps_dict[i_genLep]['mother_pdgId']      = mother_pdgId
+        genLeps_dict[i_genLep]['grandmother_pdgId'] = grandmother_pdgId
+    fill_vector_collection( event, "genLep", lep_all_varnames, genLeps_dict ) 
 
-            if abs(search.ascend(genZ).mother(0).pdgId()) in [ 6, 21 ]:
-                event.signalZ = 1    #ttZ with Z from gluon or top
 
-            d1, d2 = genZ.daughter(0), genZ.daughter(1)
-            if d1.pdgId()>0: 
-                lm, lp = d1, d2
-            else:
-                lm, lp = d2, d1
-            event.genZ_daughterPdg = lm.pdgId()
-            event.genZ_cosThetaStar = cosThetaStar(genZ.mass(), genZ.pt(), genZ.eta(), genZ.phi(), lm.pt(), lm.eta(), lm.phi())
-
-        # generated W's
-        genWs = filter( lambda p:abs(p.pdgId())==24 and search.isLast(p), gp)
-        genWs.sort( key = lambda p: -p.pt() )
-        # W can't have a top-mother - We're looking for the extra boson (there is always an extra boson)
-        genWs = filter( lambda p: abs(search.ascend(p).mother(0).pdgId())!=6, genWs )
-        if len(genWs)>0: 
-            genW = genWs[0]
-            for var in boson_read_varnames:
-               setattr( event, "genW_"+var,  getattr(genW, var)() )
+    # generated Z's
+    genZs = filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp)
+    genZs.sort( key = lambda p: -p.pt() )
+    genZs_dict = [ {var: getattr(genZ, var)() for var in boson_varnames} for genZ in genZs ]
+    for i_genZ, genZ in enumerate(genZs):
+        d1, d2 = genZ.daughter(0), genZ.daughter(1)
+        if d1.pdgId()>0: 
+            lm, lp = d1, d2
         else:
-            genW = None
-        
-        if genW is not None:
-            d1, d2 = genW.daughter(0), genW.daughter(1)
-            if abs(d1.pdgId()) in [11, 13, 15]: 
-                lep, neu = d1, d2
-            else:
-                lep, neu = d2, d1
+            lm, lp = d2, d1
+        genZs_dict[i_genZ]['daughter_pdgId'] = lm.pdgId()
+        genZs_dict[i_genZ]['l1_index'] = genLeps_from_bosons.index( genZ.daughter(0) )
+        genZs_dict[i_genZ]['l2_index'] = genLeps_from_bosons.index( genZ.daughter(1) )
+        genZs_dict[i_genZ]['cosThetaStar'] = cosThetaStar(genZ.mass(), genZ.pt(), genZ.eta(), genZ.phi(), lm.pt(), lm.eta(), lm.phi())
+    fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict ) 
 
-            event.genW_daughterPdg = lep.pdgId()
-
-
-## this def should only be called in debug mode
-#        def printTopMothers():
-#                genTopCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==6,  gp) ]
+    # generated W's
+    genWs = filter( lambda p:abs(p.pdgId())==24 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 12, 13, 14, 15, 16], gp)
+    genWs.sort( key = lambda p: -p.pt() )
+    genWs_dict = [ {var: getattr(genW, var)() for var in boson_varnames} for genW in genWs ]
+    for i_genW, genW in enumerate(genWs):
+        d1, d2 = genW.daughter(0), genW.daughter(1)
+        if abs(d1.pdgId()) in [11, 113, 15]: 
+            l, nu = d1, d2
+        else:
+            nu, l = d2, d1
+        genWs_dict[i_genW]['daughter_pdgId'] = l.pdgId()
+        genWs_dict[i_genW]['l1_index'] = genLeps_from_bosons.index( genW.daughter(0) )
+        genWs_dict[i_genW]['l2_index'] = genLeps_from_bosons.index( genW.daughter(1) )
+        genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(genW.mass(), genW.pt(), genW.eta(), genW.phi(), l.pt(), l.eta(), l.phi())
+    fill_vector_collection( event, "genW", boson_all_varnames, genWs_dict ) 
+    
 #
-#                print genTopCheck
-#                genTopCheck.sort( key = lambda p: -p[1].pt() )
-#                if len(genTopCheck) > 0:
-#                    topPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genTopCheck[0][2]])
-#                    print 'TOP 1'
-#                    print topPdg_ids
-#                    previous = genTopCheck[0][0].mother(1)
-#                    print 'first', genTopCheck[0][0].pdgId()
-#                    for i, pdg in enumerate(topPdg_ids):
-#                        try:
-#                            print 'mother', i, previous.pdgId()
-#                            print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
-#                            previous = previous.mother(0)
-#                        except Exception as val:
-#                            print val
-#                            break
-#                if len(genTopCheck) > 1:
-#                    topPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genTopCheck[1][2]])
-#                    print 'TOP 2'
-#                    print topPdg_ids
-#                    previous = genTopCheck[1][0].mother(1)
-#                    print 'first', genTopCheck[1][0].pdgId()
-#                    for i, pdg in enumerate(topPdg_ids):
-#                        try:
-#                            print 'mother', i, previous.pdgId()
-#                            print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
-#                            previous = previous.mother(0)
-#                        except Exception as val:
-#                            print val
-#                            break
+#
+### this def should only be called in debug mode
+##        def printTopMothers():
+##                genTopCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==6,  gp) ]
+##
+##                print genTopCheck
+##                genTopCheck.sort( key = lambda p: -p[1].pt() )
+##                if len(genTopCheck) > 0:
+##                    topPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genTopCheck[0][2]])
+##                    print 'TOP 1'
+##                    print topPdg_ids
+##                    previous = genTopCheck[0][0].mother(1)
+##                    print 'first', genTopCheck[0][0].pdgId()
+##                    for i, pdg in enumerate(topPdg_ids):
+##                        try:
+##                            print 'mother', i, previous.pdgId()
+##                            print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
+##                            previous = previous.mother(0)
+##                        except Exception as val:
+##                            print val
+##                            break
+##                if len(genTopCheck) > 1:
+##                    topPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genTopCheck[1][2]])
+##                    print 'TOP 2'
+##                    print topPdg_ids
+##                    previous = genTopCheck[1][0].mother(1)
+##                    print 'first', genTopCheck[1][0].pdgId()
+##                    for i, pdg in enumerate(topPdg_ids):
+##                        try:
+##                            print 'mother', i, previous.pdgId()
+##                            print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
+##                            previous = previous.mother(0)
+##                        except Exception as val:
+##                            print val
+##                            break
+#
+#
+#
+##    for ttgamma and tt events, categorize events:
+##        a1) ttgamma vertex, gamma from t/g, isolated, must be in ttgamma sample   = ttgamma signal (photonSignal == 1)
+##            -> gamma isolated
+##            -> gamma with only tops/gluons in ancestry
+##        a2) ttgamma, gamma from ISR, must be in ttgamma sample                    = tt ISR bg (photonISR == 1)
+##            -> gamma isolated
+##            -> gamma with no top in ancestry
+##            -> gamma with only gluons and light quarks in ancestry
+##            -> direct gamma mother != gluon!!! (this is a1)
+##        b) tt + isolated gamma from W, l, tau, must be in tt sample               = ttgamma (W,l,tau) bg (photonLep == 1)
+##            -> gamma isolated
+##            -> gamma with direct abs mother being 11, 13, 15 or 24 
+##        c1) tt + non isolated gamma from anything including mesons                = tt bg (ttBg == 1)
+##            -> gamma non isolated or meson in ancestry
+##        c2) tt + isolated gamma from bottom quark (from t decay) or jets (from W) = tt bottom bg (ttBg == 1)
+##            -> gamma isolated from b or j (from t/W decay)
+##            ATTENTION: gammas from bottoms with off-shell tops where the
+##                       top decay is done by pythia are currently labeled as ISR!
+##                       However this case is currently not simulated in any sample 
+##        d) tt + gamma fake                                                        = ttgamma fake (photonFake == 1)
+##            -> everything else does not contain a photon
+##            -> if it still passes selection: it is a photon fake
+#
+#        genPhotonsSignalCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==22 and p.pt()>10 and abs(p.eta())<2.5 and search.isLast(p) and p.status()==1, gp) ]
+#        genPhotonsSignalCheck.sort( key = lambda p: -p[1].pt() )
+#
+#        photonSignal = 0    #a1
+#        photonISR = 0       #a2
+#        photonLep = 0       #b
+#        ttBg = 0            #c1
+#        photonJets = 0      #c2
+#        photonFake = 0      #d
+#
+#
+#        if len( genPhotonsSignalCheck ) > 0:     
+#            # check hardest photon with pT>13 and abs(eta)<2.5
+#            first, last, ancestry = genPhotonsSignalCheck[0]
+#            # get abs pdgIDs of ancestry
+#            pdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in ancestry])
+#            # check if particles are close by
+#            close_particles = filter( lambda p: p!=last and p.pt()>5 and deltaR2( {'phi':last.phi(), 'eta':last.eta()}, {'phi':p.phi(), 'eta':p.eta()} )<0.2**2 , search.final_state_particles_no_neutrinos )
+#        
+#    #        print 'mothers pdg', pdg_ids
+#    #        print 'close', [p.pdgId() for p in close_particles]
+#    #        print 'first mother pdg', first.mother(0).pdgId()
+#
+#    #        if len(pdg_ids) < 999:
+#    #            previous = first.mother(0)
+#    #            for i, pdg in enumerate(pdg_ids):
+#    #                try:
+#    #                    print 'mother', i, previous.pdgId()
+#    #                    previous = previous.mother(0)
+#    #                except Exception as val:
+#    #                    print val
+#    #                    break
+#
+#            # deside the categories
+#            if max(pdg_ids)>100 or len(close_particles) != 0:
+#                #photon with meson in ancestry or non isolated -> cat c1)
+#                ttBg = 1
+#            elif abs(first.mother(0).pdgId()) in [ 11, 13, 15, 24 ]:
+#                #isolated photon with W, l or tau direct mother -> cat b)
+#                photonLep = 1
+#    #        elif all( [ p in [ 6, 21 ] for p in pdg_ids ] ) or abs(first.mother(0).pdgId()) == 21: # not working for photons from top, as the gluons can come from light quarks
+#            elif abs(first.mother(0).pdgId()) in [ 6, 21 ]:
+#                #isolated photon with photon from top or gluon -> cat a1)
+#                photonSignal = 1
+#    #            printTopMothers()
+#            elif all( [ p in [ 1, 2, 3, 4, 5, 21 ] for p in pdg_ids ] ):
+#                #isolated photon with photon ancestry only containing light quarks or gluons (ISR) -> cat a1)
+#                photonISR = 1
+#            else:
+#                #isolated gammas from bottoms originating from the top decay or jets from W -> cat c2) 
+#                photonJets = 1
+#
+#        else:
+#            # if events with photonFake == 1 pass selection: fake gamma -> cat d)
+#            photonFake = 1
+#
+#        # if all flags are 0, it is an isolated gamma from a process I havn't thought of!
+#        # should not be there! - check!
+#        event.signalPhoton = photonSignal
+#        event.isrPhoton    = photonISR
+#        event.lepPhoton    = photonLep
+#        event.nonIsoPhoton = ttBg
+#        event.jetPhoton    = photonJets
+#        event.fakePhoton   = photonFake
+#
+#        # gen photons: particle-level isolated gen photons
+#        genPhotons = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId())==22 and p.pt()>15 and search.isLast(p) and p.status()==1, gp) ]
+#        genPhotons.sort( key = lambda p: -p[1].pt() )
+#        genPhotons_   = []
+#
+#        for first, last in genPhotons[:100]: 
+#            mother_pdgId = first.mother(0).pdgId() if first.numberOfMothers()>0 else 0
+#            genPhoton_ = {var: getattr(last, var)() for var in boson_read_varnames}
+#            # kinematic photon selection
+#            if not isGoodGenPhoton( genPhoton_): continue
+#            genPhoton_['mother_pdgId'] = mother_pdgId
+#            genPhoton_['status']      = last.status()
+#            
+#            close_particles = filter( lambda p: p!=last and deltaR2( {'phi':last.phi(), 'eta':last.eta()}, {'phi':p.phi(), 'eta':p.eta()} )<0.4**2 , search.final_state_particles_no_neutrinos )
+#            genPhoton_['relIso04'] = sum( [p.pt() for p in close_particles], 0) / last.pt()
+#            # require isolation
+#            if genPhoton_['relIso04']<0.4:
+#                genPhotons_.append( genPhoton_ )
+#        
+#        # genLeptons: prompt gen-leptons 
+#        genLeptons = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId()) in [11, 13] and search.isLast(p) and p.pt()>=0 and p.status()==1,  gp) ]
+#        promptGenLeps    = []
+#        allGenLeps    = []
+#        for first, last in genLeptons:
+#            mother = first.mother(0) if first.numberOfMothers()>0 else None
+#            if mother is not None:
+#                mother_pdgId      = mother.pdgId()
+#                mother_ascend     = search.ascend(mother)
+#                grandmother       = mother_ascend.mother(0) if mother.numberOfMothers()>0 else None
+#                grandmother_pdgId = grandmother.pdgId() if grandmother is not None else 0
+#            else:
+#                mother_pdgId = 0
+#                grandmother_pdgId = 0 
+#            genLep = {var: getattr(last, var)() for var in lep_varnames}
+#            genLep['mother_pdgId']      = mother_pdgId
+#            genLep['grandmother_pdgId'] = grandmother_pdgId
+#            allGenLeps.append( genLep )
+#            if abs(genLep['mother_pdgId']) in [ 11, 13, 15, 23, 24, 25 ]:
+#                promptGenLeps.append(genLep )
+#
+#        # filter gen leptons
+#        promptGenLeps =  list( filter( lambda l:isGoodGenLepton( l ), promptGenLeps ) )
+#        promptGenLeps.sort( key = lambda p:-p['pt'] )
+#        addIndex( promptGenLeps )
+#
+#        ## removing photons in dR cone leptons (radiation photons)
+#        for genPhoton in genPhotons_:
+#            genPhoton['minLeptonDR'] =  min([999]+[deltaR(genPhoton, l) for l in allGenLeps])
+#        genPhotons_ = list(filter( lambda g: g['minLeptonDR']>0.4, genPhotons_))
+#        addIndex( genPhotons_ )
+#
+    # jets
+    fwlite_genJets = filter( genJetId, fwliteReader.products['genJets'] )
+    genJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
+    # filter genJets
+    genJets = list( filter( lambda j:isGoodGenJet( j ), genJets ) )
+    ## cleaning of jets with isolated photons
+    #genJets = list( filter( lambda j:min([999]+[deltaR2(j, p) for p in genPhotons_ ])>0.4**2, genJets))
 
-        # MET
-        genMet = {'pt':fwliteReader.products['genMET'][0].pt(), 'phi':fwliteReader.products['genMET'][0].phi()}
-        event.genMet_pt  = genMet['pt']
-        event.genMet_phi = genMet['phi'] 
+    ## store minimum DR to jets
+    #for genPhoton in genPhotons_:
+    #    genPhoton['minJetDR'] =  min([999]+[deltaR(genPhoton, j) for j in genJets])
 
+    # find b's from tops:
+    b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6,  gp) ]
 
-#    for ttgamma and tt events, categorize events:
-#        a1) ttgamma vertex, gamma from t/g, isolated, must be in ttgamma sample   = ttgamma signal (photonSignal == 1)
-#            -> gamma isolated
-#            -> gamma with only tops/gluons in ancestry
-#        a2) ttgamma, gamma from ISR, must be in ttgamma sample                    = tt ISR bg (photonISR == 1)
-#            -> gamma isolated
-#            -> gamma with no top in ancestry
-#            -> gamma with only gluons and light quarks in ancestry
-#            -> direct gamma mother != gluon!!! (this is a1)
-#        b) tt + isolated gamma from W, l, tau, must be in tt sample               = ttgamma (W,l,tau) bg (photonLep == 1)
-#            -> gamma isolated
-#            -> gamma with direct abs mother being 11, 13, 15 or 24 
-#        c1) tt + non isolated gamma from anything including mesons                = tt bg (ttBg == 1)
-#            -> gamma non isolated or meson in ancestry
-#        c2) tt + isolated gamma from bottom quark (from t decay) or jets (from W) = tt bottom bg (ttBg == 1)
-#            -> gamma isolated from b or j (from t/W decay)
-#            ATTENTION: gammas from bottoms with off-shell tops where the
-#                       top decay is done by pythia are currently labeled as ISR!
-#                       However this case is currently not simulated in any sample 
-#        d) tt + gamma fake                                                        = ttgamma fake (photonFake == 1)
-#            -> everything else does not contain a photon
-#            -> if it still passes selection: it is a photon fake
+    # store if gen-jet is DR matched to a B parton
+    for genJet in genJets:
+        genJet['matchBParton'] = ( min([999]+[deltaR2(genJet, {'eta':b.eta(), 'phi':b.phi()}) for b in b_partons]) < 0.2**2 )
 
-        genPhotonsSignalCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==22 and p.pt()>10 and abs(p.eta())<2.5 and search.isLast(p) and p.status()==1, gp) ]
-        genPhotonsSignalCheck.sort( key = lambda p: -p[1].pt() )
+    genJets = filter( lambda j: (min([999]+[deltaR2(j, l) for l in genLeps_dict if l['pt']>10 and l['status']==1 and abs(l['pdgId']) in [11,13]]) > 0.3**2 ), genJets )
+    genJets.sort( key = lambda p:-p['pt'] )
+    addIndex( genJets )
+    fill_vector_collection( event, "genJet", jet_write_varnames, genJets)
 
-        photonSignal = 0    #a1
-        photonISR = 0       #a2
-        photonLep = 0       #b
-        ttBg = 0            #c1
-        photonJets = 0      #c2
-        photonFake = 0      #d
+    # gen b jets
+    trueBjets = list( filter( lambda j: j['matchBParton'], genJets ) )
+    trueNonBjets = list( filter( lambda j: not j['matchBParton'], genJets ) )
 
-
-        if len( genPhotonsSignalCheck ) > 0:     
-            # check hardest photon with pT>13 and abs(eta)<2.5
-            first, last, ancestry = genPhotonsSignalCheck[0]
-            # get abs pdgIDs of ancestry
-            pdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in ancestry])
-            # check if particles are close by
-            close_particles = filter( lambda p: p!=last and p.pt()>5 and deltaR2( {'phi':last.phi(), 'eta':last.eta()}, {'phi':p.phi(), 'eta':p.eta()} )<0.2**2 , search.final_state_particles_no_neutrinos )
-        
-    #        print 'mothers pdg', pdg_ids
-    #        print 'close', [p.pdgId() for p in close_particles]
-    #        print 'first mother pdg', first.mother(0).pdgId()
-
-    #        if len(pdg_ids) < 999:
-    #            previous = first.mother(0)
-    #            for i, pdg in enumerate(pdg_ids):
-    #                try:
-    #                    print 'mother', i, previous.pdgId()
-    #                    previous = previous.mother(0)
-    #                except Exception as val:
-    #                    print val
-    #                    break
-
-            # deside the categories
-            if max(pdg_ids)>100 or len(close_particles) != 0:
-                #photon with meson in ancestry or non isolated -> cat c1)
-                ttBg = 1
-            elif abs(first.mother(0).pdgId()) in [ 11, 13, 15, 24 ]:
-                #isolated photon with W, l or tau direct mother -> cat b)
-                photonLep = 1
-    #        elif all( [ p in [ 6, 21 ] for p in pdg_ids ] ) or abs(first.mother(0).pdgId()) == 21: # not working for photons from top, as the gluons can come from light quarks
-            elif abs(first.mother(0).pdgId()) in [ 6, 21 ]:
-                #isolated photon with photon from top or gluon -> cat a1)
-                photonSignal = 1
-    #            printTopMothers()
-            elif all( [ p in [ 1, 2, 3, 4, 5, 21 ] for p in pdg_ids ] ):
-                #isolated photon with photon ancestry only containing light quarks or gluons (ISR) -> cat a1)
-                photonISR = 1
-            else:
-                #isolated gammas from bottoms originating from the top decay or jets from W -> cat c2) 
-                photonJets = 1
-
-        else:
-            # if events with photonFake == 1 pass selection: fake gamma -> cat d)
-            photonFake = 1
-
-        # if all flags are 0, it is an isolated gamma from a process I havn't thought of!
-        # should not be there! - check!
-        event.signalPhoton = photonSignal
-        event.isrPhoton    = photonISR
-        event.lepPhoton    = photonLep
-        event.nonIsoPhoton = ttBg
-        event.jetPhoton    = photonJets
-        event.fakePhoton   = photonFake
-
-        # gen photons: particle-level isolated gen photons
-        genPhotons = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId())==22 and p.pt()>15 and search.isLast(p) and p.status()==1, gp) ]
-        genPhotons.sort( key = lambda p: -p[1].pt() )
-        genPhotons_   = []
-
-        for first, last in genPhotons[:100]: 
-            mother_pdgId = first.mother(0).pdgId() if first.numberOfMothers()>0 else 0
-            genPhoton_ = {var: getattr(last, var)() for var in boson_read_varnames}
-            # kinematic photon selection
-            if not isGoodGenPhoton( genPhoton_): continue
-            genPhoton_['motherPdgId'] = mother_pdgId
-            genPhoton_['status']      = last.status()
-            
-            close_particles = filter( lambda p: p!=last and deltaR2( {'phi':last.phi(), 'eta':last.eta()}, {'phi':p.phi(), 'eta':p.eta()} )<0.4**2 , search.final_state_particles_no_neutrinos )
-            genPhoton_['relIso04'] = sum( [p.pt() for p in close_particles], 0) / last.pt()
-            # require isolation
-            if genPhoton_['relIso04']<0.4:
-                genPhotons_.append( genPhoton_ )
-        
-        # genLeptons: prompt gen-leptons 
-        genLeptons = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId()) in [11, 13] and search.isLast(p) and p.pt()>=0 and p.status()==1,  gp) ]
-        promptGenLeps    = []
-        allGenLeps    = []
-        for first, last in genLeptons:
-            mother = first.mother(0) if first.numberOfMothers()>0 else None
-            if mother is not None:
-                mother_pdgId      = mother.pdgId()
-                mother_ascend     = search.ascend(mother)
-                grandmother       = mother_ascend.mother(0) if mother.numberOfMothers()>0 else None
-                grandmother_pdgId = grandmother.pdgId() if grandmother is not None else 0
-            else:
-                mother_pdgId = 0
-                grandmother_pdgId = 0 
-            genLep = {var: getattr(last, var)() for var in lep_varnames}
-            genLep['motherPdgId']      = mother_pdgId
-            genLep['grandmotherPdgId'] = grandmother_pdgId
-            allGenLeps.append( genLep )
-            if abs(genLep['motherPdgId']) in [ 11, 13, 15, 23, 24, 25 ]:
-                promptGenLeps.append(genLep )
-
-        # filter gen leptons
-        promptGenLeps =  list( filter( lambda l:isGoodGenLepton( l ), promptGenLeps ) )
-        promptGenLeps.sort( key = lambda p:-p['pt'] )
-        addIndex( promptGenLeps )
-
-        ## removing photons in dR cone leptons (radiation photons)
-        for genPhoton in genPhotons_:
-            genPhoton['minLeptonDR'] =  min([999]+[deltaR(genPhoton, l) for l in allGenLeps])
-        genPhotons_ = list(filter( lambda g: g['minLeptonDR']>0.4, genPhotons_))
-        addIndex( genPhotons_ )
-
-        # jets
-        fwlite_genJets = filter( genJetId, fwliteReader.products['genJets'] )
-        genJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
-        # filter genJets
-        genJets = list( filter( lambda j:isGoodGenJet( j ), genJets ) )
-        # cleaning of jets with isolated photons
-        genJets = list( filter( lambda j:min([999]+[deltaR2(j, p) for p in genPhotons_ ])>0.4**2, genJets))
-
-        # store minimum DR to jets
-        for genPhoton in genPhotons_:
-            genPhoton['minJetDR'] =  min([999]+[deltaR(genPhoton, j) for j in genJets])
-
-        # find b's from tops:
-        b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6,  gp) ]
-
-        # store if gen-jet is DR matched to a B parton
-        for genJet in genJets:
-            genJet['matchBParton'] = ( min([999]+[deltaR2(genJet, {'eta':b.eta(), 'phi':b.phi()}) for b in b_partons]) < 0.2**2 )
-
-        genJets = filter( lambda j: (min([999]+[deltaR2(j, l) for l in promptGenLeps if l['pt']>10]) > 0.3**2 ), genJets )
-        genJets.sort( key = lambda p:-p['pt'] )
-        addIndex( genJets )
-
-        # gen b jets
-        trueBjets = list( filter( lambda j: j['matchBParton'], genJets ) )
-        trueNonBjets = list( filter( lambda j: not j['matchBParton'], genJets ) )
-
-        # Mimick b reconstruction ( if the trailing b fails acceptance, we supplement with the leading non-b jet ) 
-        genBj0, genBj1 = ( trueBjets + trueNonBjets + [None, None] )[:2]
-        if genBj0: fill_vector( event, "genBj0", jet_write_varnames, genBj0) 
-        if genBj1: fill_vector( event, "genBj1", jet_write_varnames, genBj1) 
-
-        # reco-bjet/leading lepton association
-        if len(promptGenLeps)>0 and genBj0 and genBj1:
-            if vecSumPt( genBj0, promptGenLeps[0], genMet ) > vecSumPt( genBj1, promptGenLeps[0], genMet ):
-                event.genBjLeadlep_index, event.genBjLeadhad_index = genBj0['index'], genBj1['index']
-            else:
-                event.genBjLeadlep_index, event.genBjLeadhad_index = genBj1['index'], genBj0['index']
-
-        # find Z in genLep
-        (event.genLepZ_mass, genLepZ_l1_index, genLepZ_l2_index) = closestOSDLMassToMZ(promptGenLeps)
-        genLepNonZ_indices = [ i for i in range(len(promptGenLeps)) if i not in [genLepZ_l1_index, genLepZ_l2_index] ]
-        event.genLepZ_l1_index    = promptGenLeps[genLepZ_l1_index]['index'] if genLepZ_l1_index>=0 else -1
-        event.genLepZ_l2_index    = promptGenLeps[genLepZ_l2_index]['index'] if genLepZ_l2_index>=0 else -1
-        event.genLepNonZ_l1_index = promptGenLeps[genLepNonZ_indices[0]]['index'] if len(genLepNonZ_indices)>0 else -1
-        event.genLepNonZ_l2_index = promptGenLeps[genLepNonZ_indices[1]]['index'] if len(genLepNonZ_indices)>1 else -1
-        # store genLepZ stuff
-        if event.genLepZ_mass>0:
-            genLepZ_l1 = ROOT.TLorentzVector()
-            genLepZ_l1.SetPtEtaPhiM(promptGenLeps[event.genLepZ_l1_index]['pt'], promptGenLeps[event.genLepZ_l1_index]['eta'], promptGenLeps[event.genLepZ_l1_index]['phi'], 0 )
-            genLepZ_l2 = ROOT.TLorentzVector()
-            genLepZ_l2.SetPtEtaPhiM(promptGenLeps[event.genLepZ_l2_index]['pt'], promptGenLeps[event.genLepZ_l2_index]['eta'], promptGenLeps[event.genLepZ_l2_index]['phi'], 0 )
-            genLepZ = genLepZ_l1 + genLepZ_l2
-            event.genLepZ_pt   = genLepZ.Pt()
-            event.genLepZ_eta  = genLepZ.Eta()
-            event.genLepZ_phi  = genLepZ.Phi()
-            event.genLepZ_lldPhi = deltaPhi(promptGenLeps[event.genLepZ_l1_index]['phi'], promptGenLeps[event.genLepZ_l2_index]['phi'])
-            event.genLepZ_lldR   = deltaR(promptGenLeps[event.genLepZ_l1_index], promptGenLeps[event.genLepZ_l2_index])
-            genLepMinus_index = event.genLepZ_l1_index if promptGenLeps[event.genLepZ_l1_index]['pdgId'] > 0 else event.genLepZ_l2_index
-            event.genLepZ_cosThetaStar = cosThetaStar(event.genLepZ_mass, event.genLepZ_pt, event.genLepZ_eta, event.genLepZ_phi, promptGenLeps[genLepMinus_index]['pt'], promptGenLeps[genLepMinus_index]['eta'], promptGenLeps[genLepMinus_index]['phi'] )
-
-        # reco-bjet/nonZ lepton association
-        if event.genLepNonZ_l1_index>=0 and genBj0 and genBj1:
-            if vecSumPt( genBj0, promptGenLeps[event.genLepNonZ_l1_index], genMet ) > vecSumPt( genBj1, promptGenLeps[event.genLepNonZ_l1_index], genMet ):
-                event.genBjNonZlep_index, event.genBjNonZhad_index = genBj0['index'], genBj1['index']
-            else:
-                event.genBjNonZlep_index, event.genBjNonZhad_index = genBj1['index'], genBj0['index']
-
-        #for jet in genJets:
-        #    print jet['isMuon'], jet['isElectron'], jet['isPhoton'], min([999]+[deltaR2(jet, l) for l in promptGenLeps if l['pt']>10]), jet
-
-        # jet/lepton disambiguation -> remove jets, because gen-jets cluster all leptons
-        #if args.logLevel == 'DEBUG':
-        #    for jet in filter( lambda j: not (min([999]+[deltaR2(j, l) for l in promptGenLeps if l['pt']>10]) > 0.3**2 ), genJets ):
-        #        logger.debug( "Filtered gen %f jet %r lep %r", sqrt((min([999]+[deltaR2(jet, l) for l in promptGenLeps if l['pt']>10]))), jet, [ (l['eta'], jet['pt']/l['pt']) for l in promptGenLeps] )
-        #        assert False, ""
-
-
-        fill_vector_collection( event, "genPhoton", gen_photon_varnames, genPhotons_ ) 
-        fill_vector_collection( event, "genLep", lep_all_varnames, promptGenLeps)
-        fill_vector_collection( event, "genJet", jet_write_varnames, genJets)
+    # Mimick b reconstruction ( if the trailing b fails acceptance, we supplement with the leading non-b jet ) 
+    genBj0, genBj1 = ( trueBjets + trueNonBjets + [None, None] )[:2]
+    if genBj0: fill_vector( event, "genBj0", jet_write_varnames, genBj0) 
+    if genBj1: fill_vector( event, "genBj1", jet_write_varnames, genBj1) 
+#
+#        # reco-bjet/leading lepton association
+#        if len(promptGenLeps)>0 and genBj0 and genBj1:
+#            if vecSumPt( genBj0, promptGenLeps[0], genMet ) > vecSumPt( genBj1, promptGenLeps[0], genMet ):
+#                event.genBjLeadlep_index, event.genBjLeadhad_index = genBj0['index'], genBj1['index']
+#            else:
+#                event.genBjLeadlep_index, event.genBjLeadhad_index = genBj1['index'], genBj0['index']
+#
+#        # find Z in genLep
+#        (event.genLepZ_mass, genLepZ_l1_index, genLepZ_l2_index) = closestOSDLMassToMZ(promptGenLeps)
+#        genLepNonZ_indices = [ i for i in range(len(promptGenLeps)) if i not in [genLepZ_l1_index, genLepZ_l2_index] ]
+#        event.genLepZ_l1_index    = promptGenLeps[genLepZ_l1_index]['index'] if genLepZ_l1_index>=0 else -1
+#        event.genLepZ_l2_index    = promptGenLeps[genLepZ_l2_index]['index'] if genLepZ_l2_index>=0 else -1
+#        event.genLepNonZ_l1_index = promptGenLeps[genLepNonZ_indices[0]]['index'] if len(genLepNonZ_indices)>0 else -1
+#        event.genLepNonZ_l2_index = promptGenLeps[genLepNonZ_indices[1]]['index'] if len(genLepNonZ_indices)>1 else -1
+#        # store genLepZ stuff
+#        if event.genLepZ_mass>0:
+#            genLepZ_l1 = ROOT.TLorentzVector()
+#            genLepZ_l1.SetPtEtaPhiM(promptGenLeps[event.genLepZ_l1_index]['pt'], promptGenLeps[event.genLepZ_l1_index]['eta'], promptGenLeps[event.genLepZ_l1_index]['phi'], 0 )
+#            genLepZ_l2 = ROOT.TLorentzVector()
+#            genLepZ_l2.SetPtEtaPhiM(promptGenLeps[event.genLepZ_l2_index]['pt'], promptGenLeps[event.genLepZ_l2_index]['eta'], promptGenLeps[event.genLepZ_l2_index]['phi'], 0 )
+#            genLepZ = genLepZ_l1 + genLepZ_l2
+#            event.genLepZ_pt   = genLepZ.Pt()
+#            event.genLepZ_eta  = genLepZ.Eta()
+#            event.genLepZ_phi  = genLepZ.Phi()
+#            event.genLepZ_lldPhi = deltaPhi(promptGenLeps[event.genLepZ_l1_index]['phi'], promptGenLeps[event.genLepZ_l2_index]['phi'])
+#            event.genLepZ_lldR   = deltaR(promptGenLeps[event.genLepZ_l1_index], promptGenLeps[event.genLepZ_l2_index])
+#            genLepMinus_index = event.genLepZ_l1_index if promptGenLeps[event.genLepZ_l1_index]['pdgId'] > 0 else event.genLepZ_l2_index
+#            event.genLepZ_cosThetaStar = cosThetaStar(event.genLepZ_mass, event.genLepZ_pt, event.genLepZ_eta, event.genLepZ_phi, promptGenLeps[genLepMinus_index]['pt'], promptGenLeps[genLepMinus_index]['eta'], promptGenLeps[genLepMinus_index]['phi'] )
+#
+#        # reco-bjet/nonZ lepton association
+#        if event.genLepNonZ_l1_index>=0 and genBj0 and genBj1:
+#            if vecSumPt( genBj0, promptGenLeps[event.genLepNonZ_l1_index], genMet ) > vecSumPt( genBj1, promptGenLeps[event.genLepNonZ_l1_index], genMet ):
+#                event.genBjNonZlep_index, event.genBjNonZhad_index = genBj0['index'], genBj1['index']
+#            else:
+#                event.genBjNonZlep_index, event.genBjNonZhad_index = genBj1['index'], genBj0['index']
+#
+#        #for jet in genJets:
+#        #    print jet['isMuon'], jet['isElectron'], jet['isPhoton'], min([999]+[deltaR2(jet, l) for l in promptGenLeps if l['pt']>10]), jet
+#
+#        # jet/lepton disambiguation -> remove jets, because gen-jets cluster all leptons
+#        #if args.logLevel == 'DEBUG':
+#        #    for jet in filter( lambda j: not (min([999]+[deltaR2(j, l) for l in promptGenLeps if l['pt']>10]) > 0.3**2 ), genJets ):
+#        #        logger.debug( "Filtered gen %f jet %r lep %r", sqrt((min([999]+[deltaR2(jet, l) for l in promptGenLeps if l['pt']>10]))), jet, [ (l['eta'], jet['pt']/l['pt']) for l in promptGenLeps] )
+#        #        assert False, ""
+#
+#
+#        fill_vector_collection( event, "genPhoton", gen_photon_varnames, genPhotons_ ) 
+#        fill_vector_collection( event, "genLep", lep_all_varnames, promptGenLeps)
 
 #    # Reco quantities
 #    if args.delphes:
