@@ -1,7 +1,7 @@
 import logging
 import sys
 def get_logger(logLevel, logFile = None, add_sync_level = False):
-    ''' Logger for TTXPheno  module.
+    ''' Logger for TMB module.
     '''
 
     # add TRACE (numerical level 5, less than DEBUG) to logging (similar to apache) 
@@ -16,7 +16,7 @@ def get_logger(logLevel, logFile = None, add_sync_level = False):
     logging.Logger.sync = lambda inst, msg, *args, **kwargs: inst.log(logging.SYNC, msg, *args, **kwargs)
     logging.sync = lambda inst, msg, *args, **kwargs: inst.log(logging.SYNC, msg, *args, **kwargs)
 
-    logger = logging.getLogger('TTXPheno')
+    logger = logging.getLogger('TMB')
 
     numeric_level = getattr(logging, logLevel.upper(), None)
     if not isinstance(numeric_level, int):
@@ -53,7 +53,7 @@ def get_logger(logLevel, logFile = None, add_sync_level = False):
     return logger
 
 def add_fileHandler( logFile, logLevel ):
-    logger = logging.getLogger('TTXPheno')
+    logger = logging.getLogger('TMB')
     fileHandler = logging.FileHandler(logFile, mode='w')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fileHandler.setFormatter(formatter)

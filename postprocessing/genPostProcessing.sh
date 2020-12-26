@@ -2,7 +2,13 @@
 
 #use cardfile delphes_card_ATLAS or delphes_card_CMS
 
-python genPostProcessing.py --targetDir v1 --logLevel DEBUG --interpolationOrder 2  --sample WZ --small 
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample WW #SPLIT100 
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample WZ #SPLIT100 
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample ZZ #SPLIT100 
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample WWW #SPLIT200
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample WWZ #SPLIT200
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample WZZ #SPLIT200
+python genPostProcessing.py --targetDir v1 --logLevel INFO --interpolationOrder 2  --sample ZZZ #SPLIT200
 
 #######
 ##CMS##
