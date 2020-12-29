@@ -23,6 +23,12 @@ if __name__ == "__main__":
 # VV and VVV with boson reweighting
 # Only leptonic decays for all V!!
 
+test = FWLiteSample.fromFiles("test", ["/eos/vbc/experiments/cms/store/user/schoef/WW-test/WW-test/201223_221102/0000/GEN_LO_0j_93X_1.root"] )
+test.reweight_pkl = os.path.join(gridpack_directory, "boson_v1_reweight_card.pkl")
+test.xsec         = 1 
+test.nEvents      = 100 
+
+
 WW  = FWLiteSample.fromDAS("WW", "/WW-v4/schoef-WW-v4-238a1f3c8105c56c183c394f2927064f/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
 WW.reweight_pkl = os.path.join(gridpack_directory, "boson_v1_reweight_card.pkl")
 WW.xsec         = 1.751 
