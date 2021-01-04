@@ -17,42 +17,13 @@ ROOT.setTDRStyle()
 #mZ=91.1876
 mZ = 91.2
 
-
-def nanJet():
-    ''' return a dict in Jet format filled with Nan
-    '''
-    elementList = ['index', 'pt', 'eta', 'phi', 'bTag', 'matchBParton' ]
-    jet = {}
-    for element in elementList:
-        jet[element] = float('nan')
-    jet['bTagPhys'] = -1
-    jet['nCharged'] = -1
-    jet['nNeutrals'] = -1
-    jet['vec2D'] = ROOT.TVector2( float('nan'), float('nan') )
-    jet['vec4D'] = ROOT.TLorentzVector( float('nan'), float('nan'), float('nan'), float('nan') )
-    return jet
-
-def nanPhoton():
-    ''' return a dict in Jet format filled with Nan
-    '''
-    elementList = ['index', 'pt', 'eta', 'phi', 'mass', 'motherPdgId', 'isolationVar', 'isolationVarRhoCorr', 'sumPtCharged', 'sumPtNeutral', 'sumPtChargedPU', 'sumPt', 'ehadOverEem', 'genIndex']
-    gamma = {}
-    for element in elementList:
-        gamma[element] = float('nan')
-    gamma['vec2D'] = ROOT.TVector2( float('nan'), float('nan') )
-    gamma['vec4D'] = ROOT.TLorentzVector( float('nan'), float('nan'), float('nan'), float('nan') )
-    return gamma
-
-def nanLepton():
-    ''' return a dict in Lepton format filled with Nan
-    '''
-    elementList = ['index', 'pt', 'eta', 'phi', 'pdgId', 'isolationVar', 'isolationVarRhoCorr', 'sumPtCharged', 'sumPtNeutral', 'sumPtChargedPU', 'sumPt', 'ehadOverEem', 'genIndex']
-    lepton = {}
-    for element in elementList:
-        lepton[element] = float('nan')
-    lepton['vec2D'] = ROOT.TVector2( float('nan'), float('nan') )
-    lepton['vec4D'] = ROOT.TLorentzVector( float('nan'), float('nan'), float('nan'), float('nan') )
-    return lepton
+def singleton(class_):
+  instances = {}
+  def getinstance(*args, **kwargs):
+    if class_ not in instances:
+        instances[class_] = class_(*args, **kwargs)
+    return instances[class_]
+  return getinstance
 
 def natural_sort(list, key=lambda s:s):
     """
