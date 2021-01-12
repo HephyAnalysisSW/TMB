@@ -1,5 +1,4 @@
-# TTXPheno
-## Get code for TTXPheno studies
+# Top quarks & dibosons
 
 ```
 cmsrel CMSSW_10_6_0
