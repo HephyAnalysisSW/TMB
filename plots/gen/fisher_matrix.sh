@@ -1,0 +1,20 @@
+
+python fisher_matrix.py --plot_directory gen_v5  --sample WZ 
+python fisher_matrix.py --plot_directory gen_v5  --sample ZZ
+python fisher_matrix.py --plot_directory gen_v5  --sample ZA
+python fisher_matrix.py --plot_directory gen_v5  --sample WW 
+python fisher_matrix.py --plot_directory gen_v5  --sample WWW
+python fisher_matrix.py --plot_directory gen_v5  --sample WWZ
+python fisher_matrix.py --plot_directory gen_v5  --sample WZZ
+python fisher_matrix.py --plot_directory gen_v5  --sample ZZZ
+python fisher_matrix.py --plot_directory gen_v5  --sample WA    
+python fisher_matrix.py --plot_directory gen_v5  --sample WA_LO 
+python fisher_matrix.py --plot_directory gen_v5  --sample WAjj  
+python fisher_matrix.py --plot_directory gen_v5  --sample WWjj_OS
+python fisher_matrix.py --plot_directory gen_v5  --sample WWjj_SS
+python fisher_matrix.py --plot_directory gen_v5  --sample WZjj
+python fisher_matrix.py --plot_directory gen_v5  --sample ZAjj
+python fisher_matrix.py --plot_directory gen_v5  --sample ZZjj
+python fisher_matrix.py --plot_directory gen_v5  --sample ttg_noFullyHad
+python fisher_matrix.py --plot_directory gen_v5  --sample ttW01j
+python fisher_matrix.py --plot_directory gen_v5  --sample ttZ01j

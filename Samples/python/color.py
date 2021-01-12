@@ -22,6 +22,7 @@ color.WWZ            = ROOT.kMagenta + 1
 color.WZZ            = ROOT.kMagenta - 4
 color.ZZZ            = ROOT.kMagenta - 9
 color.WA             = ROOT.kGreen + 1
+color.WA_LO          = ROOT.kGreen + 2
 color.WAjj           = ROOT.kGreen - 7
 
 color.ZA             = ROOT.kCyan  + 1
