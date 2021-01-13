@@ -1,4 +1,4 @@
-''' Benchmark samples for TTXPheno (EDM)'''
+''' GEN samples for TMB'''
 
 # standard imports
 import os
@@ -6,7 +6,7 @@ import os
 # RootTools
 from RootTools.core.standard import *
 
-# TTXPheno
+# TMB
 from TMB.Tools.user import cache_directory, gridpack_directory 
 
 # sqlite3 sample cache file
@@ -15,7 +15,7 @@ overwrite = False
 
 # Logging
 if __name__ == "__main__":
-    import TTXPheno.Tools.logger as logger
+    import TMB.Tools.logger as logger
     logger = logger.get_logger('DEBUG')
     import RootTools.core.logger as logger_rt
     logger_rt = logger_rt.get_logger('DEBUG')

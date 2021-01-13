@@ -220,7 +220,7 @@ if args.delphesEra is not None:
     variables      += ["recoMet_pt/F", "recoMet_phi/F"]
 
     # Systematics
-    from TTXPheno.Tools.bTagEff.delphesBTaggingEff import getBTagSF_1a
+    from TMB.Tools.bTagEff.delphesBTaggingEff import getBTagSF_1a
     variables      += ["reweight_BTag_B/F", "reweight_BTag_L/F"]
     variables      += ["reweight_id_mu/F", "reweight_id_ele/F"]
 

@@ -47,7 +47,7 @@ import scipy.special
 import itertools
 
 # Helpers
-from TTXPheno.Tools.helpers import timeit as timeit
+from TMB.Tools.helpers import timeit as timeit
 
 class HyperPoly:
 
