@@ -126,4 +126,4 @@ ttZ01j.nEvents = 3345859
 WH = FWLiteSample.fromDAS("WH", "/WH-v1/chatterj-WH-v1-13982263318d64186461fb17c44d9cef/USER", "phys03", dbFile = dbFile, overwrite=overwrite)                                                              
 WH.reweight_pkl = os.path.join(gridpack_directory, "WH_LeptonicW_LO_reweight_card.pkl")
 WH.xsec    = 7.505
-WH.nEvents = 100000
+WH.nEvents = 3017257

@@ -33,7 +33,7 @@ class WeightInfo:
             logger.warning( "No reference point found in pkl file!" )
 
         # store all variables (Wilson coefficients)
-        self.variables = self.data.keys()[0].split('_')[::2]
+        self.variables = list(set(self.data.keys()[0].split('_')[::2]))
         self.nvar      = len(self.variables)
 
         # compute reference point coordinates

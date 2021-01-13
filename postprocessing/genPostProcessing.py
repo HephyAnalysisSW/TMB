@@ -310,6 +310,7 @@ def filler( event ):
         ref_point_coordinates = [weightInfo.ref_point_coordinates[var] for var in weightInfo.variables]
 
         # Initialize with Reference Point
+
         if not hyperPoly.initialized: hyperPoly.initialize( param_points, ref_point_coordinates )
         coeff = hyperPoly.get_parametrization( weights )
 
