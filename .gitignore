@@ -1,0 +1,15 @@
+__init__.py
+*.pyc
+.*.swp
+.#*
+#*#
+*~
+nohup.out
+*.log
+*.txt
+
+# specific for Lukas
+logs/
+tmp/
+dat/
+*.dat
