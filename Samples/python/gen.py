@@ -121,4 +121,9 @@ ttW01j.nEvents = 3734478
 ttZ01j = FWLiteSample.fromDAS("ttZ01j", "/ttZ01j-v4/schoef-ttZ01j-v4-f6f4be518188a05de11e29a5ae3c75a0/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
 ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "top_boson_v1_reweight_card.pkl")
 ttZ01j.xsec    = 1.369e-01
-ttZ01j.nEvents = 3345859 
+ttZ01j.nEvents = 3345859
+
+WH = FWLiteSample.fromDAS("WH", "/WH-v1/chatterj-WH-v1-13982263318d64186461fb17c44d9cef/USER", "phys03", dbFile = dbFile, overwrite=overwrite)                                                              
+WH.reweight_pkl = os.path.join(gridpack_directory, "WH_LeptonicW_LO_reweight_card.pkl")
+WH.xsec    = 7.505
+WH.nEvents = 100000
