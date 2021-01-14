@@ -13,6 +13,12 @@ import TMB.Tools.helpers as helpers
 
 from operator import mul
 
+# unique
+def f7(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
 # Logger
 import logging
 logger = logging.getLogger(__name__)
@@ -33,8 +39,8 @@ class WeightInfo:
             logger.warning( "No reference point found in pkl file!" )
 
         # store all variables (Wilson coefficients)
-        self.variables = list(set(self.data.keys()[0].split('_')[::2]))
-        self.variables.sort()
+        self.variables = f7(self.data.keys()[0].split('_')[::2])
+        # remove duplicates
         self.nvar      = len(self.variables)
 
         # compute reference point coordinates

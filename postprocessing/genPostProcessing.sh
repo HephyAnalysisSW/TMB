@@ -1,7 +1,5 @@
 #!/bin/sh
 
-#use cardfile delphes_card_ATLAS or delphes_card_CMS
-
 #python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WW #SPLIT100
 #python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZ #SPLIT100
 #python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZ #SPLIT100
