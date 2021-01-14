@@ -384,7 +384,7 @@ def filler( event ):
     genWs_dict = [ {var: getattr(genW, var)() for var in boson_varnames} for genW in genWs ]
     for i_genW, genW in enumerate(genWs):
         d1, d2 = genW.daughter(0), genW.daughter(1)
-        if abs(d1.pdgId()) in [11, 113, 15]: 
+        if abs(d1.pdgId()) in [11, 13, 15]: 
             l, nu = d1, d2
         else:
             nu, l = d2, d1
