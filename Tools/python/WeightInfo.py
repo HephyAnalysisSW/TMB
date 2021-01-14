@@ -34,6 +34,7 @@ class WeightInfo:
 
         # store all variables (Wilson coefficients)
         self.variables = list(set(self.data.keys()[0].split('_')[::2]))
+        self.variables.sort()
         self.nvar      = len(self.variables)
 
         # compute reference point coordinates

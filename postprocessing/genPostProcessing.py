@@ -313,7 +313,6 @@ def filler( event ):
 
         if not hyperPoly.initialized: hyperPoly.initialize( param_points, ref_point_coordinates )
         coeff = hyperPoly.get_parametrization( weights )
-
         # = HyperPoly(weight_data, args.interpolationOrder)
         event.np = hyperPoly.ndof
         event.chi2_ndof = hyperPoly.chi2_ndof(coeff, weights)
