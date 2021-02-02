@@ -28,6 +28,11 @@ test.reweight_pkl = os.path.join(gridpack_directory, "boson_v1_reweight_card.pkl
 test.xsec         = 1 
 test.nEvents      = 100 
 
+test2 = FWLiteSample.fromFiles("test2", ["/users/robert.schoefbeck/CMS/test/CMSSW_10_2_22/src/reco_FastSim_LO_0j_102X_CP5_FastSim.root "] )
+test2.reweight_pkl = os.path.join(gridpack_directory, "boson_v1_reweight_card.pkl")
+test2.xsec         = 1 
+test2.nEvents      = 100 
+
 WW  = FWLiteSample.fromDAS("WW", "/WW-v4/schoef-WW-v4-238a1f3c8105c56c183c394f2927064f/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
 WW.reweight_pkl = os.path.join(gridpack_directory, "boson_v1_reweight_card.pkl")
 WW.xsec         = 1.751 
