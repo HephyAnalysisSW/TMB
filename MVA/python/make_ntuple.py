@@ -29,8 +29,8 @@ import TMB.Tools.logger as logger
 logger = logger.get_logger("INFO", logFile = None )
 import Analysis.Tools.logger as logger_an
 logger_an = logger_an.get_logger("INFO", logFile = None )
-import RootTools.core.logger as logger_rt
-logger_rt = logger_rt.get_logger("DEBUG", logFile = None )
+#import RootTools.core.logger as logger_rt
+#logger_rt = logger_rt.get_logger("DEBUG", logFile = None )
 
 # get samples
 import TMB.Samples.pp_tWZ as samples
@@ -57,28 +57,43 @@ output_file  = os.path.join( args.output_directory, sample.name + ("_small" if a
 
 # reader
 reader = sample.treeReader( \
-    variables = map( TreeVariable.fromString, config.read_variables),
-    #sequence  = config.sequence,
+    #variables = map( TreeVariable.fromString, config.read_variables),
+    variables =  config.read_variables,
+    sequence  = config.sequence,
     )
 reader.start()
 
 #filler
 def filler( event ):
 
+    r = reader.event
+
     # fill extra variables
     #event.isTraining = isTraining
     #event.isSignal   = isSignal
     # write mva variables
-    for name, func in config.mva_variables.iteritems():
+    for name, func in config.all_mva_variables.iteritems():
 #                setattr( event, name, func(reader.event) )
         setattr( event, name, func(reader.event, sample=None) )
 
+    if hasattr(config, "FIs"):
+        for FI_name, FI in config.FIs.iteritems():
+            #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
+            setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
+
 # Create a maker. Maker class will be compiled. 
+
+mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
+if hasattr( config, "FIs"):
+    FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
+else:
+    FI_variables = [] 
+
 maker = TreeMaker(
     sequence  = [ filler ],
     variables = map(TreeVariable.fromString, 
 #          ["isTraining/I", "isSignal/I"] + 
-          ["%s/F"%var for var in config.mva_variables.keys()] 
+          mva_variables+FI_variables,  
         ),
     treeName = "Events"
     )
