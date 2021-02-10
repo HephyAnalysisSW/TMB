@@ -1,15 +1,17 @@
 __init__.py
+nohup.out
 *.pyc
 .*.swp
 .#*
 #*#
 *~
-nohup.out
+*.tmp
 *.log
-*.txt
-
-# specific for Lukas
-logs/
-tmp/
-dat/
+testing
+py.py
+ME5_debug
+MG5_debug
 *.dat
+tmp*
+missing*.sh
+*.nfs*

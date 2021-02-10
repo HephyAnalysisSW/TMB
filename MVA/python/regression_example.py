@@ -5,50 +5,17 @@ import pandas as pd
 
 #########################################################################################
 # variable definitions
-variables = ['mva_Z1_eta',
-            'mva_jet2_btagDeepB',
-            'mva_Z1_pt',
-            'mva_jet0_btagDeepB',
-            'mva_jet1_nonZl1_deltaR',
-            'mva_m3l',
-            'mva_lnonZ1_eta',
-            'mva_Z1_cosThetaStar',
-            'mva_jet2_pt',
-            'mva_jet1_Z1_deltaR',
-            'mva_ht',
-            'mva_met_pt',
-            'mva_maxAbsEta_of_pt30jets',
-            'mva_jet0_Z1_deltaR',
-            'mva_lnonZ1_pt',
-            'mva_jet2_Z1_deltaR',
-            'mva_jet0_eta',
-            'mva_nJetGood',
-            'mva_jet0_nonZl1_deltaR',
-            'mva_nBTag',
-            'mva_jet1_pt',
-            'mva_nonZ1_l1_Z1_deltaPhi',
-            'mva_jet1_eta',
-            'mva_jet2_eta',
-            'mva_jet1_btagDeepB',
-            'mva_bJet_Z1_deltaR',
-            'mva_nonZ1_l1_Z1_deltaR',
-            'mva_bJet_non_Z1l1_deltaR',
-            'mva_jet0_pt',
-            'mva_W_pt',
-            'mva_l1_mvaTOP',
-            'mva_l2_mvaTOP',
-            'mva_l3_mvaTOP']
-
+variables = [
+            'LeptonTight0_pt',
+            'LeptonTight0_eta',
+            'LeptonTight0_phi',
+            'PhotonGood0_pt',
+            'PhotonGood0_eta',
+            'PhotonGood0_phi',
+            'nJetGood',
+            'nBTagGood',
+]
 treename = 'Events'
-filename = {}
-
-batch_size = 1024*4
-
-# key is used as name on the plot
-filename['TWZ'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/TWZ_NLO_DR.root'
-filename['TTZ'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/TTZ.root'
-filename['WZ']  = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/WZ.root'
-filename['NON'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/nonprompt_3l.root'
 
 # model savepath:
 model_path = '.'
@@ -56,14 +23,17 @@ model_path = '.'
 # for the plots
 save_path = '.'
 
-NDIM = len(variables)
+n_var_input = len(variables)
+
+# input samples
+import TMB.Samples.pp_TTGammaEFT as samples
+sample = samples.ttG_noFullyHad_fast
 
 # Network layout:
-NL = [NDIM*5, NDIM*5, NDIM*5]
 #########################################################################################
 # define some function to be regressed:
 
-def to_regress(values): # some random function (the result is not random)
+def regression_target(values): 
     '''Values must be a list of a list'''
     y_list = []
     for val in values:
@@ -83,26 +53,23 @@ def to_regress(values): # some random function (the result is not random)
 seed = 7
 np.random.seed(seed)
 
-upfile = {}
-df = {}
 
-# read data into dataframe
-key_list = list(filename.keys())
-
-for key in key_list: # root file to pandas dataframe
-    upfile[key] = uproot.open(filename[key]) 
+for filename in sample.filenames:
+    with uproot.open(filename) as upfile:
+        branches = uproot['Events'].arrays(namedecode='utf-8')
+        basic    = (branches['PhotonGood0_pt'] >= 0 ) & (branches['LeptonTight0_pt'] >= 0)
+    upfile[key] = uproot.open(filename[key])
     df[key] = upfile[key][treename].pandas.df(branches=variables)
 
 # preprocessing
-NDIM = len(variables) # number of variables
+n_var_input = len(variables) # number of variables
 N_classes = len(filename) # number of classes
 
 class_digit = range(N_classes)
 
 for key, digit in zip(key_list, class_digit): # add fun variable and values, this is pretty slow
     print(key, 'of', key_list)
-    df[key]['fun'] = to_regress(df[key].values)
-
+    df[key]['fun'] = regression_target(df[key].values)
 
 # concatenate the dataframes
 df_all = pd.concat([df[key_list[0]], df[key_list[1]]])
@@ -123,12 +90,13 @@ df_all = df_all.dropna() # removes all Events with nan
 
 # split dataset into Input and output data
 dataset = df_all.values
-X = dataset[:,0:NDIM]
-Y = dataset[:,NDIM]
+X = dataset[:,0:n_var_input]
+Y = dataset[:,n_var_input]
 
 # split data into train and test, test_size = 0.2 is quite standard for this
 from sklearn.model_selection import train_test_split
 X_train_val, X_test, Y_train_val, Y_test = train_test_split(X, Y, test_size=0.2, random_state=7, shuffle = True)
+
 
 
 #########################################################################################
@@ -140,9 +108,10 @@ from keras.layers import BatchNormalization
 from keras.utils import np_utils
 
 model = Sequential()
-model.add(BatchNormalization(input_shape=(NDIM, )))
+model.add(BatchNormalization(input_shape=(n_var_input, )))
 
-for dim in NL:
+layers = [n_var_input*5, n_var_input*5, n_var_input*5]
+for dim in layers:
     model.add(Dense(dim, activation='sigmoid'))
 
 model.add(Dense(1))
@@ -156,6 +125,7 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=1) # patien
                                                                         # I would recommmend at least 3, otherwise it might cancel too early
 
 # train the model
+batch_size = 1024*4
 history = model.fit(X_train_val, 
                     Y_train_val, 
                     epochs=100, 

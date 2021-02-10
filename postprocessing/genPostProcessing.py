@@ -21,7 +21,7 @@ from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosTheta
 from TMB.Tools.HyperPoly              import HyperPoly
 from TMB.Tools.WeightInfo             import WeightInfo
 from TMB.Tools.DelphesProducer        import DelphesProducer
-from TMB.Tools.objectSelection        import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton, genJetId
+from TMB.Tools.DelphesObjectSelection import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton, genJetId
 #from TMB.Tools.UpgradeJECUncertainty  import UpgradeJECUncertainty 
 #
 # Arguments
