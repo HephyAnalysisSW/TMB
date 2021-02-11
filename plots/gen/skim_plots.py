@@ -640,4 +640,4 @@ for plot in plots:
 
 drawPlots(plots, subDirectory = subDirectory)
 
-logger.info( "Done with prefix %s and selectionString %s", args.selection, genCutInterpreter.cutString(args.selection) )
+logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )

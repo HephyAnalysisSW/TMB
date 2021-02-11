@@ -125,7 +125,6 @@ model.save(model_path + '_regression_model.h5')
 # Apply the model
 
 import array
-x,y = pickle.load(file('tmp.pkl'))
 c = ROOT.TCanvas()
 g = ROOT.TGraph(len(Y_test), Y_test, model.predict(X_test)) 
 g.Draw('ap')
