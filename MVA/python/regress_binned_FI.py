@@ -7,9 +7,10 @@ c1.Print('/tmp/delete.png')
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-#argParser.add_argument('--sample',             action='store', type=str,   default='ttG_noFullyHad_fast')
+argParser.add_argument('--trainingfile',       action='store', type=str,   default='input.root')
+argParser.add_argument('--FI_branch',          action='store', type=str,   default='FI_ctZ_SM')
 argParser.add_argument('--config',             action='store', type=str,   default='ttG')
-#argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
+argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
 #argParser.add_argument('--small',              action='store_true')
 
 args = argParser.parse_args()
@@ -17,8 +18,6 @@ args = argParser.parse_args()
 #Logger
 import TMB.Tools.logger as logger
 logger = logger.get_logger("INFO", logFile = None )
-
-filename = "/eos/vbc/user/robert.schoefbeck/TMB/ttG_noFullyHad_fast.root"
 
 # MVA configuration
 import TMB.MVA.configs  as configs 
@@ -35,12 +34,14 @@ import pandas as pd
 # variable definitions
 
 # model savepath:
-model_path = '.'
-
 # for the plots
 save_path = '.'
 
-from TMB.Tools.user import plot_directory
+import TMB.Tools.user as user 
+
+# directories
+plot_directory   = os.path.join( user. plot_directory, 'MVA', args.config, args.FI_branch )
+output_directory = os.path.join( args.output_directory, args.config, args.FI_branch) 
 
 # input samples
 import TMB.Samples.pp_TTGammaEFT as samples
@@ -48,8 +49,6 @@ sample = samples.ttG_noFullyHad_fast
 
 # fix random seed for reproducibility
 np.random.seed(1)
-
-FI_branch = "FI_ctZ_SM"
 
 mva_variables = config.mva_variables.keys()
 
@@ -62,8 +61,8 @@ mva_variables = config.mva_variables.keys()
 mva_variables.sort()
 n_var_input   = len(mva_variables)
 
-upfile = uproot.open(filename)
-df     = upfile["Events"].pandas.df(branches = mva_variables+[FI_branch])
+upfile = uproot.open(args.trainingfile)
+df     = upfile["Events"].pandas.df(branches = mva_variables+[args.FI_branch])
 
 #branches = upfile['Events'].arrays(namedecode='utf-8')
 #basic    = (branches['mva_m3'] >= 0 ) 
@@ -135,7 +134,10 @@ history = model.fit(X_train_val,
 print('training finished')
 
 # saving
-model.save(model_path + '_regression_model.h5')
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+model.save(os.path.join(output_directory, 'regression_model.h5'))
 
 #########################################################################################
 # Apply the model
@@ -149,8 +151,9 @@ pred_test = list(model.predict(X_test))
 for x,y in zip( list(Y_test), pred_test):
     h.Fill( x,y )
 
+
 plot2D = Plot2D.fromHisto(name = "scatter", histos = [[h]], texX = "truth", texY = "prediction" )
-plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory,'MVA'), logY = False, logX = False, logZ = True, copyIndexPHP=True)
+plotting.draw2D(plot2D, plot_directory = plot_directory, logY = False, logX = False, logZ = True, copyIndexPHP=True)
 
 for var, binning in [ 
         ('mva_photon_pt',   [30,0,300]),
@@ -166,13 +169,13 @@ for var, binning in [
         h.Fill( x,y )
 
     plot2D = Plot2D.fromHisto(name = "truth_vs_"+var, histos = [[h]], texX = "truth", texY = var )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory,'MVA'), logY = False, logX = False, logZ = True)
+    plotting.draw2D(plot2D, plot_directory = plot_directory, logY = False, logX = False, logZ = True)
 
     h = ROOT.TH2F("pred_"+var, "pred_"+var, n,.5,n+.5, *binning)
     for x,y in zip( pred_test, list(X_test[:,mva_variables.index(var)]) ):
         h.Fill( x,y )
 
     plot2D = Plot2D.fromHisto(name = "pred_vs_"+var, histos = [[h]], texX = "pred", texY = var )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory,'MVA'), logY = False, logX = False, logZ = True)
+    plotting.draw2D(plot2D, plot_directory = plot_directory, logY = False, logX = False, logZ = True)
 
 syncer.sync()

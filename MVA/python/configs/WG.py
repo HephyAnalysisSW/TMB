@@ -47,7 +47,8 @@ sequence = []
 
 # Fisher informations
 FIs = {
-    'ctZ_SM' : { 'var': 'ctZ', 'point':{'ctZ':0}},
+    'cWWW_SM' :  { 'var': 'cWWW', 'point':{'cWWW':0}},
+    'cWWW_1' :   { 'var': 'cWWW', 'point':{'cWWW':1}},
 }
 
 # initialize weight stuff

@@ -16,7 +16,7 @@ import TMB.MVA.configs  as configs
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--selection',          action='store', type=str,   default='nLep1-nPhoton1')
+argParser.add_argument('--selection',          action='store', type=str,   default='singlelep-photon')
 argParser.add_argument('--sample',             action='store', type=str,   default='ttG_noFullyHad_fast')
 argParser.add_argument('--config',             action='store', type=str,   default='ttG')
 argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
@@ -53,7 +53,7 @@ logger.info( "Found %i events for sample %s", count, sample.name )
 config = getattr( configs, args.config)
 
 # where the output goes
-output_file  = os.path.join( args.output_directory, sample.name + ("_small" if args.small else "") + ".root" )
+output_file  = os.path.join( args.output_directory, "MVA-training", sample.name, args.selection, sample.name + ("_small" if args.small else "") + ".root" )
 
 # reader
 reader = sample.treeReader( \
