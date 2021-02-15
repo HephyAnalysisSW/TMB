@@ -21,8 +21,8 @@ from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosTheta
 from TMB.Tools.HyperPoly              import HyperPoly
 from TMB.Tools.WeightInfo             import WeightInfo
 from TMB.Tools.DelphesProducer        import DelphesProducer
-from TMB.Tools.GenObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton, genJetId
-from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton, genJetId
+from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
+from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
 #from TMB.Tools.UpgradeJECUncertainty  import UpgradeJECUncertainty 
 #
 # Arguments
@@ -312,7 +312,12 @@ def filler( event ):
 
         # Initialize with Reference Point
 
-        if not hyperPoly.initialized: hyperPoly.initialize( param_points, ref_point_coordinates )
+        if not hyperPoly.initialized: 
+            #print "evt,run,lumi", event.run, event.lumi, event.evt
+            #print "ref point", ref_point_coordinates
+            #for i_p, p in enumerate(param_points):
+            #    print "weight", i_p, weights[i_p]/event.rw_nominal, p
+            hyperPoly.initialize( param_points, ref_point_coordinates )
         coeff = hyperPoly.get_parametrization( weights )
         # = HyperPoly(weight_data, args.interpolationOrder)
         event.np = hyperPoly.ndof
@@ -321,7 +326,7 @@ def filler( event ):
         if event.chi2_ndof>10**-6: logger.warning( "chi2_ndof is large: %f", event.chi2_ndof )
         for n in xrange(hyperPoly.ndof):
             event.p_C[n] = coeff[n]
-
+            #print "p_C", n, coeff[n]/event.rw_nominal
         # lumi weight / w0
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
 

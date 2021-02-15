@@ -22,3 +22,4 @@
 #python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttW01j #SPLIT200
 #python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT200
 #
+python genPostProcessing.py --targetDir v3 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttG_noFullyHad_debug

@@ -39,9 +39,9 @@ argParser.add_argument('--small',                             action='store_true
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
 argParser.add_argument('--plot_directory', action='store', default='FI-test')
-argParser.add_argument('--WC',                 action='store',      default='ctZ')
+argParser.add_argument('--WC',                 action='store',      default='cpQ3')
 argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient for the distribution.')
-argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0],  help='Values of the Wilson coefficient to show FI for.')
+argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0, 1.0],  help='Values of the Wilson coefficient to show FI for.')
 argParser.add_argument('--era',            action='store', type=str, default="Autumn18")
 argParser.add_argument('--sample',        action='store', type=str, default="ttG_noFullyHad_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
@@ -59,7 +59,10 @@ import TMB.Samples.pp_tWZ as samples
 
 sample = getattr( samples, args.sample )
 
-lumi_scale = 137 
+lumi_scale = 137
+
+sample.weight = lambda event, sample: lumi_scale*event.weight 
+
 
 if args.small:
     sample.reduceFiles( to = 1 )
@@ -118,30 +121,6 @@ def add_fisher_plot( plot, fisher_string, color, legendText):
 # Read variables and sequences
 sequence       = []
 
-#def getWpt( event, sample):
-#
-#    # get the lepton and met
-#    lepton  = ROOT.TLorentzVector()
-#    met     = ROOT.TLorentzVector()
-#    lepton.SetPtEtaPhiM(event.lep_pt[event.nonZ1_l1_index], event.lep_eta[event.nonZ1_l1_index], event.lep_phi[event.nonZ1_l1_index], 0)
-#    met.SetPtEtaPhiM(event.met_pt, 0, event.met_phi, 0)
-#
-#    # get the W boson candidate
-#    W   = lepton + met
-#    event.W_pt = W.Pt()
-#
-#sequence.append( getWpt )
-#
-#def getM3l( event, sample ):
-#    # get the invariant mass of the 3l system
-#    l = []
-#    for i in range(3):
-#        l.append(ROOT.TLorentzVector())
-#        l[i].SetPtEtaPhiM(event.lep_pt[i], event.lep_eta[i], event.lep_phi[i],0)
-#    event.M3l = (l[0] + l[1] + l[2]).M()
-#
-#sequence.append( getM3l )
-
 read_variables = [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
@@ -153,55 +132,27 @@ read_variables = [
 #    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
+    "np/I", "p[C/F]",
+    "photon_pt/F",
+    "photon_eta/F",
+    "photon_phi/F",
+    "photonJetdR/F", "photonLepdR/F",
 ]
 
 read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F'] #'reweightTrigger/F']
 # define 3l selections
 
 #MVA
-#from Analysis.TMVA.Reader    import Reader
-import TMB.MVA.configs.ttG as mva_config 
-
-sequence.extend( mva_config.sequence )
-read_variables.extend( mva_config.read_variables )
-
-#mva_reader = Reader(
-#    mva_variables     = mva_variables,
-#    weight_directory  = os.path.join( mva_directory, "TWZ_3l" ),
-#    label             = "TWZ_3l")
+##from Analysis.TMVA.Reader    import Reader
+#import TMB.MVA.configs.ttG as mva_config 
 #
-#def makeDiscriminator( mva ):
-#    def _getDiscriminator( event, sample ):
-#        kwargs = {name:func(event,None) for name, func in mva_variables.iteritems()}
-#        setattr( event, mva['name'], mva_reader.evaluate(mva['name'], **kwargs))
-#    return _getDiscriminator
-#
+#sequence.extend( mva_config.sequence )
+#read_variables.extend( mva_config.read_variables )
+
 def discriminator_getter(name):
     def _disc_getter( event, sample ):
         return getattr( event, name )
     return _disc_getter
-
-#mvas = [mlp_tanh]
-#for mva in mvas:
-#    mva_reader.addMethod(method=mva)
-#    sequence.append( makeDiscriminator(mva) )
-
-#from ML.models.tWZ.tWZ_multiclass import variables as keras_varnames
-#from ML.models.tWZ.tWZ_multiclass import output_specification as keras_output_specification 
-#from ML.models.tWZ.tWZ_multiclass import model     as keras_multiclass
-#
-#def keras_predict( event, sample ):
-#    #print np.array([[mva_variables[varname](event, sample) for varname in keras_varnames]])
-#    event.keras_multiclass_prediction = keras_multiclass.predict( np.array([[mva_variables[varname](event, sample) for varname in keras_varnames]])) 
-#    event.keras_multiclass_prediction = event.keras_multiclass_prediction[0]
-#    #for i in xrange( len(keras_output_specification) ):
-#    #    print "keras_multiclass_"+keras_output_specification[i]
-#    #    print  event.keras_multiclass_prediction, i
-#    #    print  event.keras_multiclass_prediction[i]
-#    for i in xrange( len(keras_output_specification) ):
-#        setattr( event, "keras_multiclass_"+keras_output_specification[i], event.keras_multiclass_prediction[i] ) 
-#    #print event.keras_multiclass_prediction
-#sequence.append( keras_predict )
 
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
@@ -232,33 +183,6 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
     return func_
 
-#mu0_charge   = lep_getter("pdgId", 0, 13, functor = charge)
-#ele0_charge = lep_getter("pdgId", 0, 11, functor = charge)
-#mu1_charge   = lep_getter("pdgId", 1, 13, functor = charge)
-#ele1_charge = lep_getter("pdgId", 1, 11, functor = charge)
-#def test(event, sample):
-#    mu0_ch  = mu0_charge(event, sample)
-#    ele0_ch = ele0_charge(event, sample)
-#    mu1_ch  = mu1_charge(event, sample)
-#    ele1_ch = ele1_charge(event, sample)
-#    print "mu0_ch",mu0_ch, "ele0_ch",ele0_ch, "mu1_ch",mu1_ch, "ele1_ch",ele1_ch
-#
-#sequence.append( test )
-
-# 3l trainign variables
-
-#def make_training_observables_3l(event, sample):
-#
-#    event.nonZ1l1_Z1_deltaPhi = deltaPhi(event.lep_phi[event.nonZ1_l1_index], event.Z1_phi)
-#    event.nonZ1l1_Z1_deltaEta = abs(event.lep_eta[event.nonZ1_l1_index] - event.Z1_eta)
-#    event.nonZ1l1_Z1_deltaR   = deltaR({'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet0_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[0], 'phi':event.JetGood_phi[0]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet0_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[0], 'phi':event.JetGood_phi[0]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
-#    event.jet1_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet1_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
-#
-#sequence.append( make_training_observables_3l )
-
 yields     = {}
 allPlots   = {}
 
@@ -270,32 +194,43 @@ Plot.setDefaults(stack = stack, weight = weight, selectionString = cutInterprete
 plots        = []
 fisher_plots = []
 
-#    for output in keras_output_specification:
-#        plots.append(Plot(
-#            texX = 'keras multiclass '+output, texY = 'Number of Events',
-#            name = 'keras_multiclass_'+output, attribute = discriminator_getter('keras_multiclass_'+output),
-#            binning=[50, 0, 1],
-#        ))
-
-#for mva in mvas:
-#    plots.append(Plot(
-#        texX = 'MVA_{3l}', texY = 'Number of Events',
-#        name = mva['name'], attribute = discriminator_getter(mva['name']),
-#        binning=[25, 0, 1],
-#    ))
-
-#for mva in mvas:
-#    plots.append(Plot(
-#        texX = 'MVA_{3l}', texY = 'Number of Events',
-#        name = mva['name']+'_coarse', attribute = discriminator_getter(mva['name']),
-#        binning=[10, 0, 1],
-#    ))
-
 plots.append(Plot(
   name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
   attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
   binning=[50,0,50],
   addOverFlowBin='upper',
+))
+
+plots.append(Plot(
+    name = 'M3',
+    texX = 'M_{3} (GeV)', texY = 'Number of Events / 10 GeV',
+    attribute = TreeVariable.fromString( "m3/F" ),
+    binning=[30,0,300],
+    addOverFlowBin='upper',
+))
+
+plots.append(Plot(
+    name = 'photonJetdR',
+    texX = '#Delta R(#gamma, jets)', texY = 'Number of Events',
+    attribute = TreeVariable.fromString( "photonJetdR/F" ),
+    binning=[30,0,6],
+    addOverFlowBin='upper',
+))
+
+plots.append(Plot(
+    name = 'photonLepdR',
+    texX = '#Delta R(#gamma, leptons)', texY = 'Number of Events',
+    attribute = TreeVariable.fromString( "photonLepdR/F" ),
+    binning=[30,0,6],
+    addOverFlowBin='upper',
+))
+
+plots.append(Plot(
+    name = 'mT',
+    texX = 'M_{T} (GeV)', texY = 'Number of Events / 10 GeV',
+    attribute = lambda event, sample: sqrt(2.*event.met_pt*event.l1_pt*(1-cos(event.met_phi-event.l1_phi))),
+    binning=[30,0,300],
+    addOverFlowBin='upper',
 ))
 
 plots.append(Plot(
@@ -378,7 +313,7 @@ def drawObjects( hasData = False ):
     tex.SetTextAlign(11) # align right
     lines = [
       (0.15, 0.95, 'CMS Preliminary' if hasData else "CMS Simulation"),
-      #(0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV) Scale %3.2f'% ( lumi_scale, dataMCScale ) ) if plotData else (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale)
+      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
     ]
     return [tex.DrawLatex(*l) for l in lines]
 
