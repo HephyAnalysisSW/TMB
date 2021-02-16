@@ -38,11 +38,10 @@ argParser.add_argument('--logLevel',       action='store',      default='INFO', 
 argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?', )
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--plot_directory', action='store', default='FI-test')
-argParser.add_argument('--WC',                 action='store',      default='cpQ3')
-argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient for the distribution.')
-argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0, 1.0],  help='Values of the Wilson coefficient to show FI for.')
+argParser.add_argument('--WC',                 action='store',      default='cWWW')
+argParser.add_argument('--WCval',              action='store',      nargs = 1,             type=float,    default=1.0,  help='Value of the Wilson coefficient for the distribution.')
 argParser.add_argument('--era',            action='store', type=str, default="Autumn18")
-argParser.add_argument('--sample',        action='store', type=str, default="ttG_noFullyHad_fast")
+argParser.add_argument('--sample',        action='store', type=str, default="WGToLNu_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
 args = argParser.parse_args()
 
@@ -60,8 +59,10 @@ sample = getattr( samples, args.sample )
 
 lumi_scale = 137
 
-sample.weight = lambda event, sample: lumi_scale*event.weight 
+#lumi_weight = lambda event, sample: lumi_scale*event.weight 
 
+def lumi_weight( event, sample):
+    return 1.# lumi_scale*event.weight
 
 if args.small:
     sample.reduceFiles( to = 1 )
@@ -73,50 +74,35 @@ w.set_order(2)
 # define which Wilson coefficients to plot
 FIs = []
 
-params =  [ {'legendText':'SM',  'color':ROOT.kBlue, 'WC':{}} ]
-params += [ {'legendText':'%s %3.2f'%(args.WC, wc), 'color':ROOT.kOrange+i_wc,  'WC':{args.WC:wc} } for i_wc, wc in enumerate(args.WCval)]
+param =  {'legendText':'%s %2.1f'%(args.WC, args.WCval), 'WC':{args.WC:args.WCval} } 
 
-for i_param, param in enumerate(params):
-    param['sample'] = sample
-    param['style']  = styles.lineStyle( param['color'] )
+# selection
+selectionString = cutInterpreter.cutString(args.selection)
 
-stack = Stack(*[ [ param['sample'] ] for param in params ] )
-weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
-FIs.append( ( ROOT.kGray+1, "WC@SM",   w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0})) )
-for i_WCval, WCval in enumerate(args.WCval_FI):
-    FIs.append( ( ROOT.kGray+i_WCval,   "WC@WC=%3.2f"%WCval, w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:WCval})) )
+# get quantiles of log10(FI)
+h_FI = sample.get1DHistoFromDraw("TMath::Log10(%s)" %w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0}), binning = [300,-20,10], selectionString=selectionString)
+for i_bin in range(1, h_FI.GetNbinsX()+1):
+    h_FI.SetBinContent( i_bin, 10**h_FI.GetBinLowEdge(i_bin)*h_FI.GetBinContent(i_bin) )
+quantiles = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+prob  =   array.array('d', quantiles)
+q     =   array.array('d', [0]*len(quantiles) )
+h_FI.GetQuantiles(len(q),q, prob)
 
-import re
-# make stack and construct weights
-def coeff_getter( coeff):
-    def getter_( event, sample):
-        #print "Filling with", coeff, event.p_C[coeff]
-        return event.p_C[coeff]
-    return getter_
+colors = [ ROOT.kViolet-9, ROOT.kViolet-6, ROOT.kViolet-4, ROOT.kViolet-3 , ROOT.kViolet-2, ROOT.kViolet]
 
-def add_fisher_plot( plot, fisher_string, color, legendText):
-    # the coefficients we need
-    required_coefficients = map( lambda s: int(s.replace('[','').replace(']','')), list(set(re.findall(r'\[[0-9][0-9]*\]', fisher_string ) )) )
-    # copy the plot
-    fisher_plot = copy.deepcopy( plot )
-    # modify weights etc
-    fisher_plot.name+="_fisher_coeffs"
-    fisher_plot.weight = [ [ coeff_getter(coeff) ] for coeff in required_coefficients ]
-    fisher_plot.stack  = Stack( *[[sample] for coeff in required_coefficients] )
-    # for computing the FI
-    fisher_plot.coefficients = required_coefficients
-    fisher_plot.formula      = re.sub(r'p_C\[([0-9][0-9]*)\]', r'{lambda_\1}', fisher_string)
-    # pass through information for plotting
-    fisher_plot.color        = color
-    fisher_plot.legendText   = legendText
-    # add the fisher_plot to the original plot so we know which is which
-    if hasattr( plot, "fisher_plots"):
-        plot.fisher_plots.append( fisher_plot )
-    else:
-        plot.fisher_plots = [fisher_plot]
-    return fisher_plot
+var = w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:args.WCval})
 
-            
+params = []
+for i_th, th in enumerate( q[:-1] ):
+    params.append( { 'legendText':'%2.1f<=log_{10}(I_{F})<%2.1f'%(q[i_th], q[i_th+1]), 'selection':"%f<={var}&&{var}<%f"%(q[i_th], q[i_th+1]) , 'style':styles.fillStyle(colors[i_th+1])})
+
+stack = Stack([ copy.deepcopy(sample) for param in params ] )
+for i_s_, s_ in enumerate(stack[0]):
+    s_.setSelectionString( params[i_s_]['selection'].format(var= "TMath::Log10(%s)"%var) )
+    s_.name+='_%i'%i_s_
+    s_.weight = lumi_weight
+weight = [ [ w.get_weight_func(**{args.WC:args.WCval}) for param in params ] ]
+
 # Read variables and sequences
 sequence       = []
 
@@ -139,48 +125,6 @@ read_variables = [
 ]
 
 read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F'] #'reweightTrigger/F']
-# define 3l selections
-
-#MVA
-##from Analysis.TMVA.Reader    import Reader
-#import TMB.MVA.configs.ttG as mva_config 
-#
-#sequence.extend( mva_config.sequence )
-#read_variables.extend( mva_config.read_variables )
-
-def discriminator_getter(name):
-    def _disc_getter( event, sample ):
-        return getattr( event, name )
-    return _disc_getter
-
-mu_string  = lepString('mu','VL')
-ele_string = lepString('ele','VL')
-def getLeptonSelection():
-    return "Sum$({mu_string})+Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
-
-# Getter functor for lepton quantities
-def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
-    if functor is not None:
-        if abs_pdg == 13:
-            def func_( event, sample ):
-                if debug:
-                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
-                    print functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-                return functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-        else:
-            def func_( event, sample ):
-                return functor(getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-    else:
-        if abs_pdg == 13:
-            def func_( event, sample ):
-                if debug:
-                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
-                    print getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-                return getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-        else:
-            def func_( event, sample ):
-                return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-    return func_
 
 yields     = {}
 allPlots   = {}
@@ -188,10 +132,9 @@ allPlots   = {}
 #yt_TWZ_filter.scale = lumi_scale * 1.07314
 
 # Use some defaults
-Plot.setDefaults(stack = stack, weight = weight, selectionString = cutInterpreter.cutString(args.selection))
+Plot.setDefaults(stack = stack, weight = weight, selectionString = selectionString)
 
 plots        = []
-fisher_plots = []
 
 plots.append(Plot(
   name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -205,6 +148,14 @@ plots.append(Plot(
     texX = 'M_{3} (GeV)', texY = 'Number of Events / 10 GeV',
     attribute = TreeVariable.fromString( "m3/F" ),
     binning=[30,0,300],
+    addOverFlowBin='upper',
+))
+
+plots.append(Plot(
+    name = 'log10FI',
+    texX = 'log_{10}(FI(%s=%2.1f))' % (args.WC, args.WCval), texY = 'Number of Events',
+    attribute = lambda event, sample: ROOT.TMath.Log10(w.get_fisherInformation_matrix([event.p_C[i] for i in range(event.np)], variables=[args.WC,args.WC], **{args.WC:args.WCval})[1][0][0]),
+    binning=[300,-20,10],
     addOverFlowBin='upper',
 ))
 
@@ -239,8 +190,6 @@ plots.append(Plot(
     binning=[15,0,300],
     addOverFlowBin='upper',
 ))
-for color, legendText, fisher_string in FIs:
-    fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
 plots.append(Plot(
     name = 'l1_pt',
@@ -249,8 +198,6 @@ plots.append(Plot(
     binning=[15,0,300],
     addOverFlowBin='upper',
 ))
-for color, legendText, fisher_string in FIs:
-    fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
 plots.append(Plot(
     name = 'l1_eta',
@@ -304,6 +251,9 @@ plots.append(Plot(
   binning=[600/30,0,600],
 ))
 
+for plot in plots:
+    plot.name = 'FI_binned_'+plot.name
+
 # Text on the plots
 def drawObjects( hasData = False ):
     tex = ROOT.TLatex()
@@ -312,7 +262,7 @@ def drawObjects( hasData = False ):
     tex.SetTextAlign(11) # align right
     lines = [
       (0.15, 0.95, 'CMS Preliminary' if hasData else "CMS Simulation"),
-      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
+      (0.45, 0.95, 'L=%3.1f {fb}^{-1} (13 TeV)' % lumi_scale),
     ]
     return [tex.DrawLatex(*l) for l in lines]
 
@@ -323,10 +273,9 @@ def drawPlots(plots):
     for plot in plots:
       if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
 
-      len_FI = len(plot.fisher_plots) if hasattr(plot, "fisher_plots") else 0
       plotting.draw(plot,
         plot_directory = plot_directory_,
-        ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)} ,
+        ratio = None, #{'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)} ,
         logX = False, logY = log, sorting = False,
         yRange = (0.03, "auto") if log else "auto",
         scaling = {},
@@ -335,42 +284,13 @@ def drawPlots(plots):
         copyIndexPHP = True,
       )
 
-plotting.fill(plots+fisher_plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
+plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 for plot in plots:
-    for i_h, hl in enumerate(plot.histos):
+    for i_h, h in enumerate(plot.histos[0]):
         # dress up
-        hl[0].legendText = params[i_h]['legendText']
-        hl[0].style = params[i_h]['style']
-
-    # calculate & add FI histo
-    if hasattr(plot, "fisher_plots" ):
-        for fisher_plot in plot.fisher_plots:
-
-            # make empty histo
-            FI = plot.histos[0][0].Clone()
-            FI.Reset()
-
-            # calculate FI in each bin
-            for i_bin in range(1, FI.GetNbinsX()+1):
-                yields = {'lambda_%i'%coeff : fisher_plot.histos[i_coeff][0].GetBinContent(i_bin) for i_coeff, coeff in enumerate(fisher_plot.coefficients)}
-                try:
-                    FI.SetBinContent( i_bin,  eval(fisher_plot.formula.format(**yields)) )
-                except ZeroDivisionError:
-                    pass
-
-            # dress up
-            FI.legendText = fisher_plot.legendText
-            FI.style = styles.lineStyle( fisher_plot.color )
-
-            # scale the FI & indicate log(I) in the plot
-            if FI.Integral()>0:
-                FI.legendText += "(%3.2f)" % log(FI.Integral(),10)
-                FI.Scale(plot.histos[0][0].Integral()/FI.Integral())
-
-            # add the FI histos back to the plot and fake the stack so that the draw command does not get confused
-            plot.histos.append( [FI] )
-            stack.append( [sample] )
+        h.legendText = params[i_h]['legendText']
+        h.style = params[i_h]['style']
 
 drawPlots(plots)
 

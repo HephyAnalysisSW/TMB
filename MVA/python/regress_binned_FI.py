@@ -73,7 +73,7 @@ df = df.dropna() # removes all Events with nan -> amounts to M3 cut
 dataset = df.values
 X = dataset[:,0:n_var_input]
 #Y = np.log(dataset[:,n_var_input])
-log_FI = np.log(dataset[:,n_var_input])
+log_FI = np.log10(dataset[:,n_var_input])
 
 #Y[Y < -15] = -15
 #quantiles = [.2, .5, .8, .9, .95]
