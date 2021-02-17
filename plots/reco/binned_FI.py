@@ -39,7 +39,7 @@ argParser.add_argument('--small',                             action='store_true
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--plot_directory', action='store', default='FI-test')
 argParser.add_argument('--WC',                 action='store',      default='cWWW')
-argParser.add_argument('--WCval',              action='store',      nargs = 1,             type=float,    default=1.0,  help='Value of the Wilson coefficient for the distribution.')
+argParser.add_argument('--WCval',              action='store',   type=float,    default=1.0,  help='Value of the Wilson coefficient for the distribution.')
 argParser.add_argument('--era',            action='store', type=str, default="Autumn18")
 argParser.add_argument('--sample',        action='store', type=str, default="WGToLNu_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
@@ -51,7 +51,6 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-if args.small:                        args.plot_directory += "_small"
 
 import TMB.Samples.pp_tWZ as samples
 
@@ -66,6 +65,7 @@ def lumi_weight( event, sample):
 
 if args.small:
     sample.reduceFiles( to = 1 )
+    args.plot_directory += "_small"
 
 # WeightInfo
 w = WeightInfo(sample.reweight_pkl)
@@ -80,7 +80,7 @@ param =  {'legendText':'%s %2.1f'%(args.WC, args.WCval), 'WC':{args.WC:args.WCva
 selectionString = cutInterpreter.cutString(args.selection)
 
 # get quantiles of log10(FI)
-h_FI = sample.get1DHistoFromDraw("TMath::Log10(%s)" %w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0}), binning = [300,-20,10], selectionString=selectionString)
+h_FI = sample.get1DHistoFromDraw("TMath::Log10(%s)" %w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0}), binning = [500,-30,20], selectionString=selectionString)
 for i_bin in range(1, h_FI.GetNbinsX()+1):
     h_FI.SetBinContent( i_bin, 10**h_FI.GetBinLowEdge(i_bin)*h_FI.GetBinContent(i_bin) )
 quantiles = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -92,9 +92,10 @@ colors = [ ROOT.kViolet-9, ROOT.kViolet-6, ROOT.kViolet-4, ROOT.kViolet-3 , ROOT
 
 var = w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:args.WCval})
 
-params = []
-for i_th, th in enumerate( q[:-1] ):
-    params.append( { 'legendText':'%2.1f<=log_{10}(I_{F})<%2.1f'%(q[i_th], q[i_th+1]), 'selection':"%f<={var}&&{var}<%f"%(q[i_th], q[i_th+1]) , 'style':styles.fillStyle(colors[i_th+1])})
+params = [{ 'legendText':'log_{10}(I_{F})<%2.1f'%(q[1]), 'selection':"{var}<%f"%(q[1]) , 'style':styles.fillStyle(colors[0])}]
+for i_th, th in enumerate( q[1:-2] ):
+    params.append( { 'legendText':'%2.1f<=log_{10}(I_{F})<%2.1f'%(q[i_th+1], q[i_th+2]), 'selection':"%f<={var}&&{var}<%f"%(q[i_th+1], q[i_th+2]) , 'style':styles.fillStyle(colors[i_th+1])})
+params.append( { 'legendText':'%2.1f<=log_{10}(I_{F})'%(q[-2]), 'selection':"%f<={var}"%(q[-2]) , 'style':styles.fillStyle(colors[-1])})
 
 stack = Stack([ copy.deepcopy(sample) for param in params ] )
 for i_s_, s_ in enumerate(stack[0]):
@@ -106,6 +107,24 @@ weight = [ [ w.get_weight_func(**{args.WC:args.WCval}) for param in params ] ]
 # Read variables and sequences
 sequence       = []
 
+if args.selection.count('dilep'):
+    def make_dilep_angles(event, sample):
+
+        event.photon_Z1_deltaR   = float('nan')
+        event.photon_Z1_deltaPhi = float('nan')
+        event.jet0_Z1_deltaR = float('nan')
+        event.jet1_Z1_deltaR = float('nan')
+
+        if event.Z1_pt>=0:
+            event.photon_Z1_deltaR   = deltaR({'eta':event.photon_eta, 'phi':event.photon_phi}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
+            event.photon_Z1_deltaPhi = deltaPhi(event.photon_phi, event.Z1_phi)
+            if event.nJetGood>=1:
+                event.jet0_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[0], 'phi':event.JetGood_phi[0]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
+            if event.nJetGood>=1:
+                event.jet1_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
+
+    sequence.append( make_dilep_angles )
+
 read_variables = [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
@@ -114,7 +133,7 @@ read_variables = [
     "JetGood[pt/F,eta/F,phi/F]",
     "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I]",
 #    "Z1_l1_index/I", "Z1_l2_index/I", "nonZ1_l1_index/I", "nonZ1_l2_index/I", 
-#    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
+    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
     "np/I", "p[C/F]",
@@ -251,6 +270,59 @@ plots.append(Plot(
   binning=[600/30,0,600],
 ))
 
+if args.selection.count('dilep'):
+
+    plots.append(Plot(
+        name = "Z1_pt",
+        texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        attribute = TreeVariable.fromString( "Z1_pt/F" ),
+        binning=[20,0,400],
+        addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+        name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
+        attribute = TreeVariable.fromString( "Z1_pt/F" ),
+        binning=[16,0,800],
+        addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+        texX = '#Delta#phi(Z_{1}(ll))', texY = 'Number of Events',
+        attribute = TreeVariable.fromString( "Z1_lldPhi/F" ),
+        binning=[10,0,pi],
+    ))
+
+    plots.append(Plot(
+        texX = '#Delta R(Z_{1}(ll))', texY = 'Number of Events',
+        attribute = TreeVariable.fromString( "Z1_lldR/F" ),
+        binning=[10,0,6],
+    ))
+
+    plots.append(Plot(name="photon_Z1_deltaR",
+        texX = '#Delta R(Z_{1}, #gamma)', texY = 'Number of Events',
+        attribute = lambda event, sample: event.photon_Z1_deltaR,
+        binning=[10,0,6],
+    ))
+
+    plots.append(Plot(name="photon_Z1_deltaPhi",
+        texX = '#Delta #phi(Z_{1}, #gamma)', texY = 'Number of Events',
+        attribute = lambda event, sample: event.photon_Z1_deltaPhi,
+        binning=[10,0,pi],
+    ))
+
+    plots.append(Plot(name="jet0_Z1_deltaR",
+        texX = '#Delta R(Z_{1}, j_{0})', texY = 'Number of Events',
+        attribute = lambda event, sample: event.jet0_Z1_deltaR,
+        binning=[10,0,6],
+    ))
+
+    plots.append(Plot(name="jet1_Z1_deltaR",
+        texX = '#Delta R(Z_{1}, j_{1})', texY = 'Number of Events',
+        attribute = lambda event, sample: event.jet1_Z1_deltaR,
+        binning=[10,0,6],
+    ))
+
 for plot in plots:
     plot.name = 'FI_binned_'+plot.name
 
@@ -262,7 +334,7 @@ def drawObjects( hasData = False ):
     tex.SetTextAlign(11) # align right
     lines = [
       (0.15, 0.95, 'CMS Preliminary' if hasData else "CMS Simulation"),
-      (0.45, 0.95, 'L=%3.1f {fb}^{-1} (13 TeV)' % lumi_scale),
+      (0.45, 0.95, 'L=%3.1f fb^{-1} (13 TeV)' % lumi_scale),
     ]
     return [tex.DrawLatex(*l) for l in lines]
 

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python regress_binned_FI.py --config ttG --FI_branch FI_ctZ_SM --trainingfile /eos/vbc/user/robert.schoefbeck/TMB/MVA-training/ttG_noFullyHad_fast/singlelep-photon/ttG_noFullyHad_fast.root
+python regress_binned_FI.py --name train_ctZ_BSM_in_ttG_noFullyHad --config ttG_WG --FI_branch FI_ctZ_BSM --trainingfile ttG_noFullyHad_fast/singlelep-photon/ttG_noFullyHad_fast.root

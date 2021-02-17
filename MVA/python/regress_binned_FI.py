@@ -7,11 +7,13 @@ c1.Print('/tmp/delete.png')
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--trainingfile',       action='store', type=str,   default='input.root')
-argParser.add_argument('--FI_branch',          action='store', type=str,   default='FI_ctZ_SM')
-argParser.add_argument('--config',             action='store', type=str,   default='ttG')
+argParser.add_argument('--trainingfile',       action='store', type=str,   default='input.root', help="Input files for training")
+argParser.add_argument('--FI_branch',          action='store', type=str,   default='FI_ctZ_BSM', help="Regression target")
+argParser.add_argument('--config',             action='store', type=str,   default='ttG_WG', help="Name of the config file")
+argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
+argParser.add_argument('--variable_set',       action='store', type=str,   default='all_mva_variables', help="List of variables for training")
 argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
-#argParser.add_argument('--small',              action='store_true')
+argParser.add_argument('--truth_input',        action='store_true', help="Include truth in training input")
 
 args = argParser.parse_args()
 
@@ -40,8 +42,8 @@ save_path = '.'
 import TMB.Tools.user as user 
 
 # directories
-plot_directory   = os.path.join( user. plot_directory, 'MVA', args.config, args.FI_branch )
-output_directory = os.path.join( args.output_directory, args.config, args.FI_branch) 
+plot_directory   = os.path.join( user. plot_directory, 'MVA', args.name, args.config, args.FI_branch )
+output_directory = os.path.join( args.output_directory, args.name, args.config, args.FI_branch) 
 
 # input samples
 import TMB.Samples.pp_TTGammaEFT as samples
@@ -50,18 +52,14 @@ sample = samples.ttG_noFullyHad_fast
 # fix random seed for reproducibility
 np.random.seed(1)
 
-mva_variables = config.mva_variables.keys()
-
-#mva_variables = [
-#    'mva_photonJetdR',
-#    'mva_photonLepdR',
-#    'mva_photon_eta',
-#    'mva_photon_pt']
+# get the training variables
+mva_variables = getattr(config, args.variable_set).keys()
 
 mva_variables.sort()
 n_var_input   = len(mva_variables)
 
-upfile = uproot.open(args.trainingfile)
+upfile = uproot.open(os.path.join("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/", args.config, args.trainingfile))
+#upfile = uproot.open("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/ttG_noFullyHad_fast/singlelep-photon/ttG_noFullyHad_fast.root")
 df     = upfile["Events"].pandas.df(branches = mva_variables+[args.FI_branch])
 
 #branches = upfile['Events'].arrays(namedecode='utf-8')
@@ -85,8 +83,11 @@ q=np.concatenate(([-np.inf], q, [np.inf]))
 Y = np.digitize(log_FI, q)
 
 ## train with truth!! FIXME!!
-#X = np.concatenate( (X, Y.reshape(len(Y),1)), axis=1)
-#n_var_input+=1
+
+if args.truth_input:
+    logger.waring("Training with truth input!")
+    X = np.concatenate( (X, Y.reshape(len(Y),1)), axis=1)
+    n_var_input+=1
 
 # split data into train and test, test_size = 0.2 is quite standard for this
 from sklearn.model_selection import train_test_split

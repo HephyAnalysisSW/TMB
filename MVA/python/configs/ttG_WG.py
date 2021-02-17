@@ -47,7 +47,10 @@ sequence = []
 
 # Fisher informations
 FIs = {
+    'ctZ_BSM' : { 'var': 'ctZ', 'point':{'ctZ':1}},
+    'cWWW_BSM' : { 'var': 'cWWW', 'point':{'cWWW':1}},
     'ctZ_SM' : { 'var': 'ctZ', 'point':{'ctZ':0}},
+    'cWWW_SM' : { 'var': 'cWWW', 'point':{'cWWW':0}},
 }
 
 # initialize weight stuff
@@ -59,11 +62,18 @@ def init( event, sample ):
         sample.weightInfo = WeightInfo( sample.reweight_pkl )
         sample.weightInfo.set_order(2)
         for FI_name, FI in FIs.iteritems():
-            FI['string'] = sample.weightInfo.get_fisher_weight_string( FI['var'], FI['var'], **FI['point'] )
-            FI['func'] = lambda p_C: sample.weightInfo.get_fisherInformation_matrix( p_C, variables = [FI['var']], **FI['point'])
-            #sample.chain.SetNotify( FI['TTreeFormula'] )
-            logger.info( "Compute %s = FI(%s) at %r. The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
-
+            if FI['var'] in sample.weightInfo.variables:
+                FI['string'] = sample.weightInfo.get_fisher_weight_string( FI['var'], FI['var'], **FI['point'] )
+                # see https://stackoverflow.com/questions/11723217/python-lambda-doesnt-remember-argument-in-for-loop
+                FI['func'] = lambda p_C, FI=FI: sample.weightInfo.get_fisherInformation_matrix( p_C, variables = [FI['var']], **FI['point'])
+                #sample.chain.SetNotify( FI['TTreeFormula'] )
+                logger.info( "Compute FI_%s = FI(%s) at %r. The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
+            else:
+                FI['string'] = "(0)" 
+                FI['func'] = lambda p_C: (None, [[0]]) 
+                #sample.chain.SetNotify( FI['TTreeFormula'] )
+                logger.info( "WC not found. Set  FI_%s = 0 for WC %s (point is %r). The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
+                
 sequence.append( init )
 
 all_mva_variables = {
@@ -95,7 +105,7 @@ all_mva_variables = {
      "mva_photonLepdR"           :(lambda event, sample: event.photonLepdR),
                 }
 
-# Using all variables
-mva_variables_ = all_mva_variables.keys()
-
-mva_variables = {key:value for key, value in all_mva_variables.iteritems() if key in mva_variables_}
+## Using all variables
+#mva_variables_ = all_mva_variables.keys()
+#
+#mva_variables = {key:value for key, value in all_mva_variables.iteritems() if key in mva_variables_}
