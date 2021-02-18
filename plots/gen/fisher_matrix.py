@@ -15,7 +15,7 @@ from RootTools.core.standard        import *
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import getCollection
 from TMB.Tools.WeightInfo           import WeightInfo
-from TMB.Tools.cutInterpreter       import cutInterpreter
+from TMB.Tools.genCutInterpreter       import genCutInterpreter
 from TMB.Tools.VV_angles            import VV_angles
 
 # Arguments
@@ -71,7 +71,7 @@ preselection = [
     #( "SMP-20-005-light",  "genPhoton_pt[0]>150&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
 ]
 
-selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
+selectionString  = "&&".join( [ c[1] for c in preselection] + ([genCutInterpreter.cutString(args.selection)] if args.selection is not None else []))
 subDirectory     =  '-'.join( [ c[0] for c in preselection] + ([args.selection] if args.selection is not None else []))
 if subDirectory  == '': 
     subDirectory = 'inc'
