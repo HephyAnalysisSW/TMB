@@ -3,7 +3,7 @@ from Analysis.Tools.WeightInfo import WeightInfo
 from Analysis.Tools.HyperPoly  import HyperPoly
 import ROOT
 
-import TMB.Tools.logger as _logger
+import Analysis.Tools.logger as _logger
 import RootTools.core.logger as _logger_rt
 logger    = _logger.get_logger(   'INFO', logFile = None)
 logger_rt = _logger_rt.get_logger('INFO', logFile = None)
@@ -17,7 +17,7 @@ hyperPoly  = HyperPoly( weightInfo.order )
 
 logger.info( "Coefficients: %i (%s), order: %i number of weights: %i", len(weightInfo.variables), ",".join(weightInfo.variables), weightInfo.order,  weightInfo.nid)
 
-max_n = 1
+max_n = 3
 
 def interpret_weight(weight_id):
     str_s = weight_id.split('_')
