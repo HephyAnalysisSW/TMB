@@ -33,7 +33,7 @@ logger_an = logger_an.get_logger("INFO", logFile = None )
 #logger_rt = logger_rt.get_logger("DEBUG", logFile = None )
 
 # get samples
-import TMB.Samples.pp_tWZ as samples
+import TMB.Samples.pp_tWZ_v6 as samples
 sample = getattr(samples, args.sample)
 
 subDir = args.config

@@ -40,7 +40,7 @@ read_variables = [\
                     "photon_eta/F",
                     "photon_phi/F",
                     "photonJetdR/F", "photonLepdR/F",
-                    "np/I", "p[C/F]",
+                    "np/I", VectorTreeVariable.fromString("p[C/F]", nMax=200),
                     ]
 # sequence 
 sequence = []
