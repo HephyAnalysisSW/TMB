@@ -7,12 +7,12 @@ c1.Print('/tmp/delete.png')
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--trainingfile',       action='store', type=str,   default='input.root', help="Input files for training")
+argParser.add_argument('--trainingfiles',      action='store', type=str,   nargs = '*', default=['input.root'], help="Input files for training")
 argParser.add_argument('--FI_branch',          action='store', type=str,   default='FI_ctZ_BSM', help="Regression target")
 argParser.add_argument('--config',             action='store', type=str,   default='ttG_WG', help="Name of the config file")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
-argParser.add_argument('--variable_set',       action='store', type=str,   default='all_mva_variables', help="List of variables for training")
-argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
+argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
+argParser.add_argument('--output_directory',   action='store', type=str,   default='/mnt/hephy/cms/robert.schoefbeck/TMB/models/')
 argParser.add_argument('--truth_input',        action='store_true', help="Include truth in training input")
 
 args = argParser.parse_args()
@@ -35,10 +35,6 @@ import pandas as pd
 #########################################################################################
 # variable definitions
 
-# model savepath:
-# for the plots
-save_path = '.'
-
 import TMB.Tools.user as user 
 
 # directories
@@ -52,15 +48,18 @@ sample = samples.ttG_noFullyHad_fast
 # fix random seed for reproducibility
 np.random.seed(1)
 
-# get the training variables
-mva_variables = getattr(config, args.variable_set).keys()
+# get the training variable names
+mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.variable_set) ]
 
-mva_variables.sort()
 n_var_input   = len(mva_variables)
 
-upfile = uproot.open(os.path.join("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/", args.config, args.trainingfile))
-#upfile = uproot.open("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/ttG_noFullyHad_fast/singlelep-photon/ttG_noFullyHad_fast.root")
-df     = upfile["Events"].pandas.df(branches = mva_variables+[args.FI_branch])
+df_file = {}
+for trainingfile in args.trainingfiles:
+    upfile = uproot.open(os.path.join("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/", args.config, trainingfile))
+    #upfile = uproot.open("/eos/vbc/user/robert.schoefbeck/TMB/MVA-training/ttG_noFullyHad_fast/singlelep-photon/ttG_noFullyHad_fast.root")
+    df_file[trainingfile]  = upfile["Events"].pandas.df(branches = mva_variables+[args.FI_branch])
+
+df = pd.concat([df_file[trainingfile] for trainingfile in args.trainingfiles])
 
 #branches = upfile['Events'].arrays(namedecode='utf-8')
 #basic    = (branches['mva_m3'] >= 0 ) 
@@ -72,12 +71,17 @@ dataset = df.values
 X = dataset[:,0:n_var_input]
 #Y = np.log(dataset[:,n_var_input])
 log_FI = np.log10(dataset[:,n_var_input])
+# cap negative infinity
+min_log_FI = -30
+
+log_FI[log_FI<min_log_FI] = min_log_FI
 
 #Y[Y < -15] = -15
 #quantiles = [.2, .5, .8, .9, .95]
 #quantiles = [.9, .95]
 quantiles = [.05, .10, .15, .20, .25, .30, .35, .40, .45, .50, .55, .60, .65, .70, .75, .80, .85, .90, .95]
-q=np.quantile(log_FI, quantiles)
+# compute quantiles for values above the minimum
+q=np.quantile(log_FI[log_FI>min_log_FI], quantiles)
 q=np.concatenate(([-np.inf], q, [np.inf]))
 
 Y = np.digitize(log_FI, q)
@@ -138,7 +142,9 @@ print('training finished')
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-model.save(os.path.join(output_directory, 'regression_model.h5'))
+output_file = os.path.join(output_directory, 'regression_model.h5')
+model.save(output_file)
+logger.info("Written model to: %s", output_file)
 
 #########################################################################################
 # Apply the model

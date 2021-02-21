@@ -81,7 +81,7 @@ all_mva_variables = {
 # global event properties     
      "mva_ht"                    :(lambda event, sample: sum( [event.JetGood_pt[i] for i in range(event.nJetGood)]) ),
      "mva_mT"                    :(lambda event, sample: sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))),
-     "mva_m3"                    :(lambda event, sample: event.m3),
+     "mva_m3"                    :(lambda event, sample: event.m3 if event.nJetGood >=3 else 0),
      "mva_met_pt"                :(lambda event, sample: event.met_pt),
      "mva_nJetGood"              :(lambda event, sample: event.nJetGood),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
@@ -106,6 +106,6 @@ all_mva_variables = {
                 }
 
 ## Using all variables
-#mva_variables_ = all_mva_variables.keys()
-#
-#mva_variables = {key:value for key, value in all_mva_variables.iteritems() if key in mva_variables_}
+mva_variables_ = all_mva_variables.keys()
+mva_variables_.sort()
+mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
