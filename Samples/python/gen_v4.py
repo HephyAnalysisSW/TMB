@@ -118,6 +118,11 @@ ttg_noFullyHad.reweight_pkl = os.path.join(gridpack_directory, "v4", "top_boson_
 ttg_noFullyHad.xsec    = 1.947
 ttg_noFullyHad.nEvents = 10000000
 
+ttG_noFullyHad_debug = FWLiteSample.fromFiles("ttg_noFullyHad_test", files = ["root://cms-xrd-global.cern.ch//store/user/schoef/ttG_noFullyHad-v5/ttG_noFullyHad-v5/210120_224519/0001/reco_FastSim_LO_0j_102X_CP5_FastSim_1255.root"])
+ttG_noFullyHad_debug.reweight_pkl = os.path.join(gridpack_directory, "v5", "top_boson_reweight_card.pkl")
+ttG_noFullyHad_debug.xsec    = 1.947
+ttG_noFullyHad_debug.nEvents = 10000000
+
 ttW01j = FWLiteSample.fromDAS("ttW01j", "/ttW01j-v4/schoef-ttW01j-v4-b005ba525445f45dfb6340de320c29c1/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 ttW01j.reweight_pkl = os.path.join(gridpack_directory, "v4", "top_boson_v1_reweight_card.pkl")
 ttW01j.xsec    = 1.052
