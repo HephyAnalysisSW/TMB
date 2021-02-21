@@ -17,7 +17,7 @@ from RootTools.core.standard        import *
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
 from TMB.Tools.WeightInfo           import WeightInfo
-from TMB.Tools.cutInterpreter       import cutInterpreter
+from TMB.Tools.genCutInterpreter       import genCutInterpreter
 from TMB.Samples.color              import color
 # Arguments
 import argparse
@@ -54,7 +54,7 @@ for i_w, w in enumerate(ws):
 fisher_plots  = [ samples[i_w].get1DHistoFromDraw(
                   "TMath::Log10("+w.get_fisher_weight_string(args.WC, args.WC, **{args.WC:args.WCval})+")", 
                   [270, -25,2], 
-                  selectionString = cutInterpreter.cutString(args.selection) if args.selection is not None else "(1)", 
+                  selectionString = genCutInterpreter.cutString(args.selection) if args.selection is not None else "(1)", 
                   weightString = "137*lumiweight1fb" 
                 ) for i_w, w in enumerate(ws) ] 
 

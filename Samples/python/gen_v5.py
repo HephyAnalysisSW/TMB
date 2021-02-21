@@ -10,7 +10,7 @@ from RootTools.core.standard import *
 from TMB.Tools.user import cache_directory, gridpack_directory 
 
 # sqlite3 sample cache file
-dbFile = os.path.join( cache_directory, 'sample_cache', 'gen.db')
+dbFile = os.path.join( cache_directory, 'sample_cache', 'gen_v5.db')
 overwrite = False
 
 # Logging
@@ -38,10 +38,10 @@ if __name__ == "__main__":
 #WW.xsec         = 1.751 
 #WW.nEvents      = 5118391
 #
-#WZ  = FWLiteSample.fromDAS("WZ", "/WZ-v4/schoef-WZ-v4-093f53fdc754836a25887f03d0613010/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
-#WZ.reweight_pkl = os.path.join(gridpack_directory, "v4", "boson_v1_reweight_card.pkl")
-#WZ.xsec         = 1.751 
-#WZ.nEvents      = 5209260
+WZTo3L1Nu  = FWLiteSample.fromDAS("WZTo3L1Nu", "/WZTo3L1Nu-v5/schoef-WZTo3L1Nu-v5-151ec2871e2ed107def2a3aa630d2b24/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+WZTo3L1Nu.reweight_pkl = os.path.join(gridpack_directory, "v5", "boson_reweight_card.pkl")
+WZTo3L1Nu.xsec         = 1.729e+00 
+WZTo3L1Nu.nEvents      = 1547385.0
 #
 #ZZ  = FWLiteSample.fromDAS("ZZ", "/ZZ-v4/schoef-ZZ-v4-f26891a5e446d02810e35e2cfeda4b23/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
 #ZZ.reweight_pkl = os.path.join(gridpack_directory, "v4", "boson_v1_reweight_card.pkl")
@@ -78,10 +78,10 @@ if __name__ == "__main__":
 #WAjj.xsec       = 3.872e-01
 #WAjj.nEvents    = 10000000
 #
-#WA = FWLiteSample.fromDAS("WA", "/WA-v4/schoef-WA-v4-16c18f0394075df6fbe9587e06c41a1e/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
-#WA.reweight_pkl = os.path.join(gridpack_directory, "v4", "boson_v1_reweight_card.pkl")
-#WA.xsec     = 4.584e+01
-#WA.nEvents  = 3738992
+WGToLNu = FWLiteSample.fromDAS("WGToLNu", "/WGToLNu/schoef-WGToLNu-888b7a86c2f3c15fead55bb8986384d5/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "v5", "boson_reweight_card.pkl")
+WGToLNu.xsec     = 5.453e+01
+WGToLNu.nEvents  = 1515120
 #
 #WA_LO = FWLiteSample.fromDAS("WA_LO", "/WA_LO-v4/schoef-WA_LO-v4-7615e614e93751a66f1db38b71b2c3c8/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
 #WA_LO.reweight_pkl = os.path.join(gridpack_directory, "v4", "boson_v1_reweight_card.pkl")
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 #ZZjj.xsec    = 1.435e-03
 #ZZjj.nEvents = 10000000
 
-ttG_noFullyHad = FWLiteSample.fromDAS("ttG_noFullyHad", "/ttG_noFullyHad-v5/schoef-ttG_noFullyHad-v5-fa75f6d0d64d97494f28d49b68b6ba8c/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
+ttG_noFullyHad = FWLiteSample.fromDAS("ttG_noFullyHad", "/ttG_noFullyHad-v5/schoef-ttG_noFullyHad-v5-fa75f6d0d64d97494f28d49b68b6ba8c/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 ttG_noFullyHad.reweight_pkl = os.path.join(gridpack_directory, "v5", "top_boson_reweight_card.pkl")
 ttG_noFullyHad.xsec    = 1.947
 ttG_noFullyHad.nEvents = 3972000
@@ -123,10 +123,10 @@ ttG_noFullyHad.nEvents = 3972000
 #ttW01j.xsec    = 1.052
 #ttW01j.nEvents = 3734478
 #
-#ttZ01j = FWLiteSample.fromDAS("ttZ01j", "/ttZ01j-v4/schoef-ttZ01j-v4-f6f4be518188a05de11e29a5ae3c75a0/USER", "phys03", dbFile = dbFile, overwrite=overwrite)
-#ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "v4", "top_boson_v1_reweight_card.pkl")
-#ttZ01j.xsec    = 1.369e-01
-#ttZ01j.nEvents = 3345859
+ttZ01j = FWLiteSample.fromDAS("ttZ01j", "/ttZ01j-v5/schoef-ttZ01j-v5-5941b9a9132a067bf58859850614a6bf/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "v5", "top_boson_reweight_card.pkl")
+ttZ01j.xsec    = 1.369e-01
+ttZ01j.nEvents = 3345859
 #
 #WH = FWLiteSample.fromDAS("WH", "/WH-v1/chatterj-WH-v1-13982263318d64186461fb17c44d9cef/USER", "phys03", dbFile = dbFile, overwrite=overwrite)                                                              
 #WH.reweight_pkl = os.path.join(gridpack_directory, "v4", "WH_LeptonicW_LO_reweight_card.pkl")

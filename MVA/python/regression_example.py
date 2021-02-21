@@ -1,3 +1,30 @@
+import ROOT
+import Analysis.Tools.syncer as syncer
+c1 = ROOT.TCanvas() # do this to avoid version conflict in png.h with keras import ...
+c1.Draw()
+c1.Print('/tmp/delete.png')
+
+import argparse
+argParser = argparse.ArgumentParser(description = "Argument parser")
+#argParser.add_argument('--sample',             action='store', type=str,   default='ttG_noFullyHad_fast')
+argParser.add_argument('--config',             action='store', type=str,   default='ttG')
+#argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
+#argParser.add_argument('--small',              action='store_true')
+
+args = argParser.parse_args()
+
+#Logger
+import TMB.Tools.logger as logger
+logger = logger.get_logger("INFO", logFile = None )
+
+filename = "/eos/vbc/user/robert.schoefbeck/TMB/ttG_noFullyHad_fast.root"
+
+# MVA configuration
+import TMB.MVA.configs  as configs 
+
+#config
+config = getattr( configs, args.config)
+
 import uproot
 import numpy as np
 import pandas as pd
@@ -5,50 +32,6 @@ import pandas as pd
 
 #########################################################################################
 # variable definitions
-variables = ['mva_Z1_eta',
-            'mva_jet2_btagDeepB',
-            'mva_Z1_pt',
-            'mva_jet0_btagDeepB',
-            'mva_jet1_nonZl1_deltaR',
-            'mva_m3l',
-            'mva_lnonZ1_eta',
-            'mva_Z1_cosThetaStar',
-            'mva_jet2_pt',
-            'mva_jet1_Z1_deltaR',
-            'mva_ht',
-            'mva_met_pt',
-            'mva_maxAbsEta_of_pt30jets',
-            'mva_jet0_Z1_deltaR',
-            'mva_lnonZ1_pt',
-            'mva_jet2_Z1_deltaR',
-            'mva_jet0_eta',
-            'mva_nJetGood',
-            'mva_jet0_nonZl1_deltaR',
-            'mva_nBTag',
-            'mva_jet1_pt',
-            'mva_nonZ1_l1_Z1_deltaPhi',
-            'mva_jet1_eta',
-            'mva_jet2_eta',
-            'mva_jet1_btagDeepB',
-            'mva_bJet_Z1_deltaR',
-            'mva_nonZ1_l1_Z1_deltaR',
-            'mva_bJet_non_Z1l1_deltaR',
-            'mva_jet0_pt',
-            'mva_W_pt',
-            'mva_l1_mvaTOP',
-            'mva_l2_mvaTOP',
-            'mva_l3_mvaTOP']
-
-treename = 'Events'
-filename = {}
-
-batch_size = 1024*4
-
-# key is used as name on the plot
-filename['TWZ'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/TWZ_NLO_DR.root'
-filename['TTZ'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/TTZ.root'
-filename['WZ']  = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/WZ.root'
-filename['NON'] = '/mnt/hephy/cms/robert.schoefbeck/ML/data/root_files_2/nonprompt_3l.root'
 
 # model savepath:
 model_path = '.'
@@ -56,75 +39,41 @@ model_path = '.'
 # for the plots
 save_path = '.'
 
-NDIM = len(variables)
 
-# Network layout:
-NL = [NDIM*5, NDIM*5, NDIM*5]
-#########################################################################################
-# define some function to be regressed:
-
-def to_regress(values): # some random function (the result is not random)
-    '''Values must be a list of a list'''
-    y_list = []
-    for val in values:
-        y = 0
-        for i, v in enumerate(val):
-            if i > 0:
-                y += v / i**2
-            else:
-                y += 1
-        y_list.append(y)
-    return y_list
-
-#########################################################################################
-# read data and preprocessing
+# input samples
+import TMB.Samples.pp_TTGammaEFT as samples
+sample = samples.ttG_noFullyHad_fast
 
 # fix random seed for reproducibility
-seed = 7
-np.random.seed(seed)
+np.random.seed(1)
 
-upfile = {}
-df = {}
+regression_target = "FI_ctZ_SM"
 
-# read data into dataframe
-key_list = list(filename.keys())
+#mva_variables = config.mva_variables.keys()
 
-for key in key_list: # root file to pandas dataframe
-    upfile[key] = uproot.open(filename[key]) 
-    df[key] = upfile[key][treename].pandas.df(branches=variables)
+mva_variables = [
+    #'mva_photonJetdR',
+    #'mva_photonLepdR',
+    #'mva_photon_eta',
+    'mva_photon_pt']
 
-# preprocessing
-NDIM = len(variables) # number of variables
-N_classes = len(filename) # number of classes
+mva_variables.sort()
+n_var_input   = len(mva_variables)
 
-class_digit = range(N_classes)
+upfile = uproot.open(filename)
+df     = upfile["Events"].pandas.df(branches = mva_variables+[regression_target])
 
-for key, digit in zip(key_list, class_digit): # add fun variable and values, this is pretty slow
-    print(key, 'of', key_list)
-    df[key]['fun'] = to_regress(df[key].values)
+#branches = upfile['Events'].arrays(namedecode='utf-8')
+#basic    = (branches['mva_m3'] >= 0 ) 
 
-
-# concatenate the dataframes
-df_all = pd.concat([df[key_list[0]], df[key_list[1]]])
-
-if len(filename) > 1:
-    for i in range(2, len(filename)):
-        df_all = pd.concat([df_all, df[key_list[i]]])
-
-# check for NaN in the dataframe, .root file might be slightly broken
-for key in key_list:
-    for var in variables:
-        if df[key][var].isnull().values.any() == True:
-            print(key,':', var, ' has some entries as nan:')
-            print(df[key][var].isnull().sum(), ' are nan')
-            print('nan Events will be removed')
-
-df_all = df_all.dropna() # removes all Events with nan
+df = df.dropna() # removes all Events with nan -> amounts to M3 cut
 
 # split dataset into Input and output data
-dataset = df_all.values
-X = dataset[:,0:NDIM]
-Y = dataset[:,NDIM]
+dataset = df.values
+X = dataset[:,0:n_var_input]
+#Y = np.log(dataset[:,n_var_input])
+Y = np.log(dataset[:,n_var_input])
+Y[Y < -15] = -15
 
 # split data into train and test, test_size = 0.2 is quite standard for this
 from sklearn.model_selection import train_test_split
@@ -140,9 +89,10 @@ from keras.layers import BatchNormalization
 from keras.utils import np_utils
 
 model = Sequential()
-model.add(BatchNormalization(input_shape=(NDIM, )))
+model.add(BatchNormalization(input_shape=(n_var_input, )))
 
-for dim in NL:
+layers = [n_var_input+20]
+for dim in layers:
     model.add(Dense(dim, activation='sigmoid'))
 
 model.add(Dense(1))
@@ -152,10 +102,11 @@ model.summary()
 
 # define callback for early stopping
 import tensorflow as tf
-callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=1) # patience can be higher if a more accurate result is preferred
+callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10) # patience can be higher if a more accurate result is preferred
                                                                         # I would recommmend at least 3, otherwise it might cancel too early
 
 # train the model
+batch_size = 1024*4
 history = model.fit(X_train_val, 
                     Y_train_val, 
                     epochs=100, 
@@ -172,4 +123,10 @@ model.save(model_path + '_regression_model.h5')
 
 #########################################################################################
 # Apply the model
-print(model.predict(X_test[9:10]), Y_test[9:10])
+
+import array
+x,y = pickle.load(file('tmp.pkl'))
+c = ROOT.TCanvas()
+g = ROOT.TGraph(len(Y_test), Y_test, model.predict(X_test)) 
+g.Draw('ap')
+c.Print("/mnt/hephy/cms/robert.schoefbeck/www/TMB/MVA/scatter.png")
