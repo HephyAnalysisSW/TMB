@@ -8,8 +8,10 @@ import ROOT
 #import Analysis.Tools.syncer
 # RootTools
 from RootTools.core.standard import *
-# TopEFT
+
+# TMB
 from TMB.Tools.cutInterpreter    import cutInterpreter
+from TMB.Tools.helpers import getVarValue, getObjDict
 
 # MVA configuration
 import TMB.MVA.configs  as configs 
@@ -65,19 +67,34 @@ reader = sample.treeReader( \
     )
 reader.start()
 
+def fill_vector_collection( event, collection_name, collection_varnames, objects, maxN = 100):
+    setattr( event, "n"+collection_name, len(objects) )
+    for i_obj, obj in enumerate(objects[:maxN]):
+        for var in collection_varnames:
+            if var in obj.keys():
+                if type(obj[var]) == type("string"):
+                    obj[var] = int(ord(obj[var]))
+                if type(obj[var]) == type(True):
+                    obj[var] = int(obj[var])
+                getattr(event, collection_name+"_"+var)[i_obj] = obj[var]
+
 #filler
 def filler( event ):
 
     r = reader.event
 
-    # fill extra variables
-    #event.isTraining = isTraining
-    #event.isSignal   = isSignal
-    # write mva variables
+    # copy scalar variables
     for name, func in config.all_mva_variables.iteritems():
-#                setattr( event, name, func(reader.event) )
         setattr( event, name, func(reader.event, sample=None) )
 
+    # copy vector variables
+    for name, vector_var in config.mva_vector_variables.iteritems():
+        objs = [ getObjDict( reader.event, vector_var['name']+'_', vector_var['varnames'], i ) for i in range(int(getVarValue(reader.event, 'n'+vector_var['name']))) ] 
+        objs = filter( vector_var['selector'], objs ) 
+
+        fill_vector_collection( event, name, vector_var['varnames'], objs )
+
+    # fill FIs
     if hasattr(config, "FIs"):
         for FI_name, FI in config.FIs.iteritems():
             #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
@@ -85,16 +102,23 @@ def filler( event ):
 
 # Create a maker. Maker class will be compiled. 
 
+# scalar variables
 mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
+
+# vector variables, if any
+for name, vector_var in config.mva_vector_variables.iteritems():
+    #mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
+    mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
+# FIs
 if hasattr( config, "FIs"):
     FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
 else:
     FI_variables = [] 
 
+
 maker = TreeMaker(
     sequence  = [ filler ],
     variables = map(TreeVariable.fromString, 
-#          ["isTraining/I", "isSignal/I"] + 
           mva_variables+FI_variables,  
         ),
     treeName = "Events"
@@ -104,13 +128,6 @@ maker.start()
 logger.info( "Starting event loop" )
 counter=0
 while reader.run():
-
-    #for func in config.sequence:
-    #    func(reader.event)
-
-    ## determine whether training or test
-    #isTraining = self.samples[i_sample].training_test_list.pop(0)
-    #isSignal   = (i_sample == 0)
 
     maker.run()
     counter += 1

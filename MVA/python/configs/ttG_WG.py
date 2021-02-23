@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 
-jetVars          = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I', 'btagDeepB/F', 'btagDeepFlavB/F', 'btagCSVV2/F', 'area/F']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
@@ -47,10 +47,22 @@ sequence = []
 
 # Fisher informations
 FIs = {
-    'ctZ_BSM' : { 'var': 'ctZ', 'point':{'ctZ':1}},
+    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
+    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
+    'cpG_BSM'  : { 'var': 'cpG',  'point':{'cpG':1}},
+    'cpG_SM'   : { 'var': 'cpG',  'point':{'cpG':0}},
+    'ctG_BSM'  : { 'var': 'ctG',  'point':{'ctG':1}},
+    'ctG_SM'   : { 'var': 'ctG',  'point':{'ctG':0}},
+    'cpWB_BSM' : { 'var': 'cpWB', 'point':{'cpWB':1}},
+    'cpWB_SM'  : { 'var': 'cpWB', 'point':{'cpWB':0}},
+    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
+    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
+    'cpQ3_BSM' : { 'var': 'cpQ3', 'point':{'cpQ3':1}},
+    'cpQ3_SM'  : { 'var': 'cpQ3', 'point':{'cpQ3':0}},
+    'ctZ_BSM'  : { 'var': 'ctZ',  'point':{'ctZ':1}},
+    'ctZ_SM'   : { 'var': 'ctZ',  'point':{'ctZ':0}},
+    'cWWW_SM'  : { 'var': 'cWWW', 'point':{'cWWW':0}},
     'cWWW_BSM' : { 'var': 'cWWW', 'point':{'cWWW':1}},
-    'ctZ_SM' : { 'var': 'ctZ', 'point':{'ctZ':0}},
-    'cWWW_SM' : { 'var': 'cWWW', 'point':{'cWWW':0}},
 }
 
 # initialize weight stuff
@@ -104,6 +116,10 @@ all_mva_variables = {
      "mva_photonJetdR"           :(lambda event, sample: event.photonJetdR),
      "mva_photonLepdR"           :(lambda event, sample: event.photonLepdR),
                 }
+
+mva_vector_variables    =   {
+    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True)} 
+}
 
 ## Using all variables
 mva_variables_ = all_mva_variables.keys()
