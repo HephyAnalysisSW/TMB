@@ -37,7 +37,7 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?', )
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
-argParser.add_argument('--plot_directory', action='store', default='FI-test')
+argParser.add_argument('--plot_directory', action='store', default='FI-test-v6')
 argParser.add_argument('--WC',                 action='store',      default='cpQ3')
 argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient for the distribution.')
 argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0, 1.0],  help='Values of the Wilson coefficient to show FI for.')
@@ -54,7 +54,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 if args.small:                        args.plot_directory += "_small"
 
-import TMB.Samples.pp_tWZ as samples
+import TMB.Samples.pp_tWZ_v6 as samples
 
 sample = getattr( samples, args.sample )
 
@@ -131,7 +131,7 @@ read_variables = [
 #    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
-    "np/I", "p[C/F]",
+    "np/I", VectorTreeVariable.fromString("p[C/F]",nMax=500),
     "photon_pt/F",
     "photon_eta/F",
     "photon_phi/F",
@@ -319,7 +319,7 @@ def drawObjects( hasData = False ):
 # draw function for plots
 def drawPlots(plots):
   for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, args.plot_directory, args.sample, args.selection, ("log" if log else "lin") )
+    plot_directory_ = os.path.join(plot_directory, args.plot_directory, args.sample, args.WC, args.selection, ("log" if log else "lin") )
     for plot in plots:
       if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
 

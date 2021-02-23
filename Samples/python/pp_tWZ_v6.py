@@ -32,8 +32,8 @@ ttG_noFullyHad_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6
 #WZTojj2L_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 #WZToLNujj_fast      = Sample.fromDirectory("WZToLNujj_fast", directory = os.path.join( data_path,"WZToLNujj_fast") )
 #WZToLNujj_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
-#WGToLNu_fast        = Sample.fromDirectory("WGToLNu_fast", directory = os.path.join( data_path, "singlelep-photon", "WGToLNu_fast") )
-#WGToLNu_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+WGToLNu_fast        = Sample.fromDirectory("WGToLNu_fast", directory = os.path.join( data_path, "singlelep-photon", "WGToLNu_fast") )
+WGToLNu_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl"
 #ZGTo2L_fast         = Sample.fromDirectory("ZGTo2L_fast", directory = os.path.join( data_path, "dilep-photon", "ZGTo2L_fast") )
 #ZGTo2L_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 #WW_fast             = Sample.fromDirectory("WW_fast", directory = os.path.join( data_path,"WW_fast") )
@@ -46,7 +46,7 @@ allSamples = [
 #    WZTo3L1Nu_fast,
 #    WZTojj2L_fast,
 #    WZToLNujj_fast,
-#    WGToLNu_fast,
+    WGToLNu_fast,
 #    ZGTo2L_fast,
 #    WW_fast,
 
