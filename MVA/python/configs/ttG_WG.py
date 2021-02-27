@@ -118,10 +118,30 @@ all_mva_variables = {
                 }
 
 mva_vector_variables    =   {
-    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True)} 
+    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
 }
 
 ## Using all variables
 mva_variables_ = all_mva_variables.keys()
 mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
+
+import numpy as np
+import operator
+
+def predict_inputs( event, sample, jet_lstm = False):
+
+    flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
+
+    if jet_lstm:
+        jet_vector_var = mva_vector_variables["mva_JetGood"]
+        jets = [ getObjDict( event, jet_vector_var['name']+'_', jet_vector_var['varnames'], i ) for i in range(int(getattr(event,  'n'+jet_vector_var['name']))) ]
+        jets = filter( jet_vector_var['selector'], jets )
+        jets =  [ [ operator.itemgetter(varname)(jet) for varname in jetVarNames] for jet in jets[:jet_vector_var['maxN']] ]
+        # zero padding
+        jets += [ [0.]*len(jetVarNames)]*(max(0, jet_vector_var['maxN']-len(jets))) 
+        jets = np.array([jets])
+
+        return [ flat_variables, jets ]
+    else:
+        return   flat_variables
