@@ -18,8 +18,10 @@ import TMB.MVA.configs  as configs
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
+argParser.add_argument('--logLevel', action='store', nargs='?',  choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],   default='INFO', help="Log level for logging" )
 argParser.add_argument('--selection',          action='store', type=str,   default='singlelep-photon')
 argParser.add_argument('--sample',             action='store', type=str,   default='ttG_noFullyHad_fast')
+argParser.add_argument('--sample_file',        action='store', type=str,   default='$CMSSW_BASE/src/TMB/Samples/python/pp_tWZ_v6.py')
 argParser.add_argument('--config',             action='store', type=str,   default='ttG')
 argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
 argParser.add_argument('--small',              action='store_true')
@@ -28,14 +30,16 @@ args = argParser.parse_args()
 
 #Logger
 import TMB.Tools.logger as logger
-logger = logger.get_logger("INFO", logFile = None )
+logger = logger.get_logger(args.logLevel, logFile = None )
 import Analysis.Tools.logger as logger_an
-logger_an = logger_an.get_logger("INFO", logFile = None )
-#import RootTools.core.logger as logger_rt
-#logger_rt = logger_rt.get_logger("DEBUG", logFile = None )
+logger_an = logger_an.get_logger(args.logLevel, logFile = None )
+import RootTools.core.logger as logger_rt
+logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 
+#import TMB.Samples.pp_tWZ_v6 as samples
 # get samples
-import TMB.Samples.pp_tWZ_v6 as samples
+import imp
+samples = imp.load_source('samples', os.path.expandvars(args.sample_file))
 sample = getattr(samples, args.sample)
 
 subDir = args.config

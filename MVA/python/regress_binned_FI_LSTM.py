@@ -99,7 +99,9 @@ if args.add_weighted_quantiles:
     weighted_quantiles = np.cumsum(FI_weight) - 0.5 * FI_weight #https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
     weighted_quantiles /= np.sum(FI_weight)
 
-    q = np.concatenate( (q, np.interp(quantiles, weighted_quantiles, log_FI_sorted) ))
+    weighted_quantiles = np.interp(quantiles, weighted_quantiles, log_FI_sorted)
+
+    q = np.concatenate( (q[q<weighted_quantiles.min()], weighted_quantiles[1:] ))
 
 q = np.unique(q)
 q.sort()
@@ -108,9 +110,8 @@ logger.info("Using these quantiles: %r", list(q))
 
 # regress FI
 q = np.concatenate(([-np.inf], q, [np.inf]))
-Y = np.digitize(log_FI, q)
-
-Y = (Y-Y.min())/float(Y.max()-Y.min())
+Y_dig = np.digitize(log_FI, q)
+Y = (Y_dig-Y_dig.min())/float(Y_dig.max()-Y_dig.min())
 
 if args.truth_input:
     logger.waring("Training with truth input!")
@@ -147,7 +148,7 @@ if args.add_LSTM:
     if args.weighted_training:
         counts  = np.unique(Y,return_counts=True)[1]
         weights = float(counts.min())/counts
-        W       = np.array(map(weights.__getitem__, Y-1))
+        W       = np.array(map(weights.__getitem__, Y_dig-1))
         X_train, X_test, Y_train, Y_test, V_train, V_test, W_train, W_test = train_test_split(X, Y, V, W, **options)
 
         validation_data = ( [X_test,  V_test],  Y_test,  W_test )
@@ -162,7 +163,7 @@ else:
     if args.weighted_training:
         counts  = np.unique(Y,return_counts=True)[1]
         weights = float(counts.min())/counts
-        W       = np.array(map(weights.__getitem__, Y-1))
+        W       = np.array(map(weights.__getitem__, Y_dig-1))
         X_train, X_test, Y_train, Y_test, W_train, W_test = train_test_split(X, Y, W, **options)
 
         validation_data = ( X_test,  Y_test,  W_test )
@@ -193,7 +194,7 @@ inputs = flat_inputs
 # LSTMs
 if args.add_LSTM:
     vec_inputs = Input(shape=(max_timestep, len(vector_branches),) )
-    v = LSTM(50, activation='relu', input_shape=(max_timestep, len(vector_branches)))( vec_inputs )
+    v = LSTM(10, activation='relu', input_shape=(max_timestep, len(vector_branches)))( vec_inputs )
     x = Concatenate()( [x, v])
     inputs = ( flat_inputs, vec_inputs)
 
