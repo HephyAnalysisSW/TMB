@@ -132,6 +132,15 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 sequence       = []
 
+from TMB.Tools.objectSelection import isBJet
+from TMB.Tools.helpers import getObjDict
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
+jetVarNames      = [x.split('/')[0] for x in jetVars]
+def make_jets( event, sample ):
+    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+sequence.append( make_jets )
+
 #def getWpt( event, sample):
 #
 #    # get the lepton and met
@@ -160,7 +169,7 @@ read_variables = [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
-    "JetGood[pt/F,eta/F,phi/F]",
+    "JetGood[%s]"%(",".join(jetVars)),
     "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I]",
     "Z1_l1_index/I", "Z1_l2_index/I", #"nonZ1_l1_index/I", "nonZ1_l2_index/I", 
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
@@ -563,13 +572,19 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       texX = 'N_{jets}', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "nJetGood/I" ), #nJetSelected
-      binning=[8,-0.5,7.5],
+      binning=[8,3.5,11.5],
     ))
 
     plots.append(Plot(
       texX = 'N_{b-tag}', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
-      binning=[4,-0.5,3.5],
+      binning=[5, 1.5,6.5],
+    ))
+
+    plots.append(Plot(
+      texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
+      binning=[1500/50,0,1500],
     ))
 
     plots.append(Plot(
