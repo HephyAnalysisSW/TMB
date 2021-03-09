@@ -11,7 +11,7 @@ from RootTools.core.standard     import *
 # helpers
 from TMB.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
 #from tWZ.Tools.objectSelection  import isBJet, isAnalysisJet
-from TMB.Tools.WeightInfo       import WeightInfo
+from Analysis.Tools.WeightInfo       import WeightInfo
 
 import logging
 logger = logging.getLogger(__name__)
