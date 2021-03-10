@@ -182,7 +182,8 @@ from keras.models import load_model
 #    models = [ (name, has_lstm, load_model(args.onlyMVA) ), ]
 #else:
 models = [
-    ("tttt_2l", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_test/tttt_2l/regression_model.h5")),
+    ("tttt_2l_lstm", True, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_v1_LSTM/tttt_2l/regression_model.h5")),
+    ("tttt_2l",      False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_v1/tttt_2l/regression_model.h5")),
 ]
 
 def keras_predict( event, sample ):
