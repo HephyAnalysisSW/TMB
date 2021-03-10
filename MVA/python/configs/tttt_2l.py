@@ -4,7 +4,7 @@
 from operator                   import attrgetter
 from math                       import pi, sqrt, cosh, cos, acos
 import ROOT, os
-
+import copy
 # RootTools
 from RootTools.core.standard     import *
 
@@ -129,3 +129,29 @@ def predict_inputs( event, sample, jet_lstm = False):
         return [ flat_variables, jets ]
     else:
         return   flat_variables
+
+#define training samples for multiclassification
+import TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp as samples
+
+# ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+TTLep_bb    = copy.deepcopy( samples.TTLep )
+TTLep_bb.name = "TTLep_bb"
+TTLep_bb.texName = samples.TTLep.name+" (b#overline{b})"
+TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+TTLep_cc    = copy.deepcopy( samples.TTLep )
+TTLep_cc.name = "TTLep_cc"
+TTLep_cc.texName = samples.TTLep.name+" (c#overline{c})"
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+TTLep_other = copy.deepcopy( samples.TTLep )
+TTLep_other.name = "TTLep_other"
+TTLep_other.texName = samples.TTLep.name+" (other)"
+TTLep_other.setSelectionString( "genTtbarId%100<40" )
+
+training_samples = [ samples.TTTT, TTLep_bb,TTLep_cc,TTLep_other ]
+
+assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
+
+# training selection
+
+from TMB.Tools.cutInterpreter import cutInterpreter
+selectionString = cutInterpreter.cutString( 'dilepVL-ht400' )

@@ -16,8 +16,7 @@ argParser.add_argument('--output_directory',   action='store', type=str,   defau
 argParser.add_argument('--truth_input',        action='store_true', help="Include truth in training input")
 argParser.add_argument('--weighted_training',  action='store_true', help="Train weighted?")
 argParser.add_argument('--weighted_quantiles', action='store_true', help="Make quantiles from weighted FI?")
-argParser.add_argument('--small',              action='store_true', help="add LSTM?")
-#argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
+argParser.add_argument('--small',              action='store_true', help="small?")
 
 args = argParser.parse_args()
 

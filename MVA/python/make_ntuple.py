@@ -62,8 +62,8 @@ if args.small:
 
 # selection
 if hasattr( config, "selectionString"):
-    sample.setSelectionString( config.selectionString )
-    logger.info( "Set selectionstring %s", config.selectionString )
+    sample.addSelectionString( config.selectionString )
+    logger.info( "Add selectionstring %s", config.selectionString )
 else:
     logger.info( "Do not use selectionstring" )
 
@@ -126,7 +126,15 @@ if hasattr( config, "FIs"):
 else:
     FI_variables = [] 
 
+tmp_dir     = ROOT.gDirectory
 
+dirname = os.path.dirname(output_file)
+if not os.path.exists(dirname):
+    os.makedirs(dirname)
+
+outputfile = ROOT.TFile.Open(output_file, 'recreate')
+
+outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
     variables = map(TreeVariable.fromString, 
@@ -134,6 +142,9 @@ maker = TreeMaker(
         ),
     treeName = "Events"
     )
+
+tmp_dir.cd()
+
 maker.start()
 
 logger.info( "Starting event loop" )
@@ -147,15 +158,8 @@ while reader.run():
 
 nEventsTotal = maker.tree.GetEntries()
 
-tmp_directory = ROOT.gDirectory
-dirname = os.path.dirname(output_file)
-if not os.path.exists(dirname):
-    os.makedirs(dirname)
-
-outputfile = ROOT.TFile.Open(output_file, 'recreate')
 maker.tree.Write()
 outputfile.Close()
-tmp_directory.cd()
 logger.info( "Written %s", output_file)
 #
 #      # Destroy the TTree

@@ -16,7 +16,7 @@ argParser.add_argument('--output_directory',   action='store', type=str,   defau
 argParser.add_argument('--truth_input',        action='store_true', help="Include truth in training input")
 argParser.add_argument('--weighted_training',  action='store_true', help="Train weighted?")
 argParser.add_argument('--add_weighted_quantiles', action='store_true', help="Make quantiles from weighted FI?")
-argParser.add_argument('--small',              action='store_true', help="add LSTM?")
+argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
 
 args = argParser.parse_args()
@@ -138,6 +138,7 @@ if args.add_LSTM:
     # put columns side by side and transpose the innermost two axis
     len_samples = len(vec_br.values()[0])
     V           = np.column_stack( [vec_br[name] for name in vector_branches] ).reshape( len_samples, len(vector_branches), max_timestep).transpose((0,2,1))
+
 # split data into train and test, test_size = 0.2 is quite standard for this
 from sklearn.model_selection import train_test_split
 

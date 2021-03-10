@@ -21,7 +21,7 @@ from RootTools.core.standard             import *
 # TMB
 from TMB.Tools.user                      import plot_directory
 # tWZ
-from tWZ.Tools.cutInterpreter            import cutInterpreter
+from TMB.Tools.cutInterpreter            import cutInterpreter
 from tWZ.Tools.objectSelection           import lepString 
 
 # Analysis
@@ -41,7 +41,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
 argParser.add_argument('--era',            action='store', type=str, default="RunII")
-argParser.add_argument('--selection',      action='store', default='dilepL-njet4p-btag2p-ht500')
+argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
 # Logger
@@ -59,17 +59,39 @@ from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
 
 lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
 if args.era == "Run2016":
-    mc = [Summer16.TTLep, Summer16.DYJetsToLL, Summer16.TTTT]
+    mc = [Summer16.DYJetsToLL, Summer16.TTTT]
+    sample_TTLep = Summer16.TTLep
     lumi_scale = lumi_year[2016]/1000.
 elif args.era == "Run2017":
-    mc = [Fall17.TTLep, Fall17.DYJetsToLL, Fall17.TTTT]
+    mc = [Fall17.DYJetsToLL, Fall17.TTTT]
+    sample_TTLep = Fall17.TTLep
     lumi_scale = lumi_year[2017]/1000.
 elif args.era == "Run2018":
-    mc = [Autumn18.TTLep, Autumn18.DYJetsToLL, Autumn18.TTTT]
+    sample_TTLep = Autumn18.TTLep
+    mc = [Autumn18.DYJetsToLL, Autumn18.TTTT]
     lumi_scale = lumi_year[2018]/1000.
 elif args.era == "RunII":
-    mc = [TTLep, DYJetsToLL, TTTT]
+    sample_TTLep = TTLep
+    mc = [DYJetsToLL, TTTT]
     lumi_scale = sum(lumi_year.values())/1000.
+
+# ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+TTLep_bb    = copy.deepcopy( sample_TTLep )
+TTLep_bb.name = "TTLep_bb"
+TTLep_bb.texName = sample_TTLep.name+" (b#bar{b})"
+TTLep_bb.color   = ROOT.kRed + 2 
+TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+TTLep_cc    = copy.deepcopy( sample_TTLep )
+TTLep_cc.name = "TTLep_cc"
+TTLep_cc.texName = sample_TTLep.name+" (c#bar{c})"
+TTLep_cc.color   = ROOT.kRed - 3 
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+TTLep_other = copy.deepcopy( sample_TTLep )
+TTLep_other.name = "TTLep_other"
+TTLep_other.texName = sample_TTLep.name+" (other)"
+TTLep_other.setSelectionString( "genTtbarId%100<40" )
+
+mc = [ TTLep_bb,TTLep_cc,TTLep_other ] + mc
 
 ## data sample
 #try:
@@ -77,7 +99,6 @@ elif args.era == "RunII":
 #except Exception as e:
 #  logger.error( "Didn't find %s", args.era )
 #  raise e
-
 
 for sample in mc:
     sample.scale           = 1 
@@ -141,19 +162,40 @@ def make_jets( event, sample ):
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 sequence.append( make_jets )
 
-#def getWpt( event, sample):
-#
-#    # get the lepton and met
-#    lepton  = ROOT.TLorentzVector()
-#    met     = ROOT.TLorentzVector()
-#    lepton.SetPtEtaPhiM(event.lep_pt[event.nonZ1_l1_index], event.lep_eta[event.nonZ1_l1_index], event.lep_phi[event.nonZ1_l1_index], 0)
-#    met.SetPtEtaPhiM(event.met_pt, 0, event.met_phi, 0)
-#
-#    # get the W boson candidate
-#    W   = lepton + met
-#    event.W_pt = W.Pt()
-#
-#sequence.append( getWpt )
+#MVA
+import TMB.MVA.configs as configs
+config = configs.tttt_2l
+read_variables = config.read_variables
+
+# Add sequence that computes the MVA inputs
+def make_mva_inputs( event, sample ):
+    for mva_variable, func in config.mva_variables:
+        setattr( event, mva_variable, func(event, sample) )
+sequence.append( make_mva_inputs )
+
+# load models
+from keras.models import load_model
+
+#if args.onlyMVA is not None:
+#    has_lstm = ('LSTM' in args.onlyMVA)
+#    name = args.onlyMVA.split('/')[-4]
+#    models = [ (name, has_lstm, load_model(args.onlyMVA) ), ]
+#else:
+models = [
+    ("tttt_2l", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_test/tttt_2l/regression_model.h5")),
+]
+
+def keras_predict( event, sample ):
+
+    # get model inputs assuming lstm
+    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+    for name, has_lstm, model in models:
+        #print has_lstm, flat_variables, lstm_jets
+        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
+        for i_val, val in enumerate( prediction[0] ):
+            setattr( event, name+'_'+config.training_samples[i_val].name, val)
+
+sequence.append( keras_predict )
 
 def getM3l( event, sample ):
     # get the invariant mass of the 3l system
@@ -165,7 +207,7 @@ def getM3l( event, sample ):
 
 sequence.append( getM3l )
 
-read_variables = [
+read_variables += [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
@@ -246,7 +288,6 @@ for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
     if not args.noData:
         data_sample.texName = "data"
-        data_sample.setSelectionString([getLeptonSelection(mode)])
         data_sample.name           = "data"
         data_sample.style          = styles.errorStyle(ROOT.kBlack)
         lumi_scale                 = data_sample.lumi/1000
@@ -257,7 +298,6 @@ for i_mode, mode in enumerate(allModes):
     
     for sample in mc:
       sample.read_variables = read_variables_MC 
-      sample.setSelectionString([getLeptonSelection(mode)])
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     #yt_TWZ_filter.scale = lumi_scale * 1.07314
@@ -268,7 +308,7 @@ for i_mode, mode in enumerate(allModes):
       stack = Stack(mc)
 
     # Use some defaults
-    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = cutInterpreter.cutString(args.selection))
+    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
 
     plots = []
 
@@ -278,13 +318,16 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
-#    for output in keras_output_specification:
-#        plots.append(Plot(
-#            texX = 'keras multiclass '+output, texY = 'Number of Events',
-#            name = 'keras_multiclass_'+output, attribute = discriminator_getter('keras_multiclass_'+output),
-#            binning=[50, 0, 1],
-#        ))
-#
+    for name, has_lstm, model in models:
+        #print has_lstm, flat_variables, lstm_jets
+        for i_tr_s, tr_s in enumerate( config.training_samples ):
+            disc_name = name+'_'+config.training_samples[i_tr_s].name
+            plots.append(Plot(
+                texX = disc_name, texY = 'Number of Events',
+                name = disc_name, attribute = lambda event, sample, disc_name=disc_name: getattr( event, disc_name ),
+                binning=[50, 0, 1],
+            ))
+
     #for mva in mvas:
     #    plots.append(Plot(
     #        texX = 'MVA_{3l}', texY = 'Number of Events',

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 from TMB.Samples.color import color
 
-directory_ = "/scratch-cbe/users/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v3/2018/dilep"
+directory_ = "/scratch-cbe/users/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v4/2018/dilep"
 
 def make_dirs( dirs ):
     return [ os.path.join( directory_, dir_ ) for dir_ in dirs ]
