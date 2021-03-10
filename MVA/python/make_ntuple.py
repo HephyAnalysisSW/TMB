@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # General
-import os
+import os, sys
 import ROOT
 
 # Analysis
@@ -10,7 +10,6 @@ import ROOT
 from RootTools.core.standard import *
 
 # TMB
-from TMB.Tools.cutInterpreter    import cutInterpreter
 from TMB.Tools.helpers import getVarValue, getObjDict
 
 # MVA configuration
@@ -19,10 +18,8 @@ import TMB.MVA.configs  as configs
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel', action='store', nargs='?',  choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],   default='INFO', help="Log level for logging" )
-argParser.add_argument('--selection',          action='store', type=str,   default='singlelep-photon')
-argParser.add_argument('--sample',             action='store', type=str,   default='ttG_noFullyHad_fast')
-argParser.add_argument('--sample_file',        action='store', type=str,   default='$CMSSW_BASE/src/TMB/Samples/python/pp_tWZ_v6.py')
-argParser.add_argument('--config',             action='store', type=str,   default='ttG')
+argParser.add_argument('--sample',             action='store', type=str)
+argParser.add_argument('--config',             action='store', type=str)
 argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
 argParser.add_argument('--small',              action='store_true')
 
@@ -36,32 +33,42 @@ logger_an = logger_an.get_logger(args.logLevel, logFile = None )
 import RootTools.core.logger as logger_rt
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 
-#import TMB.Samples.pp_tWZ_v6 as samples
-# get samples
-import imp
-samples = imp.load_source('samples', os.path.expandvars(args.sample_file))
-sample = getattr(samples, args.sample)
-
 subDir = args.config
+
+#config
+config = getattr( configs, args.config)
+
+sample_names = []
+found = False
+for sample in config.training_samples:
+    if args.sample == sample.name:
+        found = True
+        break # found it
+    else:
+        sample_names.append( sample.name )
+
+if not found:
+    logger.error( "Need sample to be one of %s, got %s", ",".join( sample_names ), args.sample )
+    sys.exit()     
+
+logger.info( "Processing sample %s", sample.name )
+
+count  = int(sample.getYieldFromDraw( weightString="(1)" )["val"])
+logger.info( "Found %i events for sample %s", count, sample.name )
+
 if args.small:
     sample.reduceFiles(to=1)
     subDir += '_small'
 
 # selection
-if args.selection == None:
-    selectionString = "(1)"
+if hasattr( config, "selectionString"):
+    sample.setSelectionString( config.selectionString )
+    logger.info( "Set selectionstring %s", config.selectionString )
 else:
-    selectionString = cutInterpreter.cutString( args.selection )
-sample.setSelectionString( selectionString )
-
-count  = int(sample.getYieldFromDraw( weightString="(1)" )["val"])
-logger.info( "Found %i events for sample %s", count, sample.name )
-
-#config
-config = getattr( configs, args.config)
+    logger.info( "Do not use selectionstring" )
 
 # where the output goes
-output_file  = os.path.join( args.output_directory, "MVA-training", subDir, sample.name, args.selection, sample.name + ".root" )
+output_file  = os.path.join( args.output_directory, "MVA-training", subDir, sample.name, sample.name + ".root" )
 
 # reader
 reader = sample.treeReader( \

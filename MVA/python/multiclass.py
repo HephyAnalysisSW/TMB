@@ -7,12 +7,11 @@ c1.Print('/tmp/delete.png')
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--trainingfiles',      action='store', type=str,   nargs = '*', default=['input.root'], help="Input files for training")
 argParser.add_argument('--config',             action='store', type=str,   default='tttt_3l', help="Name of the config file")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
 argParser.add_argument('--output_directory',   action='store', type=str,   default='/mnt/hephy/cms/robert.schoefbeck/TMB/models/')
-argParser.add_argument('--weighted_training',  action='store_true', help="Train weighted?")
+argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/$USER/TMB/training-ntuples-tttt-v1/MVA-training/") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 
 args = argParser.parse_args()
@@ -52,13 +51,15 @@ mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.varia
 n_var_input   = len(mva_variables)
 
 df_file = {}
-for i_trainingfile, trainingfile in enumerate(args.trainingfiles):
-    upfile = uproot.open(os.path.join("/eos/vbc/user/robert.schoefbeck/TMB/training-ntuples-tttt-v1/MVA-training/", trainingfile))
-    df_file[trainingfile]  = upfile["Events"].pandas.df(branches = mva_variables )
+for i_training_sample, training_sample in enumerate(config.training_samples):
+    upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+    logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
+    upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root'))
+    df_file[training_sample.name]  = upfile["Events"].pandas.df(branches = mva_variables )
     # enumerate
-    df_file[trainingfile]['signal_type'] =  np.ones(len(df_file[trainingfile])) * i_trainingfile
+    df_file[training_sample.name]['signal_type'] =  np.ones(len(df_file[training_sample.name])) * i_training_sample
 
-df = pd.concat([df_file[trainingfile] for trainingfile in args.trainingfiles])
+df = pd.concat([df_file[training_sample.name] for training_sample in config.training_samples])
 
 #df = df.dropna() # removes all Events with nan -> amounts to M3 cut
 
@@ -75,7 +76,7 @@ X  = dataset[:,0:n_var_input]
 Y = dataset[:, n_var_input] 
 
 from sklearn.preprocessing import label_binarize
-classes = range(len(args.trainingfiles))
+classes = range(len(config.training_samples))
 Y = label_binarize(Y, classes=classes)
 
 # split data into train and test, test_size = 0.2 is quite standard for this
@@ -97,7 +98,7 @@ model = Sequential([
                     Dense(n_var_input*2, activation='sigmoid'),
                     Dense(n_var_input+5, activation='sigmoid'),
                     #Dense(n_var_input*5, activation='sigmoid'),
-                    Dense(len(args.trainingfiles), kernel_initializer='normal', activation='sigmoid'),
+                    Dense(len(config.training_samples), kernel_initializer='normal', activation='sigmoid'),
                     ])
 
 #model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])

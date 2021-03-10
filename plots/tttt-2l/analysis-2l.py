@@ -41,7 +41,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
 argParser.add_argument('--era',            action='store', type=str, default="RunII")
-argParser.add_argument('--selection',      action='store', default='dilepT-njet4p-btag2p-ht500')
+argParser.add_argument('--selection',      action='store', default='dilepL-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
 # Logger
@@ -645,7 +645,7 @@ for i_mode, mode in enumerate(allModes):
     #  binning=[20,0,6],
     #))
     
-    for index in range(3):
+    for index in range(2):
         for abs_pdg in [11, 13]:
             lep_name = "mu" if abs_pdg==13 else "ele"
             plots.append(Plot(

@@ -39,9 +39,6 @@ read_variables = [\
                     "l2_pt/F",
                     "l2_eta/F",
                     "l2_phi/F",
-                    "l3_pt/F",
-                    "l3_eta/F",
-                    "l3_phi/F",
                     "year/I",
                     ]
 # sequence 
@@ -66,15 +63,12 @@ all_mva_variables = {
 
      "mva_mT_l1"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))),
      "mva_mT_l2"                 :(lambda event, sample: sqrt(2*event.l2_pt*event.met_pt*(1-cos(event.l2_phi-event.met_phi)))),
-     "mva_mT_l3"                 :(lambda event, sample: sqrt(2*event.l3_pt*event.met_pt*(1-cos(event.l3_phi-event.met_phi)))),
      "mva_ml_12"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.l2_pt*(cosh(event.l1_eta-event.l2_eta)-cos(event.l1_phi-event.l2_phi)))),
      "mva_met_pt"                :(lambda event, sample: event.met_pt),
      "mva_l1_pt"                 :(lambda event, sample: event.l1_pt),
      "mva_l1_eta"                :(lambda event, sample: event.l1_eta),
      "mva_l2_pt"                 :(lambda event, sample: event.l2_pt),
      "mva_l2_eta"                :(lambda event, sample: event.l2_eta),
-     "mva_l3_pt"                 :(lambda event, sample: event.l3_pt),
-     "mva_l3_eta"                :(lambda event, sample: event.l3_eta),
      
      "mva_mj_12"                 :(lambda event, sample: sqrt(event.jets[0]['pt']*event.jets[1]['pt']*cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))  if event.nJetGood >=2 else 0),
      "mva_mlj_11"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[0]['pt']*cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi'])) if event.nJetGood >=1 else 0),
@@ -119,7 +113,6 @@ mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() 
 import numpy as np
 import operator
 
-# make predictions to be used with keras.predict
 def predict_inputs( event, sample, jet_lstm = False):
 
     flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
@@ -136,14 +129,3 @@ def predict_inputs( event, sample, jet_lstm = False):
         return [ flat_variables, jets ]
     else:
         return   flat_variables
-
-#define training samples for multiclassification
-import tWZ.samples.nanoTuples_RunII_nanoAODv6_private_postProcessed as samples
-training_samples = [ samples.TTTT, samples.TTW, samples.TTZ ]
-
-assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
-
-# training selection
-
-from TMB.Tools.cutInterpreter import cutInterpreter
-selectionString = cutInterpreter.cutString( 'trilepVL' )
