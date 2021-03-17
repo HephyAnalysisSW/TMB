@@ -96,12 +96,11 @@ def filler( event ):
 
     # copy scalar variables
     for name, func in config.all_mva_variables.iteritems():
-        setattr( event, name, func(reader.event, sample=None) )
+        setattr( event, name, func(r, sample=None) )
 
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
-        objs = [ getObjDict( reader.event, vector_var['name']+'_', vector_var['varnames'], i ) for i in range(int(getVarValue(reader.event, 'n'+vector_var['name']))) ] 
-        objs = filter( vector_var['selector'], objs ) 
+        objs = vector_var["func"]( r, sample=None ) 
 
         fill_vector_collection( event, name, vector_var['varnames'], objs )
 
