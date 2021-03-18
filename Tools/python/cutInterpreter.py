@@ -52,10 +52,14 @@ class cutInterpreter:
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
 
-        # continous Variables
-        for var, tree_var in continous_variables:
+        # continous Variables and discrete variables with "To"
+        for var, tree_var in continous_variables + discrete_variables:
+            isDiscrete = (var, tree_var) in discrete_variables
             if string.startswith( var ):
                 num_str = string[len( var ):].replace("to","To").split("To")
+                # don't do discrete variables without "To"
+                if isDiscrete and len(num_str)<=1:
+                    continue
                 upper = None
                 lower = None
                 if len(num_str)==2:
@@ -66,16 +70,18 @@ class cutInterpreter:
                     raise ValueError( "Can't interpret string %s" % string )
                 res_string = []
                 if lower: res_string.append( tree_var+">="+lower )
-                if upper: res_string.append( tree_var+"<"+upper )
+                leq = "<=" if isDiscrete else "<"
+                if upper: res_string.append( tree_var+leq+upper )
                 return "&&".join( res_string )
 
         # discrete Variables
         for var, tree_var in discrete_variables:
             logger.debug("Reading discrete cut %s as %s"%(var, tree_var))
             if string.startswith( var ):
-                # So far no njet2To5
+                # Omit discrete variables, done above
                 if string[len( var ):].replace("to","To").count("To"):
-                    raise NotImplementedError( "Can't interpret string with 'to' for discrete variable: %s. You just volunteered." % string )
+                    continue
+                    #raise NotImplementedError( "Can't interpret string with 'to' for discrete variable: %s. You just volunteered." % string )
 
                 num_str = string[len( var ):]
                 # logger.debug("Num string is %s"%(num_str))

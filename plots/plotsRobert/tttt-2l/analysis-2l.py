@@ -147,7 +147,7 @@ def drawPlots(plots, mode, dataMCScale):
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png"],
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
             
 # Read variables and sequences
@@ -182,7 +182,7 @@ from keras.models import load_model
 #    models = [ (name, has_lstm, load_model(args.onlyMVA) ), ]
 #else:
 models = [
-    ("tttt_2l_lstm", True, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_v1_LSTM/tttt_2l/regression_model.h5")),
+    ("tttt_2l_lstm", True,  load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_v1_LSTM/tttt_2l/regression_model.h5")),
     ("tttt_2l",      False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/tttt_2l_v1/tttt_2l/regression_model.h5")),
 ]
 
@@ -218,6 +218,7 @@ read_variables += [
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
+    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
 ]
 
 read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F']
@@ -281,6 +282,24 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #    event.jet1_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
 #
 #sequence.append( make_training_observables_3l )
+
+# OBJ: TBranch   GenJet_nBHadFromT   number of matched B hadrons with a top quark in their ancestry : 0 at: 0x311fbb0
+# OBJ: TBranch   GenJet_nBHadFromTbar    number of matched B hadrons with an anti-top quark in their ancestry : 0 at: 0x31206e0
+# OBJ: TBranch   GenJet_nBHadFromW   number of matched B hadrons with a W boson in their ancestry : 0 at: 0x3121220
+# OBJ: TBranch   GenJet_nBHadOther   number of matched B hadrons with no W boson or top quark in their ancestry : 0 at: 0x3121d50
+# OBJ: TBranch   GenJet_nCHadFromW   number of matched prompt (no intermediate B) C hadrons with a W boson in their ancestry : 0 at: 0x3122890
+# OBJ: TBranch   GenJet_nCHadOther   number of matched prompt (no intermediate B) C hadrons with no W boson or top quark in their ancestry : 0 at: 0x31233e0
+
+genJetSelection = "GenJet_pt>30&&abs(GenJet_eta)<2.4"
+
+ttreeFormulas = {   "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
+                    "nGenJet_absPF5":"Sum$(abs(GenJet_partonFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                    "nGenJet_min1BHadFromTorTbar":"Sum$(GenJet_nBHadFromT+GenJet_nBHadFromTbar>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                    "nGenJet_min1BHadFromW":"Sum$(GenJet_nBHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                    "nGenJet_min1BHadOther":"Sum$(GenJet_nBHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                    "nGenJet_min1CHadFromW":"Sum$(GenJet_nCHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                    "nGenJet_min1CHadOther":"Sum$(GenJet_nCHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+    }
 
 yields     = {}
 allPlots   = {}
@@ -347,6 +366,55 @@ for i_mode, mode in enumerate(allModes):
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
       binning=[50,0,50],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_absHF5', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_absHF5,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_absPF5', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_absPF5,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_min1BHadFromTorTbar', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_min1BHadFromTorTbar,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_min1BHadFromW', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_min1BHadFromW,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_min1BHadOther', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_min1BHadOther,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_min1CHadFromW', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_min1CHadFromW,
+      binning=[7,-0.5,6.5],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      name = 'nGenJet_min1CHadOther', texY = 'Number of Events',
+      attribute = lambda event, sample: event.nGenJet_min1CHadOther,
+      binning=[7,-0.5,6.5],
       addOverFlowBin='upper',
     ))
 
@@ -774,7 +842,7 @@ for i_mode, mode in enumerate(allModes):
                   binning=[20,0,20],
                 ))
 
-    plotting.fill(plots, read_variables = read_variables, sequence = sequence)
+    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 
     # Get normalization yields from yield histogram
     for plot in plots:

@@ -18,8 +18,13 @@ logger = logging.getLogger(__name__)
 
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 'index/I']
+
 jetVarNames      = [x.split('/')[0] for x in jetVars]
+
+lstm_jets_maxN   = 10
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
@@ -31,6 +36,7 @@ read_variables = [\
                     "nlep/I",
                     "m3/F",
                     "JetGood[%s]"%(",".join(jetVars)),
+                    "Jet[%s]"%(",".join(lstm_jetVars)),
                     "lep[%s]"%(",".join(lepVars)),
                     "met_pt/F", "met_phi/F",
                     "l1_pt/F",
@@ -86,23 +92,30 @@ all_mva_variables = {
 
      "mva_jet0_pt"               :(lambda event, sample: event.JetGood_pt[0]          if event.nJetGood >=1 else 0),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -10),
-     "mva_jet0_btagDeepB"        :(lambda event, sample: event.JetGood_btagDeepB[0]   if (event.nJetGood >=1 and event.JetGood_btagDeepB[0]>-10) else -10),
+     "mva_jet0_btagDeepFlavB"        :(lambda event, sample: event.JetGood_btagDeepFlavB[0]   if (event.nJetGood >=1 and event.JetGood_btagDeepFlavB[0]>-10) else -10),
      "mva_jet1_pt"               :(lambda event, sample: event.JetGood_pt[1]          if event.nJetGood >=2 else 0),
      "mva_jet1_eta"              :(lambda event, sample: event.JetGood_eta[1]         if event.nJetGood >=2 else -10),
-     "mva_jet1_btagDeepB"        :(lambda event, sample: event.JetGood_btagDeepB[1]   if (event.nJetGood >=2 and event.JetGood_btagDeepB[1]>-10) else -10),
+     "mva_jet1_btagDeepFlavB"        :(lambda event, sample: event.JetGood_btagDeepFlavB[1]   if (event.nJetGood >=2 and event.JetGood_btagDeepFlavB[1]>-10) else -10),
      "mva_jet2_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=3 else 0),
      "mva_jet2_eta"              :(lambda event, sample: event.JetGood_eta[2]         if event.nJetGood >=3 else -10),
-     "mva_jet2_btagDeepB"        :(lambda event, sample: event.JetGood_btagDeepB[2]   if (event.nJetGood >=3 and event.JetGood_btagDeepB[2]>-10) else -10),
+     "mva_jet2_btagDeepFlavB"        :(lambda event, sample: event.JetGood_btagDeepFlavB[2]   if (event.nJetGood >=3 and event.JetGood_btagDeepFlavB[2]>-10) else -10),
 
      "mva_jet3_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=4 else 0),
      "mva_jet4_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=5 else 0),
      "mva_jet5_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=6 else 0),
      "mva_jet6_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=7 else 0),
      "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=8 else 0),
-                }
+}
 
+def lstm_jets(event, sample):
+    jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]
+    #jets = filter( jet_vector_var['selector'], jets )
+    return jets 
+
+# for the filler
 mva_vector_variables    =   {
-    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames} 
 }
 
 ## Using all variables
@@ -117,13 +130,14 @@ def predict_inputs( event, sample, jet_lstm = False):
 
     flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
 
+
     if jet_lstm:
-        jet_vector_var = mva_vector_variables["mva_JetGood"]
-        jets = [ getObjDict( event, jet_vector_var['name']+'_', jet_vector_var['varnames'], i ) for i in range(int(getattr(event,  'n'+jet_vector_var['name']))) ]
-        jets = filter( jet_vector_var['selector'], jets )
-        jets =  [ [ operator.itemgetter(varname)(jet) for varname in jetVarNames] for jet in jets[:jet_vector_var['maxN']] ]
+        lstm_jets_maxN = 10 #remove after retraining
+        jet_vector_var = mva_vector_variables["mva_Jet"]
+        jets = mva_vector_variables["mva_Jet"]["func"](event,sample=None) 
+        jets =  [ [ operator.itemgetter(varname)(jet) for varname in lstm_jetVarNames] for jet in jets[:lstm_jets_maxN] ]
         # zero padding
-        jets += [ [0.]*len(jetVarNames)]*(max(0, jet_vector_var['maxN']-len(jets))) 
+        jets += [ [0.]*len(lstm_jetVarNames)]*(max(0, lstm_jets_maxN-len(jets))) 
         jets = np.array([jets])
 
         return [ flat_variables, jets ]
@@ -147,7 +161,7 @@ TTLep_other.name = "TTLep_other"
 TTLep_other.texName = samples.TTLep.name+" (other)"
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-training_samples = [ samples.TTTT, TTLep_bb,TTLep_cc,TTLep_other ]
+training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
