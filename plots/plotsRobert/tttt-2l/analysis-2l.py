@@ -147,7 +147,7 @@ def drawPlots(plots, mode, dataMCScale):
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png"],
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
             
 # Read variables and sequences
