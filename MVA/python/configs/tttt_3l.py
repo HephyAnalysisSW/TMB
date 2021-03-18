@@ -42,6 +42,9 @@ read_variables = [\
                     "l3_pt/F",
                     "l3_eta/F",
                     "l3_phi/F",
+                    "l1_mvaTOP/F",
+                    "l2_mvaTOP/F",
+                    "l3_mvaTOP/F",
                     "year/I",
                     ]
 # sequence 
@@ -105,6 +108,10 @@ all_mva_variables = {
      "mva_jet5_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=6 else 0),
      "mva_jet6_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=7 else 0),
      "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=8 else 0),
+
+     "mva_l1_mvaTOP"             :(lambda event, sample: event.l1_mvaTOP ),
+     "mva_l2_mvaTOP"             :(lambda event, sample: event.l2_mvaTOP ),
+     "mva_l3_mvaTOP"             :(lambda event, sample: event.l3_mvaTOP ),
                 }
 
 mva_vector_variables    =   {
@@ -139,7 +146,7 @@ def predict_inputs( event, sample, jet_lstm = False):
 
 #define training samples for multiclassification
 import tWZ.samples.nanoTuples_RunII_nanoAODv6_private_postProcessed as samples
-training_samples = [ samples.TTTT, samples.TTW, samples.TTZ ]
+training_samples = [ samples.TTTT, samples.TTW, samples.TTZ , samples.nonprompt_3l ]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
