@@ -127,10 +127,7 @@ import numpy as np
 import operator
 
 def predict_inputs( event, sample, jet_lstm = False):
-
     flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
-
-
     if jet_lstm:
         lstm_jets_maxN = 10 #remove after retraining
         jet_vector_var = mva_vector_variables["mva_Jet"]
