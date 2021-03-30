@@ -186,6 +186,6 @@ print('training finished')
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-output_file = os.path.join(output_directory, 'regression_model.h5')
+output_file = os.path.join(output_directory, 'multiclass_model.h5')
 model.save(output_file)
 logger.info("Written model to: %s", output_file)
