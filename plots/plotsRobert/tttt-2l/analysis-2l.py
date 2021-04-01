@@ -59,20 +59,20 @@ from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
 
 lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
 if args.era == "Run2016":
-    mc = [Summer16.DYJetsToLL, Summer16.TTTT]
+    mc = [Summer16.DYJetsToLL, Summer16.TTTT, Summer16.TTW, Summer16.TTH, Summer16.TTZ]
     sample_TTLep = Summer16.TTLep
     lumi_scale = lumi_year[2016]/1000.
 elif args.era == "Run2017":
-    mc = [Fall17.DYJetsToLL, Fall17.TTTT]
+    mc = [Fall17.DYJetsToLL, Fall17.TTTT, Fall17.TTW, Fall17.TTH, Fall17.TTZ]
     sample_TTLep = Fall17.TTLep
     lumi_scale = lumi_year[2017]/1000.
 elif args.era == "Run2018":
     sample_TTLep = Autumn18.TTLep
-    mc = [Autumn18.DYJetsToLL, Autumn18.TTTT]
+    mc = [Autumn18.DYJetsToLL, Autumn18.TTTT, Autumn18.TTW, Autumn18.TTH, Autumn18.TTZ]
     lumi_scale = lumi_year[2018]/1000.
 elif args.era == "RunII":
     sample_TTLep = TTLep
-    mc = [DYJetsToLL, TTTT]
+    mc = [DYJetsToLL, TTTT, TTW, TTH, TTZ]
     lumi_scale = sum(lumi_year.values())/1000.
 
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc

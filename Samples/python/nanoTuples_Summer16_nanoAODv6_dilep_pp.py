@@ -50,6 +50,15 @@ DYJetsToLL = Sample.fromDirectory(name="DYJetsToLL", treeName="Events", isData=F
 dirs['TTTT']  = ["TTTT"]
 TTTT = Sample.fromDirectory(name="TTTT", treeName="Events", isData=False, color=color.TTTT, texName="TTTT", directory=make_dirs( dirs['TTTT'] ))
 
+dirs['TTH']  = ["TTHbb", "TTHnobb_pow"]
+TTH = Sample.fromDirectory(name="TTH", treeName="Events", isData=False, color=color.TTH, texName="TTH", directory=make_dirs( dirs['TTH'] ))
+
+dirs['TTW']  = ["TTWToLNu_ext2", "TTWToQQ"]
+TTW = Sample.fromDirectory(name="TTW", treeName="Events", isData=False, color=color.TTW, texName="TTW", directory=make_dirs( dirs['TTW'] ))
+
+dirs['TTZ']  = ["TTZToLLNuNu_ext2_comb", "TTZToLLNuNu_m1to10", "TTZToQQ"]
+TTZ = Sample.fromDirectory(name="TTZ", treeName="Events", isData=False, color=color.TTZ, texName="TTZ", directory=make_dirs( dirs['TTZ'] ))
+
 dirs['TTWZ']  = ["TTWZ"]
 TTWZ = Sample.fromDirectory(name="TTWZ", treeName="Events", isData=False, color=color.TTWZ, texName="TTWZ", directory=make_dirs( dirs['TTWZ'] ))
 

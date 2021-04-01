@@ -53,7 +53,7 @@ nlj_plot = Plot.fromHisto(name = "TTLep_lj_comp_e2p4_reco-btag", histos = [[nlj_
 
 for log in [True, False]:
     plot_directory_ = os.path.join(plot_directory, 'nc_shapes',  selection, ("log" if log else "lin"))
-    plotting.draw(nlj_plot, plot_directory = plot_directory_, ratio = {1:0}, scaling={1:0}, logY = log, logX = False, yRange = (10**-6,0.9), 
+    plotting.draw(nlj_plot, plot_directory = plot_directory_, ratio = {'histos':[(1,0)], 'texY': 'Ratio'}, scaling={1:0}, logY = log, logX = False, yRange = (1.1*10**-5,0.9), 
         #yRange = (0, 0.5) if 'Mult' not in var else (0, 15 ),  
         legend = [0.60,0.75,0.99,0.88]
     )
