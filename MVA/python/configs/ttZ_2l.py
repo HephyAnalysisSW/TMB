@@ -199,8 +199,8 @@ def predict_inputs( event, sample, jet_lstm = False):
         return   flat_variables
 
 #define training samples for multiclassification
-import tWZ.samples.nanoTuples_RunII_nanoAODv6_private_postProcessed as samples
-training_samples = [ samples.TTZ, samples.DY, samples.TTLep ] #samples.Top ] #, samples.nonprompt_3l ]
+import TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp as samples
+training_samples = [ samples.TTZ, samples.DY ] #, samples.TTLep ] 
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
