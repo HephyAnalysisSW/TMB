@@ -46,6 +46,15 @@ TTLep = Sample.fromDirectory(name="TTLep", treeName="Events", isData=False, colo
 dirs['DYJetsToLL']  = ["DYJetsToLL_M50_LO_comb"]
 DYJetsToLL = Sample.fromDirectory(name="DYJetsToLL", treeName="Events", isData=False, color=color.DY, texName="DYJetsToLL", directory=make_dirs( dirs['DYJetsToLL'] ))
 
+dirs['TTH']  = ["TTHbb", "TTHnobb_pow"]
+TTH = Sample.fromDirectory(name="TTH", treeName="Events", isData=False, color=color.TTH, texName="TTH", directory=make_dirs( dirs['TTH'] ))
+
+dirs['TTW']  = ["TTWToLNu", "TTWToQQ"]
+TTW = Sample.fromDirectory(name="TTW", treeName="Events", isData=False, color=color.TTW, texName="TTW", directory=make_dirs( dirs['TTW'] ))
+
+dirs['TTZ']  = ["TTZToLLNuNu", "TTZToLLNuNu_m1to10", "TTZToQQ"]
+TTZ = Sample.fromDirectory(name="TTZ", treeName="Events", isData=False, color=color.TTZ, texName="TTZ", directory=make_dirs( dirs['TTZ'] ))
+
 dirs['TTTT']  = ["TTTT"]
 TTTT = Sample.fromDirectory(name="TTTT", treeName="Events", isData=False, color=color.TTTT, texName="TTTT", directory=make_dirs( dirs['TTTT'] ))
 

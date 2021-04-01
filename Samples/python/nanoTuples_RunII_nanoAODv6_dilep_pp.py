@@ -12,3 +12,9 @@ TTWW       = Sample.combine( "TTWW", [Summer16.TTWW, Fall17.TTWW, Autumn18.TTWW]
 TTWZ       = Sample.combine( "TTWZ", [Summer16.TTWZ, Fall17.TTWZ, Autumn18.TTWZ])
 TTZZ       = Sample.combine( "TTZZ", [Summer16.TTZZ, Fall17.TTZZ, Autumn18.TTZZ])
 
+TTW       = Sample.combine( "TTW", [Summer16.TTW, Fall17.TTW, Autumn18.TTW])
+TTZ       = Sample.combine( "TTZ", [Summer16.TTZ, Fall17.TTZ, Autumn18.TTZ])
+TTH       = Sample.combine( "TTH", [Summer16.TTH, Fall17.TTH, Autumn18.TTH])
+
+TTWZH     = Sample.combine( "TTWZH", [Summer16.TTH, Fall17.TTH, Autumn18.TTH])
+TTWZH.legendText = "TT+W/Z/H"
