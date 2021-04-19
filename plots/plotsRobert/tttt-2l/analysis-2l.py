@@ -35,12 +35,10 @@ import numpy as np
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--noData',         action='store_true', default=True, help='also plot data?')
 argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?', )
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
-argParser.add_argument('--era',            action='store', type=str, default="RunII")
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
@@ -51,60 +49,36 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 if args.small:                        args.plot_directory += "_small"
-if args.noData:                       args.plot_directory += "_noData"
-
-logger.info( "Working in era %s", args.era)
 
 from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
 
-lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
-if args.era == "Run2016":
-    mc = [Summer16.DYJetsToLL, Summer16.TTTT, Summer16.TTW, Summer16.TTH, Summer16.TTZ]
-    sample_TTLep = Summer16.TTLep
-    lumi_scale = lumi_year[2016]/1000.
-elif args.era == "Run2017":
-    mc = [Fall17.DYJetsToLL, Fall17.TTTT, Fall17.TTW, Fall17.TTH, Fall17.TTZ]
-    sample_TTLep = Fall17.TTLep
-    lumi_scale = lumi_year[2017]/1000.
-elif args.era == "Run2018":
-    sample_TTLep = Autumn18.TTLep
-    mc = [Autumn18.DYJetsToLL, Autumn18.TTTT, Autumn18.TTW, Autumn18.TTH, Autumn18.TTZ]
-    lumi_scale = lumi_year[2018]/1000.
-elif args.era == "RunII":
-    sample_TTLep = TTLep
-    mc = [DYJetsToLL, TTTT, TTW, TTH, TTZ]
-    lumi_scale = sum(lumi_year.values())/1000.
-
+sample_TTLep = TTLep
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
-TTLep_bb.texName = sample_TTLep.name+" (b#bar{b})"
+TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2 
 TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
-TTLep_cc.texName = sample_TTLep.name+" (c#bar{c})"
+TTLep_cc.texName = "t#bar{t}c#bar{c}" 
 TTLep_cc.color   = ROOT.kRed - 3 
 TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
-TTLep_other.texName = sample_TTLep.name+" (other)"
+TTLep_other.texName = "t#bar{t} + light j." 
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-mc = [ TTLep_bb,TTLep_cc,TTLep_other ] + mc
+mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ] 
 
-## data sample
-#try:
-#  data_sample = eval(args.era)
-#except Exception as e:
-#  logger.error( "Didn't find %s", args.era )
-#  raise e
+all_mc = mc + [TTTT]
+lumi_scale = 350#sum(lumi_year.values())/1000.
 
-for sample in mc:
+for sample in all_mc:
     sample.scale           = 1 
 
 if args.small:
-    for sample in mc:
+    for sample in all_mc:
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         #sample.reduceFiles( to=1)
@@ -119,34 +93,30 @@ tex.SetTextAlign(11) # align right
 def charge(pdgId):
     return -pdgId/abs(pdgId)
 
-def drawObjects( plotData, dataMCScale, lumi_scale ):
+def drawObjects( dataMCScale, lumi_scale ):
     lines = [
-      (0.15, 0.95, 'CMS Preliminary' if plotData else 'CMS Simulation'), 
-      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV) Scale %3.2f'% ( lumi_scale, dataMCScale ) ) if plotData else (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale)
+      (0.15, 0.95, 'CMS Simulation'), 
+      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
     ]
-    if "mt2ll100" in args.selection and args.noData: lines += [(0.55, 0.5, 'M_{T2}(ll) > 100 GeV')] # Manually put the mt2ll > 100 GeV label
     return [tex.DrawLatex(*l) for l in lines] 
 
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, mode + ("_log" if log else ""), args.selection)
+    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunIII', mode + ("_log" if log else ""), args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
-      if not args.noData: 
-        if mode == "all": plot.histos[1][0].legendText = "Data"
-        if mode == "SF":  plot.histos[1][0].legendText = "Data (SF)"
 
       _drawObjects = []
 
       if isinstance( plot, Plot):
           plotting.draw(plot,
             plot_directory = plot_directory_,
-            ratio = {'yRange':(0.1,1.9)} if not args.noData else None,
+            ratio = None,
             logX = False, logY = log, sorting = True,
-            yRange = (0.03, "auto") if log else (0.001, "auto"),
+            yRange = (0.9, "auto") if log else (0.001, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
-            drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ) + _drawObjects,
+            drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
             
@@ -306,26 +276,19 @@ allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
 for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
-    if not args.noData:
-        data_sample.texName = "data"
-        data_sample.name           = "data"
-        data_sample.style          = styles.errorStyle(ROOT.kBlack)
-        lumi_scale                 = data_sample.lumi/1000
 
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_year[event.year]/1000.
+    weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
 
     for sample in mc: sample.style = styles.fillStyle(sample.color)
-    
-    for sample in mc:
+    TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
+ 
+    for sample in all_mc:
       sample.read_variables = read_variables_MC 
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     #yt_TWZ_filter.scale = lumi_scale * 1.07314
 
-    if not args.noData:
-      stack = Stack(mc, data_sample)
-    else:
-      stack = Stack(mc)
+    stack = Stack(mc, TTTT)
 
     # Use some defaults
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
@@ -862,7 +825,7 @@ for i_mode, mode in enumerate(allModes):
             h.GetXaxis().SetBinLabel(4, "medium")
             h.GetXaxis().SetBinLabel(5, "tight")
         
-    if args.noData: yields[mode]["data"] = 0
+    yields[mode]["data"] = 0
 
     yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
     dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
