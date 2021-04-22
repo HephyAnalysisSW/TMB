@@ -157,7 +157,7 @@ def predict_inputs( event, sample, jet_lstm = False):
 
 #define training samples for multiclassification
 import tWZ.samples.nanoTuples_RunII_nanoAODv6_private_postProcessed as samples
-training_samples = [ samples.TTTT, samples.TTW, samples.TTZ , samples.nonprompt_3l ]
+training_samples = [ samples.TTTT, samples.TTW, samples.TTZ , samples.nonprompt_3l]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 

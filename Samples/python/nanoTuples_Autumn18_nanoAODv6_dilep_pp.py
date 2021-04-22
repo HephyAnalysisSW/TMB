@@ -41,28 +41,28 @@ def make_dirs( dirs ):
 dirs = {}
 
 dirs['TTLep']  = ["TTLep_pow"]
-TTLep = Sample.fromDirectory(name="TTLep", treeName="Events", isData=False, color=color.TT, texName="TTLep", directory=make_dirs( dirs['TTLep'] ))
+TTLep = Sample.fromDirectory(name="TTLep", treeName="Events", isData=False, color=color.TT, texName="t#bar{t}", directory=make_dirs( dirs['TTLep'] ))
 
 dirs['TTH']  = ["TTHbbLep", "TTHnobb_pow"]
-TTH = Sample.fromDirectory(name="TTH", treeName="Events", isData=False, color=color.TTH, texName="TTH", directory=make_dirs( dirs['TTH'] ))
+TTH = Sample.fromDirectory(name="TTH", treeName="Events", isData=False, color=color.TTH, texName="t#bar{t}H", directory=make_dirs( dirs['TTH'] ))
 
 dirs['TTW']  = ["TTWToLNu", "TTWToQQ"]
-TTW = Sample.fromDirectory(name="TTW", treeName="Events", isData=False, color=color.TTW, texName="TTW", directory=make_dirs( dirs['TTW'] ))
+TTW = Sample.fromDirectory(name="TTW", treeName="Events", isData=False, color=color.TTW, texName="t#bar{t}W", directory=make_dirs( dirs['TTW'] ))
 
 dirs['TTZ']  = ["TTZToLLNuNu", "TTZToLLNuNu_m1to10", "TTZToQQ"]
-TTZ = Sample.fromDirectory(name="TTZ", treeName="Events", isData=False, color=color.TTZ, texName="TTZ", directory=make_dirs( dirs['TTZ'] ))
+TTZ = Sample.fromDirectory(name="TTZ", treeName="Events", isData=False, color=color.TTZ, texName="t#bar{t}Z", directory=make_dirs( dirs['TTZ'] ))
 
 dirs['DYJetsToLL']  = ["DYJetsToLL_M50_LO"]
 DYJetsToLL = Sample.fromDirectory(name="DYJetsToLL", treeName="Events", isData=False, color=color.DY, texName="DYJetsToLL", directory=make_dirs( dirs['DYJetsToLL'] ))
 
 dirs['TTTT']  = ["TTTT"]
-TTTT = Sample.fromDirectory(name="TTTT", treeName="Events", isData=False, color=color.TTTT, texName="TTTT", directory=make_dirs( dirs['TTTT'] ))
+TTTT = Sample.fromDirectory(name="TTTT", treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=make_dirs( dirs['TTTT'] ))
 
 dirs['TTWZ']  = ["TTWZ"]
-TTWZ = Sample.fromDirectory(name="TTWZ", treeName="Events", isData=False, color=color.TTWZ, texName="TTWZ", directory=make_dirs( dirs['TTWZ'] ))
+TTWZ = Sample.fromDirectory(name="TTWZ", treeName="Events", isData=False, color=color.TTWZ, texName="t#bar{t}WZ", directory=make_dirs( dirs['TTWZ'] ))
 
 dirs['TTWW']  = ["TTWW"]
-TTWW = Sample.fromDirectory(name="TTWW", treeName="Events", isData=False, color=color.TTWW, texName="TTWW", directory=make_dirs( dirs['TTWW'] ))
+TTWW = Sample.fromDirectory(name="TTWW", treeName="Events", isData=False, color=color.TTWW, texName="t#bar{t}WW", directory=make_dirs( dirs['TTWW'] ))
 
 dirs['TTZZ']  = ["TTZZ"]
-TTZZ = Sample.fromDirectory(name="TTZZ", treeName="Events", isData=False, color=color.TTZZ, texName="TTZZ", directory=make_dirs( dirs['TTZZ'] ))
+TTZZ = Sample.fromDirectory(name="TTZZ", treeName="Events", isData=False, color=color.TTZZ, texName="t#bar{t}ZZ", directory=make_dirs( dirs['TTZZ'] ))

@@ -6,10 +6,11 @@
 #python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-tttt-v3 --sample TTW  --config tttt_3l 
 #python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-tttt-v3 --sample TTZ  --config tttt_3l 
 #python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-tttt-v3 --sample nonprompt_3l --config tttt_3l 
+python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-tttt-v3 --sample TTH --config tttt_3l_tth 
 
-python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample TT --config ttZ_2l 
-python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample DY  --config ttZ_2l 
-python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample TTZ  --config ttZ_2l 
+#python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample TT --config ttZ_2l 
+#python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample DY  --config ttZ_2l 
+#python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ --sample TTZ  --config ttZ_2l 
 #python make_ntuple.py  --output /scratch-cbe/users/$USER/TMB/training-ntuples-tttt-v3 --sample nonprompt_3l --config tttt_3l 
 
 #python make_ntuple.py  --output /eos/vbc/user/$USER/TMB/training-ntuples-tttt-v1 --sample TTTT         --config tttt_2l 
