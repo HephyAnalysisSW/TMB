@@ -11,13 +11,12 @@ from TMB.Tools.user import plot_directory
 
 from Analysis.Tools.GenSearch import GenSearch
 
-maxN_files = 1
+maxN_files = 10
 
 products = {
     'gp':      {'type':'vector<reco::GenParticle>', 'label':("genParticles")},
     'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
     }
-
 
 weights = ['mt_174p0', 'mt_173p9', 'mt_173p8', 'mt_173p7', 'mt_173p6', 'mt_173p5', 'mt_173p4', 'mt_173p3', 'mt_173p2', 'mt_173p1', 'mt_173p0', 'mt_172p9', 'mt_172p8', 'mt_172p7', 'mt_172p6', 'mt_172p5', 'mt_172p4', 'mt_172p3', 'mt_172p2', 'mt_172p1', 'mt_172p0', 'mt_171p9', 'mt_171p8', 'mt_171p7', 'mt_171p6', 'mt_171p5', 'mt_171p4', 'mt_171p3', 'mt_171p2', 'mt_171p1', 'mt_171p0',] 
 
@@ -28,7 +27,7 @@ for i_weight, weight in enumerate(weights):
     wd[weight] = {
         'm'   : m,
         'h_mt' : ROOT.TH1F('mt_'+weight, 'mt_'+weight, 30, 165, 180),
-        'h_mlb' : ROOT.TH1F('mlb_'+weight, 'mlb_'+weight, 30, 50, 250),
+        'h_mlb' : ROOT.TH1F('mlb_'+weight, 'mlb_'+weight, 10, 0, 150),
         }  
 
     wd[weight]['h_mt'].SetLineColor(40+i_weight)
@@ -88,17 +87,19 @@ mlb_rw = Plot.fromHisto(name = "mlb_n"+str(len(tt1l.files)), histos = [[wd[w]['h
 
 nicename = {'mt': 'gen m_{t}', 'mlb':'gen m_{lb}'}
 
-for varname in ['mt', 'mlb']:
-    plot  = Plot.fromHisto(name = varname+"_n"+str(len(tt1l.files)), histos = [[wd[w]['h_'+varname]] for w in weights], texX = nicename[varname] , texY = "arbitrary" )
+for varname, yRange in [('mt', (0,2)), ('mlb', (0.5,1.5))]:
 
-    h_nom = wd['mt_172p5']['h_'+varname].Clone()
-    h_nom.SetLineColor(ROOT.kBlue) 
-    h_nom.SetLineWidth(2) 
-    plot.histos.append( [h_nom] )
-    plotting.draw(plot, 
-            plot_directory = os.path.join( plot_directory, 'mt_rw'),
-            yRange = 'auto',
-            legend = None,
-            ratio = {'yRange':(0,2), 'histos': [ (i,weights.index('mt_172p5')) for i in range(len(weights))]}, logY = True, logX = False,
-    #        drawObjects = [h_nom]
-        )
+    for logY in [True, False]:
+        plot  = Plot.fromHisto(name = varname+"_n"+str(len(tt1l.files))+("_log" if logY else ""), histos = [[wd[w]['h_'+varname]] for w in weights], texX = nicename[varname] , texY = "arbitrary" )
+
+        h_nom = wd['mt_172p5']['h_'+varname].Clone()
+        h_nom.SetLineColor(ROOT.kBlue) 
+        h_nom.SetLineWidth(2) 
+        plot.histos.append( [h_nom] )
+        plotting.draw(plot, 
+                plot_directory = os.path.join( plot_directory, 'mt_rw'),
+                yRange = 'auto',
+                legend = None,
+                ratio = {'yRange':yRange, 'histos': [ (i,weights.index('mt_172p5')) for i in range(len(weights))]}, logY = logY, logX = False,
+        #        drawObjects = [h_nom]
+            )
