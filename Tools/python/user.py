@@ -13,3 +13,17 @@ if os.environ['USER'] in ['robert.schoefbeck']:
     gridpack_directory                  = "/eos/vbc/user/robert.schoefbeck/gridpacks/"
 
     cache_directory                     = "/users/robert.schoefbeck/public/cache/TMB/"
+
+if os.environ['USER'] in ['rosmarie.schoefbeck']:
+
+    #tmp_directory                       = "/mnt/hephy/cms/rosmarie.schoefbeck/tmp/TMB/"
+    results_directory                   = "/mnt/hephy/cms/rosmarie.schoefbeck/TMB/results/"
+    skim_output_directory               = "/scratch-cbe/users/rosmarie.schoefbeck/TMB/postprocessed/"
+
+    #mva_directory                       = "/mnt/hephy/cms/rosmarie.schoefbeck/TMB/mva/"
+    plot_directory                      = "/mnt/hephy/cms/rosmarie.schoefbeck/www/TMB/"
+
+    #postprocessing_output_directory     = "/scratch/rosmarie.schoefbeck/TMB/nanoTuples/postprocessed/"
+    gridpack_directory                  = "/eos/vbc/user/rosmarie.schoefbeck/gridpacks/"
+
+    cache_directory                     = "/users/rosmarie.schoefbeck/public/cache/TMB/"
