@@ -8,13 +8,13 @@ class color():
 
 color.data           = ROOT.kBlack
 color.Zinv           = ROOT.kGray+2
-color.DY             = ROOT.kAzure+4 #ROOT.kCyan+2
+#color.DY             = ROOT.kAzure+4 #ROOT.kCyan+2
 color.ZGamma         = ROOT.kBlue+2
 color.WGamma         = ROOT.kAzure-3
 color.VGamma         = ROOT.kAzure+3 #ROOT.kAzure
 color.TTH            = ROOT.kAzure+8 #ROOT.kAzure
 color.TWZ            = ROOT.kRed
-color.TTZ            = ROOT.kAzure+4 #ROOT.kBlack
+#color.TTZ            = ROOT.kAzure+4 #ROOT.kBlack
 color.TTW            = ROOT.kGreen+2 
 color.TTG            = ROOT.kOrange
 color.Other          = ROOT.kOrange+2 #ROOT.kViolet+5
@@ -64,3 +64,9 @@ color.VG5            = ROOT.kBlack
 color.VG6            = ROOT.kCyan+1
 color.VG7            = ROOT.kViolet
 color.VG8            = ROOT.kYellow
+
+
+color.DY             = ROOT.kOrange-3
+color.TTZ            = ROOT.kGreen+4 #ROOT.kBlack
+color.TTLep          = ROOT.kAzure+6
+

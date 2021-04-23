@@ -52,7 +52,7 @@ TTW = Sample.fromDirectory(name="TTW", treeName="Events", isData=False, color=co
 dirs['TTZ']  = ["TTZToLLNuNu", "TTZToLLNuNu_m1to10", "TTZToQQ"]
 TTZ = Sample.fromDirectory(name="TTZ", treeName="Events", isData=False, color=color.TTZ, texName="t#bar{t}Z", directory=make_dirs( dirs['TTZ'] ))
 
-dirs['DYJetsToLL']  = ["DYJetsToLL_M50_LO"]
+dirs['DYJetsToLL']  = ["DYJetsToLL_M50_LO"] #DYJetsToLL_M10to50_LO
 DYJetsToLL = Sample.fromDirectory(name="DYJetsToLL", treeName="Events", isData=False, color=color.DY, texName="DYJetsToLL", directory=make_dirs( dirs['DYJetsToLL'] ))
 
 dirs['TTTT']  = ["TTTT"]
