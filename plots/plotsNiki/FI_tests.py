@@ -50,13 +50,6 @@ import TMB.Samples.pp_tWZ_v6 as samples
 
 sample = getattr( samples, args.sample )
 
-lumi_scale = 137
-
-#lumi_weight = lambda event, sample: lumi_scale*event.weight 
-
-def lumi_weight( event, sample):
-    return 1.# lumi_scale*event.weight
-
 if args.small:
     sample.reduceFiles( to = 1 )
     args.plot_directory += "_small"
