@@ -29,6 +29,7 @@ import Analysis.Tools.syncer             as     syncer
 import numpy as np
 
 import time
+from cut_opt import *
 
 # Arguments
 import argparse
@@ -39,6 +40,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--plot_directory', action='store', default='FI-test-v6')
 argParser.add_argument('--sample',        action='store', type=str, default="WGToLNu_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
+argParser.add_argument('--second_photon_pt_cut',      action='store', type=float, default=400.0)
 args = argParser.parse_args()
 
 # Logger
@@ -93,32 +95,7 @@ read_variables = [
 WC    = 'cWWW'
 WCval = 1.0
 
-# create event-wise coeffs with photon_pt, adapted from WeightInfo.py
-def get_coeff_list_with_photon_pt_from_events(sample, selectionString=None, weightFunction=None):
-        ''' Create list of weights for each event
-        '''
-        # RootTools
-        from RootTools.core.standard             import TreeVariable, VectorTreeVariable
-
-        sample.setSelectionString(selectionString) 
-        
-        variables = map( TreeVariable.fromString, [ "np/I", "photon_pt/F" ] )
-        variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=1000) )
-
-        reader = sample.treeReader( variables = variables )
-        reader.start()
-
-        coeffs_with_photon_pt = []
-        while reader.run():
-            event_data = {
-                'coeffs': [reader.event.p_C[i] * (weightFunction( reader.event, sample )) if weightFunction is not None else reader.event.p_C[i] for i in range(reader.event.np)],
-                'photon_pt': reader.event.photon_pt
-            }
-            coeffs_with_photon_pt.append(event_data)
-
-        return coeffs_with_photon_pt
-
-photon_pt_initial_cut = 400
+photon_pt_initial_cut = args.second_photon_pt_cut
 
 t_start = time.time()
 
@@ -133,10 +110,12 @@ t_draw = time.time() - t_start
 print "time needed for data selection: %f seconds" % t_draw
 
 t_start = time.time()
+fi_calc_time = 0.0
 
 second_photon_pt_cut_with_fi = []
 max_fi_sum = 0
 max_photon_pt = photon_pt_initial_cut
+total_fi_sum = w.get_fisherInformation_matrix(np.sum(sorted_coeffs_matrix, axis=1), [WC], **{WC:WCval})[1][0][0]
 
 for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
     fi_sum = 0
@@ -144,19 +123,20 @@ for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
     left_coeffs = np.sum(sorted_coeffs_matrix[:, 0:i+1], axis=1)
     right_coeffs = np.sum(sorted_coeffs_matrix[:, i+1:], axis=1)
     assert left_coeffs[0] + right_coeffs[0] == number_of_events
+    t_start_2 = time.time()
     fi_sum += w.get_fisherInformation_matrix(left_coeffs, [WC], **{WC:WCval})[1][0][0]
     fi_sum += w.get_fisherInformation_matrix(right_coeffs, [WC], **{WC:WCval})[1][0][0]
+    fi_calc_time += time.time() -t_start_2
     if fi_sum > max_fi_sum:
         max_photon_pt = event_data['photon_pt']
         max_fi_sum = fi_sum
-    second_photon_pt_cut_with_fi.append([event_data['photon_pt'], fi_sum])
+    second_photon_pt_cut_with_fi.append([event_data['photon_pt'], fi_sum/total_fi_sum-1])
 
 t_cut_optimization = time.time() - t_start
 
-
 print "time needed for cut optimization: %f seconds" % t_cut_optimization
-
-print "max fi sum: %f at second cut on photon_pt: %f" % (max_fi_sum, max_photon_pt)
+print "of this time, fi calc time: %f second" % fi_calc_time
+print "total fi sum without cut %f, max fi sum: %f at second cut on photon_pt: %f, max relative fi increase in: %.02f%%" % (total_fi_sum, max_fi_sum, max_photon_pt, (max_fi_sum/total_fi_sum-1)*100)
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -164,8 +144,8 @@ import matplotlib.pyplot as plt
 
 second_photon_pt_cut_with_fi_matrix = np.array(second_photon_pt_cut_with_fi)
 
-plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1])
+plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1]*100)
 plt.grid(True)
 plt.xlabel('second photon pt cut')
-plt.ylabel('fisher information')
+plt.ylabel('relative fisher information increase in %')
 plt.savefig('FI_over_second_photon_pt_cut.pdf', dpi=1000)
