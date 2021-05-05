@@ -85,7 +85,8 @@ Y = dataset[:, n_var_flat]
 
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
-Y = label_binarize(Y, classes=classes)
+
+Y = label_binarize(Y, classes=classes+[-1])[:,:2]
 
 # loading vector branches for LSTM
 if args.add_LSTM:
@@ -176,9 +177,9 @@ history = model.fit(training_data,
                     epochs=500, 
                     batch_size=batch_size,
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
-                    callbacks=[callback],
                     #validation_split=0.1
                     validation_data = validation_data,
+                    callbacks=[callback],
                    )
 print('training finished')
 
