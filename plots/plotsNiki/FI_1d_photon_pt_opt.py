@@ -40,7 +40,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--plot_directory', action='store', default='FI-test-v6')
 argParser.add_argument('--sample',        action='store', type=str, default="WGToLNu_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
-argParser.add_argument('--second_photon_pt_cut',      action='store', type=float, default=400.0)
+argParser.add_argument('--first_photon_pt_cut',      action='store', type=float, default=400.0)
 args = argParser.parse_args()
 
 # Logger
@@ -95,7 +95,7 @@ read_variables = [
 WC    = 'cWWW'
 WCval = 1.0
 
-photon_pt_initial_cut = args.second_photon_pt_cut
+photon_pt_initial_cut = args.first_photon_pt_cut
 
 t_start = time.time()
 
