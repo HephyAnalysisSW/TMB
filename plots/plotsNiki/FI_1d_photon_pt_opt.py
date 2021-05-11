@@ -43,6 +43,7 @@ argParser.add_argument('--sample',        action='store', type=str, default="WGT
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
 argParser.add_argument('--first_photon_pt_cut',      action='store', type=float, default=400.0)
 argParser.add_argument('--bootstrapping',            action='store_true', help='Optimize on bootstrapped median', default=False)
+argParser.add_argument('--bootstrapping_N',      action='store', type=int, default=1000)
 args = argParser.parse_args()
 
 # Logger
@@ -120,12 +121,12 @@ total_fi_sum = w.get_fisherInformation_matrix(np.sum(sorted_coeffs_matrix, axis=
 event_base_indices = np.arange(number_of_events)
 
 for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
-    print i
+    print "running cut %d" % i
     fi_sum = 0.0
     cut_val = event_data['photon_pt']
 
     if args.bootstrapping:
-        def fi_sum_for_events_with_replacement_after_cut(event_indices):
+        def relative_fi_sum_increase_for_events_with_replacement_after_cut(event_indices):
             fi_sum_inner = 0.0
             left_coeffs = np.zeros(number_of_coeffs)
             right_coeffs = np.zeros(number_of_coeffs)
@@ -137,11 +138,12 @@ for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
             fi_sum_inner += w.get_fisherInformation_matrix(left_coeffs, [WC], **{WC:WCval})[1][0][0]
             fi_sum_inner += w.get_fisherInformation_matrix(right_coeffs, [WC], **{WC:WCval})[1][0][0]
             
-            return fi_sum_inner
+            total_fi_sum = w.get_fisherInformation_matrix(left_coeffs+right_coeffs, [WC], **{WC:WCval})[1][0][0]
+            return fi_sum_inner/total_fi_sum - 1
 
         t_start_2 = time.time()
-        fi_sum_quantiles = boot_strapped_quantiles(event_base_indices, fi_sum_for_events_with_replacement_after_cut, 50)
-        print fi_sum_quantiles
+        fi_sum_quantiles = boot_strapped_quantiles(event_base_indices, relative_fi_sum_increase_for_events_with_replacement_after_cut, args.bootstrapping_N)
+        #print fi_sum_quantiles
         fi_sum += fi_sum_quantiles[2]
         fi_calc_time += time.time() - t_start_2
     else:
@@ -159,8 +161,6 @@ for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
         max_fi_sum = fi_sum
 
     if args.bootstrapping:
-        #transformed_fi_sum_quantiles_list = (np.array(fi_sum_quantiles)/total_fi_sum - 1).tolist()
-        #second_photon_pt_cut_with_fi.append([cut_val] + transformed_fi_sum_quantiles_list)
         second_photon_pt_cut_with_fi.append([cut_val] + fi_sum_quantiles)
     else:
         second_photon_pt_cut_with_fi.append([cut_val, fi_sum/total_fi_sum-1])
@@ -169,7 +169,10 @@ t_cut_optimization = time.time() - t_start
 
 print "time needed for cut optimization: %f seconds" % t_cut_optimization
 print "of this time, fi calc time: %f second" % fi_calc_time
-print "total fi sum without cut %f, max fi sum: %f at second cut on photon_pt: %f, max relative fi increase in: %.02f%%" % (total_fi_sum, max_fi_sum, max_photon_pt, (max_fi_sum/total_fi_sum-1)*100)
+if args.bootstrapping:
+    print "max relative fi increase: %.02f%% at second cut on photon_pt: %f:" % (max_fi_sum*100, max_photon_pt)
+else:
+    print "total fi sum without cut %f, max fi sum: %f at second cut on photon_pt: %f, max relative fi increase in: %.02f%%" % (total_fi_sum, max_fi_sum, max_photon_pt, (max_fi_sum/total_fi_sum-1)*100)
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -178,8 +181,8 @@ import matplotlib.pyplot as plt
 second_photon_pt_cut_with_fi_matrix = np.array(second_photon_pt_cut_with_fi)
 
 if args.bootstrapping:
-    plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 2])
-    plt.fill_between(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1], second_photon_pt_cut_with_fi_matrix[:, 3], alpha=0.5)
+    plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 2]*100)
+    plt.fill_between(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1]*100, second_photon_pt_cut_with_fi_matrix[:, 3]*100, alpha=0.5)
 else:    
     plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1]*100)
 plt.grid(True)
