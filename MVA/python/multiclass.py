@@ -55,10 +55,12 @@ mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.varia
 
 n_var_flat   = len(mva_variables)
 
+
 df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
     upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
     logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
+    # with uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')) as upfile: # 
     upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root'))
     df_file[training_sample.name]  = upfile["Events"].pandas.df(branches = mva_variables )
     # enumerate
@@ -86,7 +88,8 @@ Y = dataset[:, n_var_flat]
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
 
-Y = label_binarize(Y, classes=classes+[-1])[:,:2]
+if len(config.training_samples) == 2: Y = label_binarize(Y, classes=classes+[-1])[:,:2]
+else: Y = label_binarize(Y, classes=classes)
 
 # loading vector branches for LSTM
 if args.add_LSTM:

@@ -19,10 +19,11 @@ from math                                import sqrt, cos, sin, pi, atan2, cosh,
 # RootTools
 from RootTools.core.standard             import *
 
-# tWZ
+# TMB
 from TMB.Tools.user                      import plot_directory
 from TMB.Tools.cutInterpreter            import cutInterpreter
 from tWZ.Tools.objectSelection           import lepString # probably will merge TMB and tWZ repos 
+
 # Analysis
 from Analysis.Tools.WeightInfo                import WeightInfo
 import Analysis.Tools.syncer             as     syncer
@@ -90,6 +91,15 @@ FI_string = w.get_fisher_weight_string(WC,WC, **{WC:WCval})
 
 # Get the coefficient list for a selection
 coeffList = w.getCoeffListFromDraw( sample, 'photon_pt>400' ) 
+# compute FI from coefficient list:
+print ("FI for %s and %r"%(WC, {WC:WCval}), w.get_fisherInformation_matrix(coeffList, [WC], **{WC:WCval}))
+
+# Get the coefficient list for a selection
+coeffList = w.getCoeffListFromDraw( sample, 'photon_pt>400&&photon_pt<450' ) 
+# compute FI from coefficient list:
+print ("FI for %s and %r"%(WC, {WC:WCval}), w.get_fisherInformation_matrix(coeffList, [WC], **{WC:WCval}))
+
+coeffList = w.getCoeffListFromDraw( sample, 'photon_pt>450' ) 
 # compute FI from coefficient list:
 print ("FI for %s and %r"%(WC, {WC:WCval}), w.get_fisherInformation_matrix(coeffList, [WC], **{WC:WCval}))
 
