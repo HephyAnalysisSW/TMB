@@ -1,3 +1,6 @@
+import numpy as np
+
+
 # create event-wise coeffs with photon_pt, adapted from WeightInfo.py
 def get_coeff_list_with_photon_pt_from_events(sample, selectionString=None, weightFunction=None):
         ''' Create list of weights for each event
@@ -22,3 +25,11 @@ def get_coeff_list_with_photon_pt_from_events(sample, selectionString=None, weig
             coeffs_with_photon_pt.append(event_data)
 
         return coeffs_with_photon_pt
+
+
+def get_sorted_events(coeffs_with_features_list_events, sort_by='photon_pt'):
+    sorted_coeffs_with_feature_list_events = sorted(coeffs_with_features_list_events, key=lambda x: x[sort_by])
+    sorted_coeffs_list_events = map(lambda x: x['coeffs'], sorted_coeffs_with_feature_list_events)
+    sorted_coeffs_matrix = np.array(zip(*sorted_coeffs_list_events))
+
+    return sorted_coeffs_with_feature_list_events, sorted_coeffs_matrix

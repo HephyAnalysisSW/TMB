@@ -30,6 +30,7 @@ import numpy as np
 
 import time
 from cut_opt import *
+from bootstrapping import boot_strapped_quantiles
 
 # Arguments
 import argparse
@@ -41,6 +42,7 @@ argParser.add_argument('--plot_directory', action='store', default='FI-test-v6')
 argParser.add_argument('--sample',        action='store', type=str, default="WGToLNu_fast")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
 argParser.add_argument('--first_photon_pt_cut',      action='store', type=float, default=400.0)
+argParser.add_argument('--bootstrapping',            action='store_true', help='Optimize on bootstrapped median', default=False)
 args = argParser.parse_args()
 
 # Logger
@@ -101,10 +103,9 @@ t_start = time.time()
 
 coeffs_with_photon_pt_list_events = get_coeff_list_with_photon_pt_from_events(sample, "photon_pt>%f" % photon_pt_initial_cut)
 number_of_events = len(coeffs_with_photon_pt_list_events)
+number_of_coeffs = len(coeffs_with_photon_pt_list_events[0]['coeffs'])
 
-sorted_coeffs_with_photon_pt_list_events = sorted(coeffs_with_photon_pt_list_events, key=lambda x: x['photon_pt'])
-sorted_coeffs_list_events = map(lambda x: x['coeffs'], sorted_coeffs_with_photon_pt_list_events)
-sorted_coeffs_matrix = np.array(zip(*sorted_coeffs_list_events))
+sorted_coeffs_with_photon_pt_list_events, sorted_coeffs_matrix = get_sorted_events(coeffs_with_photon_pt_list_events, 'photon_pt')
 
 t_draw = time.time() - t_start
 print "time needed for data selection: %f seconds" % t_draw
@@ -116,21 +117,53 @@ second_photon_pt_cut_with_fi = []
 max_fi_sum = 0
 max_photon_pt = photon_pt_initial_cut
 total_fi_sum = w.get_fisherInformation_matrix(np.sum(sorted_coeffs_matrix, axis=1), [WC], **{WC:WCval})[1][0][0]
+event_base_indices = np.arange(number_of_events)
 
 for i, event_data in enumerate(sorted_coeffs_with_photon_pt_list_events):
-    fi_sum = 0
-    # can be implemented more efficiently by incremental changes
-    left_coeffs = np.sum(sorted_coeffs_matrix[:, 0:i+1], axis=1)
-    right_coeffs = np.sum(sorted_coeffs_matrix[:, i+1:], axis=1)
-    assert left_coeffs[0] + right_coeffs[0] == number_of_events
-    t_start_2 = time.time()
-    fi_sum += w.get_fisherInformation_matrix(left_coeffs, [WC], **{WC:WCval})[1][0][0]
-    fi_sum += w.get_fisherInformation_matrix(right_coeffs, [WC], **{WC:WCval})[1][0][0]
-    fi_calc_time += time.time() -t_start_2
+    print i
+    fi_sum = 0.0
+    cut_val = event_data['photon_pt']
+
+    if args.bootstrapping:
+        def fi_sum_for_events_with_replacement_after_cut(event_indices):
+            fi_sum_inner = 0.0
+            left_coeffs = np.zeros(number_of_coeffs)
+            right_coeffs = np.zeros(number_of_coeffs)
+            for event_index in event_indices:
+                if sorted_coeffs_with_photon_pt_list_events[event_index]['photon_pt'] <= cut_val:
+                    left_coeffs += sorted_coeffs_with_photon_pt_list_events[event_index]['coeffs']
+                else:
+                    right_coeffs += sorted_coeffs_with_photon_pt_list_events[event_index]['coeffs']
+            fi_sum_inner += w.get_fisherInformation_matrix(left_coeffs, [WC], **{WC:WCval})[1][0][0]
+            fi_sum_inner += w.get_fisherInformation_matrix(right_coeffs, [WC], **{WC:WCval})[1][0][0]
+            
+            return fi_sum_inner
+
+        t_start_2 = time.time()
+        fi_sum_quantiles = boot_strapped_quantiles(event_base_indices, fi_sum_for_events_with_replacement_after_cut, 50)
+        print fi_sum_quantiles
+        fi_sum += fi_sum_quantiles[2]
+        fi_calc_time += time.time() - t_start_2
+    else:
+        # can be implemented more efficiently by incremental changes
+        left_coeffs = np.sum(sorted_coeffs_matrix[:, 0:i+1], axis=1)
+        right_coeffs = np.sum(sorted_coeffs_matrix[:, i+1:], axis=1)
+        assert left_coeffs[0] + right_coeffs[0] == number_of_events
+        t_start_2 = time.time()
+        fi_sum += w.get_fisherInformation_matrix(left_coeffs, [WC], **{WC:WCval})[1][0][0]
+        fi_sum += w.get_fisherInformation_matrix(right_coeffs, [WC], **{WC:WCval})[1][0][0]
+        fi_calc_time += time.time() - t_start_2
+    
     if fi_sum > max_fi_sum:
-        max_photon_pt = event_data['photon_pt']
+        max_photon_pt = cut_val
         max_fi_sum = fi_sum
-    second_photon_pt_cut_with_fi.append([event_data['photon_pt'], fi_sum/total_fi_sum-1])
+
+    if args.bootstrapping:
+        #transformed_fi_sum_quantiles_list = (np.array(fi_sum_quantiles)/total_fi_sum - 1).tolist()
+        #second_photon_pt_cut_with_fi.append([cut_val] + transformed_fi_sum_quantiles_list)
+        second_photon_pt_cut_with_fi.append([cut_val] + fi_sum_quantiles)
+    else:
+        second_photon_pt_cut_with_fi.append([cut_val, fi_sum/total_fi_sum-1])
 
 t_cut_optimization = time.time() - t_start
 
@@ -144,7 +177,11 @@ import matplotlib.pyplot as plt
 
 second_photon_pt_cut_with_fi_matrix = np.array(second_photon_pt_cut_with_fi)
 
-plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1]*100)
+if args.bootstrapping:
+    plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 2])
+    plt.fill_between(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1], second_photon_pt_cut_with_fi_matrix[:, 3], alpha=0.5)
+else:    
+    plt.plot(second_photon_pt_cut_with_fi_matrix[:, 0], second_photon_pt_cut_with_fi_matrix[:, 1]*100)
 plt.grid(True)
 plt.xlabel('second photon pt cut')
 plt.ylabel('relative fisher information increase in %')
