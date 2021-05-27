@@ -155,46 +155,31 @@ def load_csv(filename = 'data_banknote_authentication.csv'):
 max_depth = 5
 min_size = 10
 
-# load dataset
-dataset = load_csv('data_banknote_authentication.csv')
-np.random.seed(1)
-np.random.shuffle(dataset)
+import uproot
+import awkward
+import numpy as np
+import pandas as pd
 
-# train on the whole dataset
-#tree = Node( dataset, max_depth = max_depth, min_size = min_size)
-#tree.print_tree()
+input_file = "/eos/vbc/user/robert.schoefbeck/TMB/bit/MVA-training/ttG_WG_small/WGToLNu_fast/WGToLNu_fast.root"
+upfile     = uproot.open( input_file )
+tree       = upfile["Events"]
+n_events   = len( upfile["Events"] )
+n_events   = max(10000, n_events)
+entrystart, entrystop = 0, n_events 
 
-# split into 'folds'
-n_folds = 5
-folds  = [ np.take( dataset, range( *chunk(len(dataset), n_folds, n_fold)), axis=0) for n_fold in range(n_folds) ]
+# Load features
+features   = [ "mva_photon_pt", "mva_photon_eta", "mva_photonJetdR", "mva_photonLepdR", "mva_mT" ]
+df         = tree.pandas.df(branches = features, entrystart=entrystart, entrystop=entrystop)
+x          = df.values
 
-# train on N-1 folds and test on the remaining. Obtain the resolting scores
-scores = list()
-for n_fold in range(n_folds):
+# Load weights
+from Analysis.Tools.WeightInfo import WeightInfo
+w = WeightInfo("/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl")
 
-    # Make train set from N-1 folds
-    train_set = np.concatenate( [ folds[n_fold_] for n_fold_ in range(n_folds) if n_fold_!=n_fold], axis=0)
+# Load all weights and reshape the array according to ndof from weightInfo
+weights    = tree.pandas.df(branches = ["p_C"], entrystart=entrystart, entrystop=entrystop).values.reshape((-1,w.nid))
 
-    # train a tree
-    tree = Node( train_set, max_depth = max_depth, min_size = min_size)
+assert len(x)==len(weights), "Need equal length for weights and features."
 
-    # Make test set from remaining fold
-    test_set = copy.deepcopy( folds[n_fold] )
-    for row in test_set:
-        row[-1] = None
-
-    # predict on test set
-    predicted = map( tree.predict, test_set )
-    # truth
-    actual  = map( operator.itemgetter(-1), folds[n_fold] )
-    # count correct classifications
-    correct = sum( operator.eq(a,b) for a,b in zip(actual, predicted) )
-
-    accuracy = correct / float(len(test_set)) * 100.0
-
-    # recall score
-    scores.append(accuracy)
-
-# That's how good we were!
-print ( "Scores: " + ", ".join( "%3.3f"%s for s in scores ) )
+# shuffle!
 
