@@ -21,7 +21,7 @@ class Node:
         self.split(depth=depth)
 
     # compute the gini impurity from a set of booleans defining the 'left' box and (by negation) the 'right' box
-    def gini( self, value, left_indices):
+    def gini( self, left_indices):
         ''' Calculate Gini index for split dataset
         '''
         gini = 0
@@ -57,7 +57,7 @@ class Node:
             for value in feature_values:
                 #print (i_feature, value)
                 left_indices = feature_values<value
-                gini = self.gini( value, left_indices )
+                gini = self.gini( left_indices )
                 if gini < self.split_score:
                     #print ("found better!", i_feature, value, "old score", self.split_score, "gini", gini)
                     self.split_i_feature = i_feature
