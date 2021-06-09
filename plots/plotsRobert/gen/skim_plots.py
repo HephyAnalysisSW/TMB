@@ -10,6 +10,7 @@ from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh
 
 # Analysis
 import Analysis.Tools.syncer        as syncer
+from   Analysis.Tools.WeightInfo    import WeightInfo
 
 # RootTools
 from RootTools.core.standard        import *
@@ -17,8 +18,7 @@ from RootTools.core.standard        import *
 # TMB
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
-from TMB.Tools.WeightInfo           import WeightInfo
-from TMB.Tools.genCutInterpreter       import genCutInterpreter
+from TMB.Tools.genCutInterpreter    import genCutInterpreter
 from TMB.Tools.VV_angles            import VV_angles
 from TMB.Tools.objectSelection      import isGoodGenJet
 
