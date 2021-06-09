@@ -19,8 +19,7 @@ from TMB.Tools.user                   import skim_output_directory
 from TMB.Tools.GenSearch              import GenSearch
 from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosThetaStar, closestOSDLMassToMZ, checkRootFile
 from TMB.Tools.HyperPoly              import HyperPoly
-from TMB.Tools.WeightInfo             import WeightInfo
-#from Analysis.Tools.WeightInfo             import WeightInfo
+from Analysis.Tools.WeightInfo        import WeightInfo
 from TMB.Tools.DelphesProducer        import DelphesProducer
 from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
 from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
@@ -33,7 +32,7 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',              action='store_true', help='Run only on a small subset of the data?')#, default = True)
 argParser.add_argument('--overwrite',          action='store',      nargs='?', choices = ['none', 'all', 'target'], default = 'none', help='Overwrite?')#, default = True)
-argParser.add_argument('--targetDir',          action='store',      default='v5')
+argParser.add_argument('--targetDir',          action='store',      default='v7')
 argParser.add_argument('--sample',             action='store',      default='fwlite_ttZ_ll_LO_scan', help="Name of the sample loaded from fwlite_benchmarks. Only if no inputFiles are specified")
 argParser.add_argument('--inputFiles',         action='store',      nargs = '*', default=[])
 argParser.add_argument('--delphesEra',         action='store',      default = None, choices = ["RunII", "RunIICentral", "RunIInoDelphesIso", "RunIIPileUp", "PhaseII"], help="specify delphes era")
@@ -64,6 +63,8 @@ else:
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v5.py"
     elif args.targetDir.startswith('v6'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v6.py"
+    elif args.targetDir.startswith('v7'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v7.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )
@@ -373,7 +374,6 @@ def filler( event ):
         genLeps_dict[i_genLep]['grandmother_pdgId'] = grandmother_pdgId
     fill_vector_collection( event, "genLep", lep_all_varnames, genLeps_dict ) 
 
-
     # generated Zs decaying to leptons
     genZs = filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp)
     genZs.sort( key = lambda p: -p.pt() )
@@ -388,7 +388,10 @@ def filler( event ):
         genZs_dict[i_genZ]['l1_index'] = genLeps_from_bosons.index( genZ.daughter(0) )
         genZs_dict[i_genZ]['l2_index'] = genLeps_from_bosons.index( genZ.daughter(1) )
         genZs_dict[i_genZ]['cosThetaStar'] = cosThetaStar(genZ.mass(), genZ.pt(), genZ.eta(), genZ.phi(), lm.pt(), lm.eta(), lm.phi())
-    fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict ) 
+    fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict )
+    for genZ in genZs:
+        genZ_ascend = search.ascend(genZ) 
+        print "genZ pdgId %i m-pdgId %i pt %3.2f eta %3.2f"%(  genZ_ascend.pdgId(), genZ_ascend.mother(0).pdgId(), genZ_ascend.pt(), genZ_ascend.eta() )
 
     # generated W decaying to leptons
     genWs = filter( lambda p:abs(p.pdgId())==24 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 12, 13, 14, 15, 16], gp)
@@ -405,6 +408,9 @@ def filler( event ):
         genWs_dict[i_genW]['l2_index'] = genLeps_from_bosons.index( genW.daughter(1) )
         genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(genW.mass(), genW.pt(), genW.eta(), genW.phi(), l.pt(), l.eta(), l.phi())
     fill_vector_collection( event, "genW", boson_all_varnames, genWs_dict ) 
+    for genW in genWs:
+        genW_ascend = search.ascend(genW) 
+        print "genW pdgId %i m-pdgId %i pt %3.2f eta %3.2f"%(  genW_ascend.pdgId(), genW_ascend.mother(0).pdgId(), genW_ascend.pt(), genW_ascend.eta() )
     
 #
 #

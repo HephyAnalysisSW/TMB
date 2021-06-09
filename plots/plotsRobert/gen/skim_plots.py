@@ -18,9 +18,9 @@ from RootTools.core.standard        import *
 # TMB
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
-from TMB.Tools.genCutInterpreter    import genCutInterpreter
+from TMB.Tools.genCutInterpreter    import cutInterpreter
 from TMB.Tools.VV_angles            import VV_angles
-from TMB.Tools.objectSelection      import isGoodGenJet
+from TMB.Tools.genObjectSelection   import isGoodGenJet
 
 # Arguments
 import argparse
@@ -28,7 +28,7 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--plot_directory',     action='store',      default='gen')
 argParser.add_argument('--selection',          action='store',      default=None)
-argParser.add_argument('--sample',             action='store',      default='WZ')
+argParser.add_argument('--sample',             action='store',      default='ttG_noFullyHad')
 argParser.add_argument('--WC',                 action='store',      default='cWWW')
 argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient')
 argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0],  help='Values of the Wilson coefficient to show FI for.')
@@ -47,7 +47,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 
 # Import samples
-from TMB.Samples.gen_pp import *
+from TMB.Samples.pp_gen_v5 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -108,7 +108,7 @@ preselection = [
     #( "SMP-20-005-light",  "genPhoton_pt[0]>150&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
 ]
 
-selectionString  = "&&".join( [ c[1] for c in preselection] + ([genCutInterpreter.cutString(args.selection)] if args.selection is not None else []))
+selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
 subDirectory     =  '-'.join( [ c[0] for c in preselection] + ([args.selection] if args.selection is not None else []))
 if subDirectory  == '': 
     subDirectory = 'inc'
