@@ -8,7 +8,8 @@ import RootTools.core.logger as _logger_rt
 logger    = _logger.get_logger(   'INFO', logFile = None)
 logger_rt = _logger_rt.get_logger('INFO', logFile = None)
 
-weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/test_reweighting/reweight_card.pkl")
+#weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/test_reweighting/reweight_card.pkl")
+weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl")
 weightInfo.set_order(2)
 # get list of values of ref point in correct order
 ref_point_coordinates = [weightInfo.ref_point_coordinates[var] for var in weightInfo.variables]
@@ -27,7 +28,8 @@ def interpret_weight(weight_id):
     return res
 
 # from here on miniAOD specific:
-miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/miniAODSIM.root"])
+#miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/miniAODSIM.root"])
+miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/miniAODSim_fast_private/WGToLNu-v6_schoef-WGToLNu-v6-888b7a86c2f3c15fead55bb8986384d5_USER/MINIAODSIMoutput_201.root"])
 logger.info("Compute parametrisation from miniAOD relying on the same sequence of weights as in the card file.")
 
 fwliteReader = miniAOD.fwliteReader( products = { 'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")}} )
@@ -46,7 +48,7 @@ while fwliteReader.run( ):
         if weight.id in ['rwgt_1','dummy']: rw_nominal = weight.wgt
         if not weight.id in weightInfo.id: continue
         pos = weightInfo.data[weight.id]
-        weights.append( weight.wgt )
+        weights.append( weight.wgt/rw_nominal )
         interpreted_weight = interpret_weight(weight.id) 
         # weight data for interpolation
         if not hyperPoly.initialized:
@@ -77,7 +79,8 @@ while fwliteReader.run( ):
 
 
 # from here on nanoAOD specific:
-nanoAOD = Sample.fromFiles("nanoAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/nanoAOD.root"])
+#nanoAOD = Sample.fromFiles("nanoAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/nanoAOD.root"])
+nanoAOD = Sample.fromFiles("nanoAOD", ["/eos/vbc/user/robert.schoefbeck/topNanoAODSim_fast_private/v6/WGToLNu/NANOAODSIMoutput_115.root"])
 logger.info("Compute parametrisation from nanoAOD, relying on the sequence of weights as in weightInfo.data")
 
 # Hack for broken naming convention for the LHEReweightingWeight vector:
@@ -134,12 +137,12 @@ while reader.run():
         pass
     else:
         raise RuntimeError("reweight_pkl and nLHEReweightWeight are inconsistent.")
-    
-    weights = [r.LHEWeight_originalXWGTUP*reader.sample.chain.GetLeaf("LHEReweightingWeight").GetValue(i_weight) for i_weight in range(r.nLHEReweightingWeight)] 
-
+   
+    # here we check the consistency with miniAOD, hence multiply with LHEWeight_originalXWGTUP 
+    weights = [reader.sample.chain.GetLeaf("LHEReweightingWeight").GetValue(i_weight) for i_weight in range(r.nLHEReweightingWeight)] 
          
     if include_missing_refpoint:
-        weights = weights[:ref_point_index] + [r.LHEWeight_originalXWGTUP] + weights[ref_point_index:]
+        weights = weights[:ref_point_index] + [1] + weights[ref_point_index:]
 
     coeff           = hyperPoly.get_parametrization( weights )
     #print weights, coeff
