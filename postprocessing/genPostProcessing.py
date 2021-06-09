@@ -179,8 +179,8 @@ variables     += ["genTop[%s]"%top_vars]
 boson_varnames = [ 'pt', 'phi', 'eta', 'mass', 'status']
 # Z vector from gen collection
 boson_all_varnames = boson_varnames + ['cosThetaStar', 'daughter_pdgId','l1_index', 'l2_index']
-variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,l1_index/I,l2_index/I]"]
-variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,l1_index/I,l2_index/I]"]
+variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
+variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
 # Z vector from genleps
 # gamma vector
 gen_photon_vars = "pt/F,phi/F,eta/F,mass/F,mother_pdgId/I,grandmother_pdgId/I,isISR/I,relIso04/F"#,minLeptonDR/F,minJetDR/F"
@@ -375,38 +375,61 @@ def filler( event ):
     fill_vector_collection( event, "genLep", lep_all_varnames, genLeps_dict ) 
 
     # generated Zs decaying to leptons
-    genZs = filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp)
-    genZs.sort( key = lambda p: -p.pt() )
-    genZs_dict = [ {var: getattr(genZ, var)() for var in boson_varnames} for genZ in genZs ]
-    for i_genZ, genZ in enumerate(genZs):
-        d1, d2 = genZ.daughter(0), genZ.daughter(1)
+    genZs = [ (search.ascend(genZ), genZ) for genZ in filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp) ]
+    genZs.sort( key = lambda p: -p[1].pt() )
+    genZs_dict = [ {var: getattr(last, var)() for var in boson_varnames} for first, last in genZs ]
+    for i_genZ, (first, last) in enumerate(genZs):
+
+        mother = first.mother(0) if first.numberOfMothers()>0 else None
+        if mother is not None:
+            mother_pdgId      = mother.pdgId()
+            mother_ascend     = search.ascend(mother)
+            grandmother       = mother_ascend.mother(0) if mother_ascend.numberOfMothers()>0 else None
+            grandmother_pdgId = grandmother.pdgId() if grandmother is not None else 0
+        else:
+            mother_pdgId = 0
+            grandmother_pdgId = 0 
+        genZs_dict[i_genZ]['mother_pdgId']      = mother_pdgId
+        genZs_dict[i_genZ]['grandmother_pdgId'] = grandmother_pdgId
+
+        d1, d2 = last.daughter(0), last.daughter(1)
         if d1.pdgId()>0: 
             lm, lp = d1, d2
         else:
             lm, lp = d2, d1
         genZs_dict[i_genZ]['daughter_pdgId'] = lm.pdgId()
-        genZs_dict[i_genZ]['l1_index'] = genLeps_from_bosons.index( genZ.daughter(0) )
-        genZs_dict[i_genZ]['l2_index'] = genLeps_from_bosons.index( genZ.daughter(1) )
-        genZs_dict[i_genZ]['cosThetaStar'] = cosThetaStar(genZ.mass(), genZ.pt(), genZ.eta(), genZ.phi(), lm.pt(), lm.eta(), lm.phi())
-    fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict )
-    for genZ in genZs:
-        genZ_ascend = search.ascend(genZ) 
-        print "genZ pdgId %i m-pdgId %i pt %3.2f eta %3.2f"%(  genZ_ascend.pdgId(), genZ_ascend.mother(0).pdgId(), genZ_ascend.pt(), genZ_ascend.eta() )
+        genZs_dict[i_genZ]['l1_index'] = genLeps_from_bosons.index( last.daughter(0) )
+        genZs_dict[i_genZ]['l2_index'] = genLeps_from_bosons.index( last.daughter(1) )
+        genZs_dict[i_genZ]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), last.phi(), lm.pt(), lm.eta(), lm.phi())
+    fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict ) 
 
     # generated W decaying to leptons
-    genWs = filter( lambda p:abs(p.pdgId())==24 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 12, 13, 14, 15, 16], gp)
-    genWs.sort( key = lambda p: -p.pt() )
-    genWs_dict = [ {var: getattr(genW, var)() for var in boson_varnames} for genW in genWs ]
-    for i_genW, genW in enumerate(genWs):
-        d1, d2 = genW.daughter(0), genW.daughter(1)
+    genWs = [ (search.ascend(genW), genW) for genW in filter( lambda p:abs(p.pdgId())==24 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 12, 13, 14, 15, 16], gp)]
+    genWs.sort( key = lambda p: -p[1].pt() )
+    genWs_dict = [ {var: getattr(last, var)() for var in boson_varnames} for first, last in genWs ]
+    for i_genW, (first, last) in enumerate(genWs):
+
+        mother = first.mother(0) if first.numberOfMothers()>0 else None
+        if mother is not None:
+            mother_pdgId      = mother.pdgId()
+            mother_ascend     = search.ascend(mother)
+            grandmother       = mother_ascend.mother(0) if mother_ascend.numberOfMothers()>0 else None
+            grandmother_pdgId = grandmother.pdgId() if grandmother is not None else 0
+        else:
+            mother_pdgId = 0
+            grandmother_pdgId = 0 
+        genWs_dict[i_genW]['mother_pdgId']      = mother_pdgId
+        genWs_dict[i_genW]['grandmother_pdgId'] = grandmother_pdgId
+
+        d1, d2 = last.daughter(0), last.daughter(1)
         if abs(d1.pdgId()) in [11, 13, 15]: 
             l, nu = d1, d2
         else:
             nu, l = d2, d1
         genWs_dict[i_genW]['daughter_pdgId'] = l.pdgId()
-        genWs_dict[i_genW]['l1_index'] = genLeps_from_bosons.index( genW.daughter(0) )
-        genWs_dict[i_genW]['l2_index'] = genLeps_from_bosons.index( genW.daughter(1) )
-        genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(genW.mass(), genW.pt(), genW.eta(), genW.phi(), l.pt(), l.eta(), l.phi())
+        genWs_dict[i_genW]['l1_index'] = genLeps_from_bosons.index( last.daughter(0) )
+        genWs_dict[i_genW]['l2_index'] = genLeps_from_bosons.index( last.daughter(1) )
+        genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), phi(), l.pt(), l.eta(), l.phi())
     fill_vector_collection( event, "genW", boson_all_varnames, genWs_dict ) 
     for genW in genWs:
         genW_ascend = search.ascend(genW) 
