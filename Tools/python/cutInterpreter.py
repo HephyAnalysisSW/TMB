@@ -15,16 +15,21 @@ special_cuts = {
     "trilepOLD":       "Sum$(lep_pt>40&&{lep_string})>=1&&Sum$(lep_pt>20&&{lep_string})>=2&&Sum$(lep_pt>10&&{lep_string})==3".format(lep_string=lep_string_TTH),
     "singlelep":       "l1_pt>20",
     "dilep":           "l2_pt>20",
+    "dilepVL":        "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20",
+    "dilepL" :        "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
+    "dilepM" :        "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
+    "dilepT" :        "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
     "trilepVL":        "l1_pt>40&&l2_pt>20&&l3_pt>10",
     "trilepL" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
     "trilepM" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
     "trilepT" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
     "trilepMini0p12" : "Sum$(lep_pt>40&&lep_miniPFRelIso_all<0.12&&{lep_string})>=1 && Sum$(lep_pt>20&&lep_miniPFRelIso_all<0.12&&{lep_string})>=2&&Sum$(lep_pt>10&&lep_miniPFRelIso_all<0.12&&{lep_string})==3".format(lep_string=lep_string_TTH),
     "onZ1"   : "abs(Z1_mass-91.2)<10",
-    "offZ2"  : "(!(abs(Z2_mass-91.2)<20))",
+    "offZ1"  : "(!(abs(Z1_mass-91.2)<15))",
+    "offZ2"  : "(!(abs(Z2_mass-91.2)<15))",
   }
 
-continous_variables = [ ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT")]
+continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>30&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT")]
 discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag")]
 
 class cutInterpreter:
@@ -47,10 +52,14 @@ class cutInterpreter:
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
 
-        # continous Variables
-        for var, tree_var in continous_variables:
+        # continous Variables and discrete variables with "To"
+        for var, tree_var in continous_variables + discrete_variables:
+            isDiscrete = (var, tree_var) in discrete_variables
             if string.startswith( var ):
                 num_str = string[len( var ):].replace("to","To").split("To")
+                # don't do discrete variables without "To"
+                if isDiscrete and len(num_str)<=1:
+                    continue
                 upper = None
                 lower = None
                 if len(num_str)==2:
@@ -61,16 +70,18 @@ class cutInterpreter:
                     raise ValueError( "Can't interpret string %s" % string )
                 res_string = []
                 if lower: res_string.append( tree_var+">="+lower )
-                if upper: res_string.append( tree_var+"<"+upper )
+                leq = "<=" if isDiscrete else "<"
+                if upper: res_string.append( tree_var+leq+upper )
                 return "&&".join( res_string )
 
         # discrete Variables
         for var, tree_var in discrete_variables:
             logger.debug("Reading discrete cut %s as %s"%(var, tree_var))
             if string.startswith( var ):
-                # So far no njet2To5
+                # Omit discrete variables, done above
                 if string[len( var ):].replace("to","To").count("To"):
-                    raise NotImplementedError( "Can't interpret string with 'to' for discrete variable: %s. You just volunteered." % string )
+                    continue
+                    #raise NotImplementedError( "Can't interpret string with 'to' for discrete variable: %s. You just volunteered." % string )
 
                 num_str = string[len( var ):]
                 # logger.debug("Num string is %s"%(num_str))

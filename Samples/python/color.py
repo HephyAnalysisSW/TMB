@@ -1,6 +1,6 @@
 import ROOT
 
-from TTGammaEFT.Samples.helpers import singleton as singleton
+from TMB.Samples.helpers import singleton as singleton
 
 @singleton
 class color():
@@ -8,14 +8,22 @@ class color():
 
 color.data           = ROOT.kBlack
 color.Zinv           = ROOT.kGray+2
-color.DY             = ROOT.kAzure+4 #ROOT.kCyan+2
+#color.DY             = ROOT.kAzure+4 #ROOT.kCyan+2
 color.ZGamma         = ROOT.kBlue+2
 color.WGamma         = ROOT.kAzure-3
 color.VGamma         = ROOT.kAzure+3 #ROOT.kAzure
+color.TTH            = ROOT.kAzure+8 #ROOT.kAzure
+color.TWZ            = ROOT.kRed
+#color.TTZ            = ROOT.kAzure+4 #ROOT.kBlack
+color.TTW            = ROOT.kGreen+2 
 color.TTG            = ROOT.kOrange
 color.Other          = ROOT.kOrange+2 #ROOT.kViolet+5
-color.TT             = ROOT.kRed-3 #ROOT.kRed+1
-color.T              = ROOT.kOrange+1
+color.TT             = ROOT.kRed-7 #ROOT.kRed+1
+color.TTTT           = ROOT.kOrange+1
+color.TTWZ           = ROOT.kOrange+1
+color.TTWW           = ROOT.kOrange+2
+color.TTZZ           = ROOT.kOrange+3
+color.T              = ROOT.kOrange+4
 color.TGamma         = ROOT.kGray
 color.tW             = ROOT.kCyan+3
 color.W              = ROOT.kCyan+1
@@ -56,3 +64,9 @@ color.VG5            = ROOT.kBlack
 color.VG6            = ROOT.kCyan+1
 color.VG7            = ROOT.kViolet
 color.VG8            = ROOT.kYellow
+
+
+color.DY             = ROOT.kOrange-3
+color.TTZ            = ROOT.kGreen+4 #ROOT.kBlack
+color.TTLep          = ROOT.kAzure+6
+

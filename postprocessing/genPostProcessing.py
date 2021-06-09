@@ -20,6 +20,7 @@ from TMB.Tools.GenSearch              import GenSearch
 from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosThetaStar, closestOSDLMassToMZ, checkRootFile
 from TMB.Tools.HyperPoly              import HyperPoly
 from TMB.Tools.WeightInfo             import WeightInfo
+#from Analysis.Tools.WeightInfo             import WeightInfo
 from TMB.Tools.DelphesProducer        import DelphesProducer
 from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
 from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
@@ -57,7 +58,12 @@ if len(args.inputFiles)>0:
     logger.info( "Input files found. Ignoring 'sample' argument. Files: %r", args.inputFiles)
     sample = FWLiteSample( args.targetSampleName, args.inputFiles)
 else:
-    sample_file = "$CMSSW_BASE/python/TMB/Samples/gen.py"
+    if args.targetDir.startswith('v4'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v4.py"
+    elif args.targetDir.startswith('v5'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v5.py"
+    elif args.targetDir.startswith('v6'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v6.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )
