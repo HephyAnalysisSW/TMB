@@ -34,7 +34,9 @@ def VV_angles( v1, v2, v3, v4, debug=False):
     v4.Boost(boostToCMS)
 
     r = ROOT.TLorentzVector()
-    r.SetPtEtaPhiM( cms.Pt(), cms.Eta(), cms.Phi(), 0 )
+    #r.SetPtEtaPhiM( cms.Pt(), cms.Eta(), cms.Phi(), 0 ) #wtf
+    r.SetPxPyPzE( 0, 0, 6500, 6500 )
+    
     r.Boost(boostToCMS)
     cms.Boost(boostToCMS)
     if debug:
@@ -43,7 +45,7 @@ def VV_angles( v1, v2, v3, v4, debug=False):
         v2.Print()
         v3.Print()
         v4.Print()
-        print "r (light-like vector in direction of cms)"
+        print "r (light-like vector in beam direction)"
         r.Print() 
         print "cms after boost to c.m.s."
         cms.Print()
@@ -89,6 +91,8 @@ def VV_angles( v1, v2, v3, v4, debug=False):
     for vec in [r, V1, V2, v1, v2, v3, v4 ]:
         vec.Rotate(-angle, axis)
     if debug:
+        print "Rotation axis (in z direction)"
+        axis.Print()
         print "After rotation of r into +x:"
         print "V1, V2"
         V1.Print()
@@ -103,7 +107,7 @@ def VV_angles( v1, v2, v3, v4, debug=False):
 
     # rotations complete, let's compute angles
     res = {
-        'theta':r.Vect().Angle(z_axis), 
+        'Theta':r.Vect().Angle(z_axis), 
         'phi1':      v1.Phi(), 
         'phi2':     -v3.Phi(),
         }
@@ -158,7 +162,7 @@ def getTheta(lep1, lep2, H):
     bVH = (tmp_lep1+tmp_lep2+tmp_H).BoostVector()
 
     V_mom.Boost(-bVH)
-
+    beam.Boost(-bVH) #wtf
     Theta = float('nan')
 
 #   Theta  = acos((V_mom.Vect().Unit()).Dot(beam.Vect().Unit()))
@@ -216,6 +220,8 @@ def getphi(lep1, lep2, H):
     tmp_lep2.Boost(-bVH)
     V_mom.Boost(-bVH)
 
+    beam.Boost(-bVH) #wtf?
+
     n_scatter = (V_mom.Vect().Cross(beam.Vect().Unit())).Unit()
     n_decay   = (tmp_lep1.Vect().Cross(tmp_lep2.Vect())).Unit()
 
@@ -227,7 +233,7 @@ def getphi(lep1, lep2, H):
 
 if __name__=='__main__':
     v1 = ROOT.TLorentzVector(100,10,70, sqrt(2*100**2+80**2))
-    v2 = ROOT.TLorentzVector(80,-100,70, sqrt(2*100**2+80**2))
+    v2 = ROOT.TLorentzVector(80,100,70, sqrt(2*100**2+80**2))
 
     v3 = ROOT.TLorentzVector(-30,10,50, sqrt(2*100**2+80**2))
     v4 = ROOT.TLorentzVector(90,100,-70, sqrt(2*100**2+80**2))
@@ -235,8 +241,8 @@ if __name__=='__main__':
     res = VV_angles( v1, v2, v3, v4, debug = True)
 
     print res
-    print "suman Theta", getTheta(v1, v2, v3+v4), "mine", res["theta"]
-    print "suman V1", gettheta(v1, v2, v3+v4), "mine", res["theta_V1"]
-    print "suman V2", gettheta(v3, v4, v1+v2), "mine", res["theta_V2"]
+    print "suman Theta", getTheta(v1, v2, v3+v4), "mine", res["Theta"]
+    print "suman V1",    gettheta(v1, v2, v3+v4), "mine", res["theta_V1"]
+    print "suman V2",    gettheta(v3, v4, v1+v2), "mine", res["theta_V2"]
     print "suman phi 1", getphi(v1, v2, v3+v4), "mine", res["phi1"]
     print "suman phi 2", getphi(v3, v4, v1+v2), "mine", res["phi2"]
