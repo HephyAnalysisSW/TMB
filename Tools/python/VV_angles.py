@@ -4,7 +4,6 @@ import copy
 from TMB.Tools.helpers import deltaPhi
 
 #X -> (V->v1,v2) (V ->v3->v4) 
-
 def VV_angles( v1, v2, v3, v4, debug=False):
     ''' Assume V1=v1+v2 and V2=v3+v4 are from resonances and compute the angles phi, theta1, and theta2 defined in Fig. 1 in https://arxiv.org/pdf/1708.07823.pdf
     Permutating v1,v2 or v3,v4 reflects the phi->pi-phi ambiguity.
@@ -138,12 +137,106 @@ def VV_angles( v1, v2, v3, v4, debug=False):
         print
     return res
 
+def getTheta(lep1, lep2, H):
+    # from https://github.com/HephyAnalysisSW/VH/blob/main/Tools/python/helpers.py#L177
+
+    beam = ROOT.TLorentzVector()
+
+    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+
+    tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
+    tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
+    tmp_H.SetPtEtaPhiM(H.Pt(),H.Eta(),H.Phi(),H.M())
+
+    if(lep1.Eta()<-10 or lep2.Eta()<-10 or tmp_H.Eta()<-10):
+        return -100
+    
+    beam.SetPxPyPzE(0,0,6500,6500)
+                    
+    V_mom, bVH = ROOT.TLorentzVector(), ROOT.TVector3()
+    V_mom = tmp_lep1+tmp_lep2
+    bVH = (tmp_lep1+tmp_lep2+tmp_H).BoostVector()
+
+    V_mom.Boost(-bVH)
+
+    Theta = float('nan')
+
+#   Theta  = acos((V_mom.Vect().Unit()).Dot(beam.Vect().Unit()))
+    Theta = (V_mom.Vect().Unit()).Angle(beam.Vect().Unit())
+
+    return Theta;
+
+def gettheta(lep1, lep2, H):
+    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+
+    tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
+    tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
+    tmp_H.SetPtEtaPhiM(H.Pt(),H.Eta(),H.Phi(),H.M())
+
+    if(lep1.Eta()<-10 or lep2.Eta()<-10 or tmp_H.Eta()<-10):
+        return -100
+
+    V_mom, bVH, bV = ROOT.TLorentzVector(), ROOT.TVector3(), ROOT.TVector3()
+
+    bVH = (tmp_lep1 + tmp_lep2 + tmp_H).BoostVector()
+    V_mom = (tmp_lep1 + tmp_lep2)
+
+    V_mom.Boost(-bVH)
+    tmp_lep1.Boost(-bVH)
+
+    bV = V_mom.BoostVector()
+    tmp_lep1.Boost(-bV)
+
+    theta = float('nan')
+
+    theta = (V_mom).Angle(tmp_lep1.Vect())
+
+    return theta
+
+def getphi(lep1, lep2, H):
+
+    beam = ROOT.TLorentzVector()
+
+    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+
+    tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
+    tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
+    tmp_H.SetPtEtaPhiM(H.Pt(),H.Eta(),H.Phi(),H.M())
+
+    if(lep1.Eta()<-10 or lep2.Eta()<-10 or tmp_H.Eta()<-10):
+        return -100
+
+    beam.SetPxPyPzE(0,0,6500,6500)
+
+    V_mom, bVH, n_scatter, n_decay = ROOT.TLorentzVector(), ROOT.TVector3(), ROOT.TVector3(), ROOT.TVector3()
+    bVH = (tmp_lep1+tmp_lep2+tmp_H).BoostVector()
+    V_mom = tmp_lep1+tmp_lep2
+
+    tmp_lep1.Boost(-bVH)
+    tmp_lep2.Boost(-bVH)
+    V_mom.Boost(-bVH)
+
+    n_scatter = (V_mom.Vect().Cross(beam.Vect().Unit())).Unit()
+    n_decay   = (tmp_lep1.Vect().Cross(tmp_lep2.Vect())).Unit()
+
+    sign_flip =  1 if ( ((n_scatter.Cross(n_decay))*(V_mom.Vect())) > 0 ) else -1
+
+    phi = sign_flip*acos(n_scatter.Dot(n_decay))
+
+    return phi
+
 if __name__=='__main__':
     v1 = ROOT.TLorentzVector(100,10,70, sqrt(2*100**2+80**2))
     v2 = ROOT.TLorentzVector(80,-100,70, sqrt(2*100**2+80**2))
 
-    v3 = ROOT.TLorentzVector(-100,10,50, sqrt(2*100**2+80**2))
+    v3 = ROOT.TLorentzVector(-30,10,50, sqrt(2*100**2+80**2))
     v4 = ROOT.TLorentzVector(90,100,-70, sqrt(2*100**2+80**2))
 
-    res = VV_angles( v1, v2, v3, v4)
+    res = VV_angles( v1, v2, v3, v4, debug = True)
 
+    print res
+    print "suman Theta", getTheta(v1, v2, v3+v4), "mine", res["theta"]
+    print "suman V1", gettheta(v1, v2, v3+v4), "mine", res["theta_V1"]
+    print "suman V2", gettheta(v3, v4, v1+v2), "mine", res["theta_V2"]
+    print "suman phi 1", getphi(v1, v2, v3+v4), "mine", res["phi1"]
+    print "suman phi 2", getphi(v3, v4, v1+v2), "mine", res["phi2"]

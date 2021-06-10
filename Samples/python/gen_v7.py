@@ -23,6 +23,21 @@ if __name__ == "__main__":
 # for flavor analysis 
 # https://cmsweb.cern.ch/das/request?view=list&limit=50&instance=prod%2Fphys03&input=%2F*flavor_o2*%2F*%2F*
 
+ttG_noFullyHad = FWLiteSample.fromDirectory("ttG_noFullyHad", "/eos/vbc/experiments/cms/store/user/schoef/flavor_o2_ttG_noFullyHad/flavor_o2_ttG_noFullyHad/210609_094234/0000/")
+ttG_noFullyHad.reweight_pkl = os.path.join(gridpack_directory, "flavor/order_2", "ttG_noFullyHad_reweight_card.pkl")
+ttG_noFullyHad.xsec         = 3.410e+00 
+ttG_noFullyHad.nEvents      = 1000000
+
+ttW01j = FWLiteSample.fromDirectory("ttW01j", "/eos/vbc/experiments/cms/store/user/schoef/flavor_o2_ttW01j/flavor_o2_ttW01j/210609_094425/0000/")
+ttW01j.reweight_pkl = os.path.join(gridpack_directory, "flavor/order_2", "ttW01j_reweight_card.pkl")
+ttW01j.xsec         = 5.384e-01 
+ttW01j.nEvents      = 474130
+
+ttZ01j = FWLiteSample.fromDirectory("ttZ01j", "/eos/vbc/experiments/cms/store/user/schoef/flavor_o2_ttZ01j/flavor_o2_ttZ01j/210609_194229/0000/")
+ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "flavor/order_2", "ttZ01j_reweight_card.pkl")
+ttZ01j.xsec         = 6.323e-02 
+ttZ01j.nEvents      = 325546
+
 WGToLNu = FWLiteSample.fromDirectory("WGToLNu", "/eos/vbc/experiments/cms/store/user/schoef/flavor_o2_WGToLNu/flavor_o2_WGToLNu/210608_200214/0000")
 WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "flavor/order_2", "WGToLNu_reweight_card.pkl")
 WGToLNu.xsec         = 6.235e+01 

@@ -178,7 +178,7 @@ variables     += ["genTop[%s]"%top_vars]
 # to be stored for each boson
 boson_varnames = [ 'pt', 'phi', 'eta', 'mass', 'status']
 # Z vector from gen collection
-boson_all_varnames = boson_varnames + ['cosThetaStar', 'daughter_pdgId','l1_index', 'l2_index']
+boson_all_varnames = boson_varnames + ['cosThetaStar', 'daughter_pdgId','l1_index', 'l2_index', 'mother_pdgId', 'grandmother_pdgId']
 variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
 variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
 # Z vector from genleps
@@ -429,11 +429,8 @@ def filler( event ):
         genWs_dict[i_genW]['daughter_pdgId'] = l.pdgId()
         genWs_dict[i_genW]['l1_index'] = genLeps_from_bosons.index( last.daughter(0) )
         genWs_dict[i_genW]['l2_index'] = genLeps_from_bosons.index( last.daughter(1) )
-        genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), phi(), l.pt(), l.eta(), l.phi())
+        genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), last.phi(), l.pt(), l.eta(), l.phi())
     fill_vector_collection( event, "genW", boson_all_varnames, genWs_dict ) 
-    for genW in genWs:
-        genW_ascend = search.ascend(genW) 
-        print "genW pdgId %i m-pdgId %i pt %3.2f eta %3.2f"%(  genW_ascend.pdgId(), genW_ascend.mother(0).pdgId(), genW_ascend.pt(), genW_ascend.eta() )
     
 #
 #
