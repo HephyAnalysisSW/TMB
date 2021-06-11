@@ -16,7 +16,6 @@ from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import getCollection
 from TMB.Tools.WeightInfo           import WeightInfo
 from TMB.Tools.genCutInterpreter       import genCutInterpreter
-from TMB.Tools.VV_angles            import VV_angles
 
 # Arguments
 import argparse

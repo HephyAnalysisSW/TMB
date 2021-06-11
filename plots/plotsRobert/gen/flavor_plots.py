@@ -19,7 +19,7 @@ from RootTools.core.standard        import *
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
 from TMB.Tools.genCutInterpreter    import cutInterpreter
-from TMB.Tools.VV_angles            import VV_angles
+import TMB.Tools.VV_angles          as VV_angles
 from TMB.Tools.genObjectSelection   import isGoodGenJet
 
 # Arguments
@@ -189,7 +189,7 @@ sequence.append( makeLeps )
 
 # interference resurrection
 if args.ZZ:
-    def make_VV_angles( event, sample ):
+    def make_ZZ_angles( event, sample ):
         # nothing to resurrect here
         event.genZs = filter( lambda z: abs(z['daughter_pdgId']) in [11, 13, 15], getCollection( event, 'genZ', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenZ' ) )
         if len(event.genZs)>1:
@@ -197,22 +197,38 @@ if args.ZZ:
             id2 = event.genZs[0]['l2_index']
             id3 = event.genZs[1]['l1_index']
             id4 = event.genZs[1]['l2_index']
-            v = [ ROOT.TLorentzVector() for i in range(4) ]
+
             l = event.all_leps
+            if l[id1]['pdgId']<0:
+                id1, id2 = id2, id1 
+            if l[id3]['pdgId']<0:
+                id3, id4 = id4, id3 
+
+            v = [ ROOT.TLorentzVector() for i in range(4) ]
             for i_id, id_ in enumerate( [id1, id2, id3, id4] ):
                 #print "Lepton",i_id, l[id_]
                 v[i_id].SetPtEtaPhiM(l[id_]['pt'], l[id_]['eta'], l[id_]['phi'], 0)
-            #print
-            event.ZZ_angles = VV_angles( *v, debug=False)
+
+            event.VV_Theta = VV_angles.getTheta( v[0], v[1], v[2]+v[3] )
+            event.VV_theta1= VV_angles.gettheta( v[0], v[1], v[2]+v[3] )
+            event.VV_theta2= VV_angles.gettheta( v[2], v[3], v[0]+v[1] )
+            event.VV_phi1  = VV_angles.getphi( v[0], v[1], v[2]+v[3] )
+            event.VV_phi2  = VV_angles.getphi( v[2], v[3], v[0]+v[1] )
+            event.VV_dphi  = event.VV_phi1 + event.VV_phi2 #ZZ_phis differ by a sign
         else:
-            event.ZZ_angles = None
+            event.VV_Theta = float('nan') 
+            event.VV_theta1= float('nan') 
+            event.VV_theta2= float('nan') 
+            event.VV_phi1  = float('nan') 
+            event.VV_phi2  = float('nan') 
+            event.VV_dphi  = float('nan') 
         #print event.ZZ_angles
         #print
         #assert False, "" 
-    sequence.append( make_VV_angles )
+    sequence.append( make_ZZ_angles )
 
 if args.WG:
-    def make_VV_angles( event, sample ):
+    def make_WG_angles( event, sample ):
         # SMP-20-005 (gen-level version) 
         #print  getCollection( event, 'genW', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenW' )
         event.genWs      = filter( lambda w: abs(w['daughter_pdgId']) in [11, 13, 15], getCollection( event, 'genW', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenW' ) )
@@ -224,21 +240,24 @@ if args.WG:
             l = event.all_leps
 
             v = [ ROOT.TLorentzVector() for i in range(2) ]
-            id1, id2 = (event.genWs[0]['l1_index'], event.genWs[0]['l2_index']) if event.genLep_pdgId[event.genWs[0]['l1_index']]>0 else (event.genWs[0]['l2_index'], event.genWs[0]['l1_index'])
+            id1, id2 = (event.genWs[0]['l1_index'], event.genWs[0]['l2_index']) if abs(event.genLep_pdgId[event.genWs[0]['l1_index']]) in [ 11, 13, 15 ] else (event.genWs[0]['l2_index'], event.genWs[0]['l1_index'])
 
             for i_id, id_ in enumerate( [id1, id2] ):
                 v[i_id].SetPtEtaPhiM(l[id_]['pt'], l[id_]['eta'], l[id_]['phi'], 0)
             v_photon = ROOT.TLorentzVector()
             v_photon.SetPtEtaPhiM(genPhoton['pt'], genPhoton['eta'],genPhoton['phi'], 0)
-            v.append( v_photon )
-            v.append( ROOT.TLorentzVector(0,0,0,0) )
 
-            event.WG_angles = VV_angles( *v, debug=False)
+            event.VV_Theta = VV_angles.getTheta( v[0], v[1], v_photon )
+            event.VV_theta1= VV_angles.gettheta( v[0], v[1], v_photon )
+            event.VV_phi1  = VV_angles.getphi( v[0], v[1], v_photon )
         else:
-            event.WG_angles = None
+            event.VV_Theta = float('nan') 
+            event.VV_theta1= float('nan') 
+            event.VV_phi1  = float('nan') 
+
         #print event.WG_angles
         #print 
-    sequence.append( make_VV_angles )
+    sequence.append( make_WG_angles )
 
 # Use some defaults
 Plot.setDefaults(stack = stack, weight = weight, addOverFlowBin=None)
@@ -251,19 +270,37 @@ postfix = "" #'_'+args.WC + ("_FIth" if args.FI_thresholds is not None else "")
 if args.ZZ:
     plots.append(Plot( name = "phi1"+postfix,
       texX = '#phi_{1}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['phi1'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_phi1,
       binning=[40, -pi, pi], addOverFlowBin="both",
     ))
 
     plots.append(Plot( name = "phi2"+postfix,
       texX = '#phi_{2}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['phi2'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_phi2,
       binning=[40, -pi, pi], addOverFlowBin="both",
+    ))
+
+    plots.append(Plot( name = "theta1"+postfix,
+      texX = '#theta_{1}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta1,
+      binning=[40, 0, pi], addOverFlowBin="both",
+    ))
+
+    plots.append(Plot( name = "theta2"+postfix,
+      texX = '#theta_{2}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta2,
+      binning=[40, 0, pi], addOverFlowBin="both",
+    ))
+
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_Theta,
+      binning=[40, 0, pi], addOverFlowBin="both",
     ))
 
     plots.append(Plot( name = "deltaPhi"+postfix,
       texX = '#Delta #Phi', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['deltaPhi'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_dphi,
       binning=[40, 0, 2*pi], addOverFlowBin="both",
     ))
 
@@ -284,21 +321,22 @@ if 'g' in objects:
 if args.WG:
     plots.append(Plot( name = "phi1"+postfix,
       texX = '#phi_{1}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['phi1'] if event.WG_angles is not None else float('nan'),
-      binning=[20, -pi, pi], addOverFlowBin="both",
+      attribute = lambda event, sample: event.VV_phi1,
+      binning=[40, -pi, pi], addOverFlowBin="both",
     ))
 
-    plots.append(Plot( name = "phi2"+postfix,
-      texX = '#phi_{2}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['phi2'] if event.WG_angles is not None else float('nan'),
-      binning=[20, -pi, pi], addOverFlowBin="both",
+    plots.append(Plot( name = "theta1"+postfix,
+      texX = '#theta_{1}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta1,
+      binning=[40, 0, pi], addOverFlowBin="both",
     ))
 
-    plots.append(Plot( name = "deltaPhi"+postfix,
-      texX = '#Delta #Phi', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['deltaPhi'] if event.WG_angles is not None else float('nan'),
-      binning=[20, 0, 2*pi], addOverFlowBin="both",
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_Theta,
+      binning=[40, 0, pi], addOverFlowBin="both",
     ))
+
 
 if 'Z' in objects:
     plots.append(Plot( name = "Z0_pt"+postfix,
