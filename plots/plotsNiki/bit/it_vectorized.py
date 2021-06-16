@@ -176,13 +176,13 @@ class Node:
         if  self.max_depth <= depth+1 or (not any(self.split_left_group)) or all(self.split_left_group): # Jason Brownlee starts counting depth at 1, we start counting at 0, hence the +1
             #print ("Choice2", depth, self.FI_from_group(self.split_left_group), self.FI_from_group(~self.split_left_group) )
             # The split was good, but we stop splitting further. Put the result of the split in the left/right boxes.
-            self.left, self.right = ResultNode(self.FI_from_group(self.split_left_group)), ResultNode(self.FI_from_group(~self.split_left_group))
+            self.left, self.right = ResultNode(self.FI_from_group(self.split_left_group), np.count_nonzero(self.split_left_group)), ResultNode(self.FI_from_group(~self.split_left_group), np.count_nonzero(~self.split_left_group))
             return
         # process left child
         if np.count_nonzero(self.split_left_group) <= min_size:
             #print ("Choice3", depth, self.FI_from_group(self.split_left_group) )
             # Too few events in the left box. We stop.
-            self.left             = ResultNode(self.FI_from_group(self.split_left_group))
+            self.left             = ResultNode(self.FI_from_group(self.split_left_group), np.count_nonzero(self.split_left_group))
         else:
             #print ("Choice4", depth )
             # Continue splitting left box. 
@@ -191,7 +191,7 @@ class Node:
         if np.count_nonzero(~self.split_left_group) <= min_size:
             #print ("Choice5", depth, self.FI_from_group(~self.split_left_group) )
             # Too few events in the right box. We stop.
-            self.right            = ResultNode(self.FI_from_group(~self.split_left_group))
+            self.right            = ResultNode(self.FI_from_group(~self.split_left_group), np.count_nonzero(~self.split_left_group))
         else:
             #print ("Choice6", depth  )
             # Continue splitting right box. 
@@ -222,10 +222,11 @@ class Node:
 class ResultNode:
     ''' Simple helper class to store result value.
     '''
-    def __init__( self, return_value ):
+    def __init__( self, return_value, size ):
         self.return_value   = return_value
+        self.size = size
     def print_tree(self, depth=0):
-        print('%s[%s]' % (((depth)*' ', self.return_value)))
+        print('%s[%s] (%d)' % (((depth)*' ', self.return_value, self.size)))
 
 import uproot
 import awkward
@@ -268,6 +269,7 @@ diff_weight_factors[84] = 2
 
 #node       = Node( features, weights, FI_func=FI_func, max_depth=1, min_size=min_size )
 
+print("number of events %d" % len(features))
 tic_overall = time.time()
 for max_depth in range(1,5):
     tic = time.time()
