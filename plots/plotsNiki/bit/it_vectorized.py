@@ -9,7 +9,7 @@ import time
 from Analysis.Tools.helpers import chunk
 
 class Node:
-    def __init__( self, features, weights, FI_func, max_depth, min_size, weight_factors, diff_weight_factors, depth=0):
+    def __init__( self, features, weights, FI_func, max_depth, min_size, sorted_feature_values_and_weight_sums, weight_factors, diff_weight_factors, split_method="python_loop", depth=0):
 
         ## basic BDT configuration
         self.max_depth  = max_depth
@@ -26,6 +26,7 @@ class Node:
 
         # weight factors to calculate FI vectorized
         self.polynomial_dim = self.weights.shape[-1]
+        self.sorted_feature_values_and_weight_sums = sorted_feature_values_and_weight_sums 
         self.weight_factors = weight_factors
         self.diff_weight_factors = diff_weight_factors
         assert len(self.weight_factors) == self.polynomial_dim, "Unequal length weights and factors!"
@@ -35,6 +36,7 @@ class Node:
 
         # keep track of recursion depth
         self.depth      = depth
+        self.split_method = split_method
 
         self.split(depth=depth)
 
@@ -122,23 +124,31 @@ class Node:
         # loop over features
         for i_feature in range(len(self.features[0])):
             feature_values = self.features[:,i_feature]
+        
+            if self.split_method == 'vectorized_split_and_weight_sums':
+                feature_sorted_indices = np.argsort(feature_values)
+                weight_sums = np.cumsum(self.weights[feature_sorted_indices], axis=0)
 
-            weight_sum = np.zeros(len(self.weights[0]))
-            weight_sums= []
-            pure_weight_sums = []
-            #tic = time.time()
-            for position, value in sorted(enumerate(feature_values), key=operator.itemgetter(1)):
-                weight_sum = weight_sum+self.weights[position]
-                weight_sums.append( (value,  weight_sum) )
-                pure_weight_sums.append(weight_sum)
-            #toc = time.time()
-            #print("sorting/summing in {time:0.4f} seconds".format(time=toc-tic))
+                #tic = time.time()
+                idx, score = self.find_split_vectorized(weight_sums)
+                #toc = time.time()
+                #print("vectorized split in {time:0.4f} seconds".format(time=toc-tic))
+                value = feature_values[feature_sorted_indices[idx]]
+                #value = self.sorted_feature_values_and_weight_sums[i_feature]['sorted_feature_values'][idx]
+            else:
+                weight_sum = np.zeros(len(self.weights[0]))
+                weight_sums= []
+                pure_weight_sums = []
+                #tic = time.time()
+                for position, value in sorted(enumerate(feature_values), key=operator.itemgetter(1)):
+                    weight_sum = weight_sum+self.weights[position]
+                    weight_sums.append( (value,  weight_sum) )
+                    pure_weight_sums.append(weight_sum)
+                #toc = time.time()
+                #print("sorting/summing in {time:0.4f} seconds".format(time=toc-tic))
+                idx, score = self.find_split_vectorized(np.array(pure_weight_sums))
+                value = weight_sums[idx][0]
 
-            #tic = time.time()
-            idx, score = self.find_split_vectorized(np.array(pure_weight_sums))
-            #toc = time.time()
-            #print("vectorized split in {time:0.4f} seconds".format(time=toc-tic))
-            value = weight_sums[idx][0]
             if score > self.split_score: 
                 self.split_i_feature = i_feature
                 self.split_value     = value
@@ -166,7 +176,12 @@ class Node:
         #tic = time.time()
         #self.get_split()
         #self.get_split_fast()
-        self.get_split_vectorized()
+        if self.split_method == "python_loop":
+            self.get_split_fast()
+        elif self.split_method == "vectorized_split" or self.split_method == "vectorized_split_and_weight_sums":
+            self.get_split_vectorized()
+        else:
+            raise ValueError("no such split method %s" % self.split_method)
         #toc = time.time()
 
         #print("get_split in {time:0.4f} seconds".format(time=toc-tic))
@@ -186,7 +201,7 @@ class Node:
         else:
             #print ("Choice4", depth )
             # Continue splitting left box. 
-            self.left             = Node(self.features[self.split_left_group], self.weights[self.split_left_group], FI_func=self.FI_func, max_depth=self.max_depth, min_size=self.min_size, weight_factors=self.weight_factors, diff_weight_factors=self.diff_weight_factors, depth=self.depth+1 )
+            self.left             = Node(self.features[self.split_left_group], self.weights[self.split_left_group], FI_func=self.FI_func, max_depth=self.max_depth, min_size=self.min_size, sorted_feature_values_and_weight_sums=self.sorted_feature_values_and_weight_sums, weight_factors=self.weight_factors, diff_weight_factors=self.diff_weight_factors, split_method=self.split_method, depth=self.depth+1 )
         # process right child
         if np.count_nonzero(~self.split_left_group) <= min_size:
             #print ("Choice5", depth, self.FI_from_group(~self.split_left_group) )
@@ -195,7 +210,7 @@ class Node:
         else:
             #print ("Choice6", depth  )
             # Continue splitting right box. 
-            self.right            = Node(self.features[~self.split_left_group], self.weights[~self.split_left_group], FI_func=self.FI_func, max_depth=self.max_depth, min_size=self.min_size, weight_factors=self.weight_factors, diff_weight_factors=self.diff_weight_factors, depth=self.depth+1 )
+            self.right            = Node(self.features[~self.split_left_group], self.weights[~self.split_left_group], FI_func=self.FI_func, max_depth=self.max_depth, min_size=self.min_size, sorted_feature_values_and_weight_sums=self.sorted_feature_values_and_weight_sums, weight_factors=self.weight_factors, diff_weight_factors=self.diff_weight_factors, split_method=self.split_method, depth=self.depth+1 )
 
 #    # Prediction    
 #    def predict( self, row ):
@@ -233,9 +248,18 @@ import awkward
 import numpy as np
 import pandas as pd
 
-max_events  = 100000
-input_file  = "/eos/vbc/user/robert.schoefbeck/TMB/bit/MVA-training/ttG_WG_small/WGToLNu_fast/WGToLNu_fast.root"
-#input_file  = "/scratch-cbe/users/nikolaus.frohner/TMB/bit/MVA-training/ttG_WG/WGToLNu_fast/WGToLNu_fast.root"
+# Arguments
+import argparse
+argParser = argparse.ArgumentParser(description = "Argument parser")
+argParser.add_argument('--maxEvents', action='store', type=int, default=10000)
+argParser.add_argument('--minDepth', action='store', type=int, default=1)
+argParser.add_argument('--maxDepth', action='store', type=int, default=4)
+argParser.add_argument('--splitMethod', action='store', type=str, default='vectorized_split_and_weight_sums')
+args = argParser.parse_args()
+
+max_events  = args.maxEvents
+#input_file  = "/eos/vbc/user/robert.schoefbeck/TMB/bit/MVA-training/ttG_WG_small/WGToLNu_fast/WGToLNu_fast.root"
+input_file  = "/scratch-cbe/users/nikolaus.frohner/TMB/bit/MVA-training/ttG_WG/WGToLNu_fast/WGToLNu_fast.root"
 upfile      = uproot.open( input_file )
 tree        = upfile["Events"]
 n_events    = len( upfile["Events"] )
@@ -249,6 +273,7 @@ df          = tree.pandas.df(branches = branches, entrystart=entrystart, entryst
 features    = df.values
 
 print(features.shape)
+# TODO: only one feature for now
 assert features.shape[1] == 1
 
 # Load weights
@@ -275,9 +300,26 @@ diff_weight_factors = w.get_diff_weight_yield_factors( 'cWWW', cWWW=1 )
 
 print("number of events %d" % len(features))
 tic_overall = time.time()
-for max_depth in range(1,5):
+
+# sort features once and create weight sums before construction
+# TODO: delta evaluation for weight sums
+sorted_feature_values_and_weight_sums = []
+#for i_feature in range(features.shape[1]):
+#    feature_values = features[:,i_feature]
+#    weight_sum = np.zeros(len(weights[0]))
+#    weight_sums = []
+#    sorted_feature_values = []
+#    
+#    for position, value in sorted(enumerate(feature_values), key=operator.itemgetter(1)):
+#        weight_sum = weight_sum+weights[position]
+#        weight_sums.append(weight_sum)
+#        sorted_feature_values.append(value)
+#    
+#    sorted_feature_values_and_weight_sums.append({'sorted_feature_values': np.array(sorted_feature_values), 'weight_sums': np.array(weight_sums)})
+
+for max_depth in range(args.minDepth,args.maxDepth+1):
     tic = time.time()
-    node       = Node( features, weights, FI_func=FI_func, max_depth=max_depth, min_size=min_size, weight_factors=weight_factors, diff_weight_factors=diff_weight_factors )
+    node       = Node( features, weights, FI_func=FI_func, max_depth=max_depth, min_size=min_size, sorted_feature_values_and_weight_sums=sorted_feature_values_and_weight_sums, weight_factors=weight_factors, diff_weight_factors=diff_weight_factors, split_method=args.splitMethod )
     toc = time.time()
     print("tree construction in {time:0.4f} seconds".format(time=toc-tic))
     print "max_depth", max_depth
@@ -289,4 +331,5 @@ for max_depth in range(1,5):
     print 
 
 toc_overall = time.time()
-print("all constructions in {time:0.4f} seconds".format(time=toc_overall-tic_overall))
+all_construction_time = toc_overall-tic_overall
+print("all constructions in {time:0.4f} seconds".format(time=all_construction_time))
