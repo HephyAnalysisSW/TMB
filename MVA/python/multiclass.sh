@@ -5,8 +5,18 @@
 #python multiclass.py --name ttZ_tt_dy --input_directory /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_2l --output_directory /mnt/hephy/cms/$USER/TMB/models 
 #python multiclass.py --name ttZ_tt_dy --input_directory /scratch-cbe/users/$USER/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_2l --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM 
 
-python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --small 
-python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM --small
+#python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --small 
+#python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM --small
 
-python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models  
-python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM
+#python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models  
+#python multiclass.py --name ttZ_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM
+
+#python multiclass_generator.py --name ttZ_dy_50 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --small
+#python multiclass_generator.py --name ttZ_dy_50 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM --small
+
+python multiclass_generator.py --name ttZ_dy_100 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models 
+python multiclass_generator.py --name ttZ_dy_100 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM 
+#python multiclass_generator.py --name ttZ_dy_100_lstm7 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --small
+#python multiclass_generator.py --name ttZ_dy_100_lstm7_2 --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_dy --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM --small
+#python multiclass_generator.py --name ttZ_tt_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_2l --output_directory /mnt/hephy/cms/$USER/TMB/models 
+#python multiclass_generator.py --name ttZ_tt_dy --input_directory /scratch-cbe/users/rosmarie.schoefbeck/TMB/training-ntuples-ttZ/MVA-training/ --config ttZ_2l --output_directory /mnt/hephy/cms/$USER/TMB/models --add_LSTM

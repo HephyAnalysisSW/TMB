@@ -22,7 +22,7 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 
 
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
-lstm_jets_maxN   = 10
+lstm_jets_maxN   = 10 
 lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
