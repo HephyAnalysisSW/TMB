@@ -45,26 +45,6 @@ read_variables = [\
 # sequence 
 sequence = []
 
-# Fisher informations
-FIs = {
-    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
-    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
-    'cpG_BSM'  : { 'var': 'cpG',  'point':{'cpG':1}},
-    'cpG_SM'   : { 'var': 'cpG',  'point':{'cpG':0}},
-    'ctG_BSM'  : { 'var': 'ctG',  'point':{'ctG':1}},
-    'ctG_SM'   : { 'var': 'ctG',  'point':{'ctG':0}},
-    'cpWB_BSM' : { 'var': 'cpWB', 'point':{'cpWB':1}},
-    'cpWB_SM'  : { 'var': 'cpWB', 'point':{'cpWB':0}},
-    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
-    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
-    'cpQ3_BSM' : { 'var': 'cpQ3', 'point':{'cpQ3':1}},
-    'cpQ3_SM'  : { 'var': 'cpQ3', 'point':{'cpQ3':0}},
-    'ctZ_BSM'  : { 'var': 'ctZ',  'point':{'ctZ':1}},
-    'ctZ_SM'   : { 'var': 'ctZ',  'point':{'ctZ':0}},
-    'cWWW_SM'  : { 'var': 'cWWW', 'point':{'cWWW':0}},
-    'cWWW_BSM' : { 'var': 'cWWW', 'point':{'cWWW':1}},
-}
-
 # initialize weight stuff
 def init( event, sample ):
     if hasattr( sample, "EFT_init") and sample.EFT_init:
@@ -87,7 +67,6 @@ def init( event, sample ):
                 logger.info( "WC not found. Set  FI_%s = 0 for WC %s (point is %r). The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
                 
 sequence.append( init )
-
 all_mva_variables = {
 
 # global event properties     
@@ -117,14 +96,49 @@ all_mva_variables = {
      "mva_photonLepdR"           :(lambda event, sample: event.photonLepdR),
                 }
 
+#mva_vector_variables    =   {
+#    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+#}
+
+def lstm_jets(event, sample):
+    jets = [ getObjDict( event, 'JetGood_', jetVarNames, i ) for i in range(int(event.nJetGood)) ]
+    return jets
+
+# for the filler
 mva_vector_variables    =   {
-    "mva_JetGood":  {"name":"JetGood", "vars":jetVars, "varnames":jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+    "mva_JetGood":  {"func":lstm_jets, "name":"JetGood", "vars":jetVars, "varnames":jetVarNames}
 }
+
+keep_branches = ["p_C", "np"]
 
 ## Using all variables
 mva_variables_ = all_mva_variables.keys()
 mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
+
+# Fisher informations
+FIs = {
+    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
+    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
+    'cpG_BSM'  : { 'var': 'cpG',  'point':{'cpG':1}},
+    'cpG_SM'   : { 'var': 'cpG',  'point':{'cpG':0}},
+    'ctG_BSM'  : { 'var': 'ctG',  'point':{'ctG':1}},
+    'ctG_SM'   : { 'var': 'ctG',  'point':{'ctG':0}},
+    'cpWB_BSM' : { 'var': 'cpWB', 'point':{'cpWB':1}},
+    'cpWB_SM'  : { 'var': 'cpWB', 'point':{'cpWB':0}},
+    'cpDC_BSM' : { 'var': 'cpDC', 'point':{'cpDC':1}},
+    'cpDC_SM'  : { 'var': 'cpDC', 'point':{'cpDC':0}},
+    'cpQ3_BSM' : { 'var': 'cpQ3', 'point':{'cpQ3':1}},
+    'cpQ3_SM'  : { 'var': 'cpQ3', 'point':{'cpQ3':0}},
+#    'ctZ_BSM'  : { 'var': 'ctZ',  'point':{'ctZ':1}},
+#    'ctZ_SM'   : { 'var': 'ctZ',  'point':{'ctZ':0}},
+    'cWWW_SM'  : { 'var': 'cWWW', 'point':{'cWWW':0}},
+    'cWWW_BSM' : { 'var': 'cWWW', 'point':{'cWWW':1}},
+}
+
+for FI_name, FI in FIs.iteritems():
+    all_mva_variables["FI_"+FI_name] = lambda event, sample, FI=FI: sample.weightInfo.get_fisherInformation_matrix( event.p_C, variables = [FI['var']], **FI['point'])[1][0][0]
+
 
 import numpy as np
 import operator
@@ -145,3 +159,12 @@ def predict_inputs( event, sample, jet_lstm = False):
         return [ flat_variables, jets ]
     else:
         return   flat_variables
+
+# selection
+from TMB.Tools.cutInterpreter import cutInterpreter
+selectionString = cutInterpreter.cutString('singlelep-photon')
+
+#define training samples for multiclassification
+from TMB.Samples.pp_tWZ_v6 import *
+#use only Summer16
+training_samples = [ WGToLNu_fast, ttG_noFullyHad_fast]#, Summer16.DY]#, Summer16.TTW]   

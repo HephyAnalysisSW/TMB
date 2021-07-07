@@ -10,7 +10,6 @@ from RootTools.core.standard     import *
 
 # helpers
 from TMB.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
-#from tWZ.Tools.objectSelection  import isBJet, isAnalysisJet
 from Analysis.Tools.WeightInfo       import WeightInfo
 
 import logging
@@ -40,32 +39,10 @@ read_variables = [\
                     "photon_eta/F",
                     "photon_phi/F",
                     "photonJetdR/F", "photonLepdR/F",
-                    "np/I", "p[C/F]",
+                    VectorTreeVariable.fromString("p[C/F]",nMax=1000), "np/I",
                     ]
 # sequence 
 sequence = []
-
-# Fisher informations
-FIs = {
-    'cWWW_SM' :  { 'var': 'cWWW', 'point':{'cWWW':0}},
-    'cWWW_1' :   { 'var': 'cWWW', 'point':{'cWWW':1}},
-}
-
-# initialize weight stuff
-def init( event, sample ):
-    if hasattr( sample, "EFT_init") and sample.EFT_init:
-        return
-    sample.EFT_init = True
-    if hasattr( sample, "reweight_pkl"):
-        sample.weightInfo = WeightInfo( sample.reweight_pkl )
-        sample.weightInfo.set_order(2)
-        for FI_name, FI in FIs.iteritems():
-            FI['string'] = sample.weightInfo.get_fisher_weight_string( FI['var'], FI['var'], **FI['point'] )
-            FI['func'] = lambda p_C: sample.weightInfo.get_fisherInformation_matrix( p_C, variables = [FI['var']], **FI['point'])
-            #sample.chain.SetNotify( FI['TTreeFormula'] )
-            logger.info( "Compute %s = FI(%s) at %r. The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
-
-sequence.append( init )
 
 all_mva_variables = {
 
@@ -96,7 +73,44 @@ all_mva_variables = {
      "mva_photonLepdR"           :(lambda event, sample: event.photonLepdR),
                 }
 
+# Fisher informations
+FIs = {
+    'cWWW_SM' :  { 'var': 'cWWW', 'point':{'cWWW':0}},
+    'cWWW_1' :   { 'var': 'cWWW', 'point':{'cWWW':1}},
+}
+
+# initialize weight stuff
+def init( event, sample ):
+    if hasattr( sample, "EFT_init") and sample.EFT_init:
+        return
+    sample.EFT_init = True
+
+    if hasattr( sample, "reweight_pkl"):
+        sample.weightInfo = WeightInfo( sample.reweight_pkl )
+        sample.weightInfo.set_order(2)
+        for FI_name, FI in FIs.iteritems():
+            FI['string'] = sample.weightInfo.get_fisher_weight_string( FI['var'], FI['var'], **FI['point'] )
+            #FI['func'] = lambda p_C, FI=FI: sample.weightInfo.get_fisherInformation_matrix( p_C, variables = [FI['var']], **FI['point'])
+            #sample.chain.SetNotify( FI['TTreeFormula'] )
+            logger.info( "Compute %s = FI(%s) at %r. The string expression is %s", FI_name, FI['var'], FI['point'], FI['string'] )
+
+sequence.append( init )
+
+for FI_name, FI in FIs.iteritems():
+    all_mva_variables["FI_"+FI_name] = lambda event, sample, FI=FI: sample.weightInfo.get_fisherInformation_matrix( event.p_C, variables = [FI['var']], **FI['point'])[1][0][0]
+
+mva_vector_variables = {}
+
 # Using all variables
 mva_variables_ = all_mva_variables.keys()
 
 mva_variables = {key:value for key, value in all_mva_variables.iteritems() if key in mva_variables_}
+
+# selection
+from TMB.Tools.cutInterpreter import cutInterpreter
+selectionString = cutInterpreter.cutString('singlelep-photon')
+
+#define training samples for multiclassification
+from TMB.Samples.pp_tWZ_v6 import *
+#use only Summer16
+training_samples = [ WGToLNu_fast ]#, Summer16.DY]#, Summer16.TTW]   

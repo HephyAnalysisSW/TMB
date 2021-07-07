@@ -19,20 +19,16 @@ from RootTools.core.standard        import *
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
 from TMB.Tools.genCutInterpreter    import cutInterpreter
-from TMB.Tools.VV_angles            import VV_angles
+import TMB.Tools.VV_angles          as VV_angles
 from TMB.Tools.genObjectSelection   import isGoodGenJet
 
 # Arguments
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--plot_directory',     action='store',      default='gen')
+argParser.add_argument('--plot_directory',     action='store',      default='gen_flavor')
 argParser.add_argument('--selection',          action='store',      default=None)
 argParser.add_argument('--sample',             action='store',      default='ttG_noFullyHad')
-argParser.add_argument('--WC',                 action='store',      default='cWWW')
-argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient')
-argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0],  help='Values of the Wilson coefficient to show FI for.')
-argParser.add_argument('--FI_thresholds',      action='store',      nargs = '*',             type=float,    default=None,   help='Bins in FI?')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 argParser.add_argument('--ZZ',                                      action='store_true',     help='Add diboson ZZ angles?')
 argParser.add_argument('--WG',                                      action='store_true',     help='Add diboson WG angles?')
@@ -47,7 +43,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 
 # Import samples
-from TMB.Samples.pp_gen_v5 import *
+from TMB.Samples.pp_gen_v7 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -57,38 +53,31 @@ w = WeightInfo(sample.reweight_pkl)
 w.set_order(2)
 
 # define which Wilson coefficients to plot
-FIs = []
-if args.FI_thresholds is None:
-    params =  [ {'legendText':'SM',  'color':ROOT.kBlue, 'WC':{}} ] 
-    params += [ {'legendText':'%s %3.2f'%(args.WC, wc), 'color':ROOT.kOrange+i_wc,  'WC':{args.WC:wc} } for i_wc, wc in enumerate(args.WCval)]
 
-    for i_param, param in enumerate(params):
-        param['sample'] = sample
-        param['style']  = styles.lineStyle( param['color'] )
+WCs = [
+    ('cWWW', 1.0, ROOT.kRed),
+    ('cpq3i', 1.0,ROOT.kGreen),
+    ('cpqMi', 1.0, ROOT.kOrange),
+    ('cpu', 1.0, ROOT.kCyan),
+    ('cpt', 1.0, ROOT.kMagenta),
+    ('cpQ3', 1.0, ROOT.kBlue),
+    ('cpQM', 1.0, ROOT.kViolet-9),
+    ('cpb', 1.0, ROOT.kGray),
+    ('cpd', 1.0, ROOT.kAzure+10),
+]
 
-    stack = Stack(*[ [ param['sample'] ] for param in params ] )
-    weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
-    FIs.append( ( ROOT.kGray+1, "WC@SM",   w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0})) )
-    for i_WCval, WCval in enumerate(args.WCval_FI):
-        FIs.append( ( ROOT.kGray+i_WCval,   "WC@WC=%3.2f"%WCval, w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:WCval})) )
-else:
+params =  [ ] 
 
-    colors = [ ROOT.kViolet-9, ROOT.kViolet-6, ROOT.kViolet-4, ROOT.kViolet-3 , ROOT.kViolet-2, ROOT.kViolet]
-    WCval = args.WCval[0]
-    if len(args.WCval)>1:
-        raise RuntimeError, "Call with exactly one WC!"
-    var = w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:WCval})
+for i_wc, (WC, WCval, color) in enumerate(WCs):
+    params.append ({'legendText':'%s=%3.2f'%(WC, WCval), 'color':color,  'WC':{WC:WCval} })
+params +=  [ {'legendText':'SM',  'color':ROOT.kBlack, 'WC':{}} ] 
 
-    params = [ {'legendText':'I_{F}<%3.2f'%args.FI_thresholds[0],'selection':"{var}<%f"%(args.FI_thresholds[0]), 'style':styles.fillStyle(colors[0])} ]
-    for i_th, th in enumerate( args.FI_thresholds[:-1] ):
-        params.append( { 'legendText':'%3.2f<=I_{F}<%3.2f'%(args.FI_thresholds[i_th], args.FI_thresholds[i_th+1]), 'selection':"%f<={var}&&{var}<%f"%(args.FI_thresholds[i_th], args.FI_thresholds[i_th+1]) , 'style':styles.fillStyle(colors[i_th+1])})
-    params.append( {'legendText':'I_{F}>=%3.2f'%args.FI_thresholds[-1], 'selection': "%f<={var}"%(args.FI_thresholds[-1]), 'style':styles.fillStyle(colors[len(args.FI_thresholds)])} )
-     
-    stack = Stack([ copy.deepcopy(sample) for param in params ] )
-    for i_s_, s_ in enumerate(stack[0]):
-        s_.setSelectionString( params[i_s_]['selection'].format(var=var) )
-        s_.name+='_%i'%i_s_
-    weight= [ [ w.get_weight_func(**{args.WC:WCval}) for param in params ] ]
+for i_param, param in enumerate(params):
+    param['sample'] = sample
+    param['style']  = styles.lineStyle( param['color'] )
+
+stack = Stack(*[ [ param['sample'] ] for param in params ] )
+weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
     
 
 # Read variables and sequences
@@ -97,9 +86,9 @@ read_variables = [
     "ngenJet/I", "genJet[pt/F,eta/F,phi/F,matchBParton/I]", 
     "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
     "ngenTop/I", "genTop[pt/F,eta/F,phi/F]", 
-    "ngenZ/I", "genZ[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I]",
-    "ngenW/I", "genW[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I]",
-    "ngenPhoton/I", "genPhoton[pt/F,phi/F,eta/F]",
+    "ngenZ/I", "genZ[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I,mother_pdgId/I,grandmother_pdgId/I]",
+    "ngenW/I", "genW[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I,mother_pdgId/I,grandmother_pdgId/I]",
+    "ngenPhoton/I", "genPhoton[pt/F,phi/F,eta/F,mother_pdgId/I,grandmother_pdgId/I]",
 ]
 read_variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=2000) )
 
@@ -200,7 +189,7 @@ sequence.append( makeLeps )
 
 # interference resurrection
 if args.ZZ:
-    def make_VV_angles( event, sample ):
+    def make_ZZ_angles( event, sample ):
         # nothing to resurrect here
         event.genZs = filter( lambda z: abs(z['daughter_pdgId']) in [11, 13, 15], getCollection( event, 'genZ', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenZ' ) )
         if len(event.genZs)>1:
@@ -208,22 +197,38 @@ if args.ZZ:
             id2 = event.genZs[0]['l2_index']
             id3 = event.genZs[1]['l1_index']
             id4 = event.genZs[1]['l2_index']
-            v = [ ROOT.TLorentzVector() for i in range(4) ]
+
             l = event.all_leps
+            if l[id1]['pdgId']<0:
+                id1, id2 = id2, id1 
+            if l[id3]['pdgId']<0:
+                id3, id4 = id4, id3 
+
+            v = [ ROOT.TLorentzVector() for i in range(4) ]
             for i_id, id_ in enumerate( [id1, id2, id3, id4] ):
                 #print "Lepton",i_id, l[id_]
                 v[i_id].SetPtEtaPhiM(l[id_]['pt'], l[id_]['eta'], l[id_]['phi'], 0)
-            #print
-            event.ZZ_angles = VV_angles( *v, debug=False)
+
+            event.VV_Theta = VV_angles.getTheta( v[0], v[1], v[2]+v[3] )
+            event.VV_theta1= VV_angles.gettheta( v[0], v[1], v[2]+v[3] )
+            event.VV_theta2= VV_angles.gettheta( v[2], v[3], v[0]+v[1] )
+            event.VV_phi1  = VV_angles.getphi( v[0], v[1], v[2]+v[3] )
+            event.VV_phi2  = VV_angles.getphi( v[2], v[3], v[0]+v[1] )
+            event.VV_dphi  = event.VV_phi1 + event.VV_phi2 #ZZ_phis differ by a sign
         else:
-            event.ZZ_angles = None
+            event.VV_Theta = float('nan') 
+            event.VV_theta1= float('nan') 
+            event.VV_theta2= float('nan') 
+            event.VV_phi1  = float('nan') 
+            event.VV_phi2  = float('nan') 
+            event.VV_dphi  = float('nan') 
         #print event.ZZ_angles
         #print
         #assert False, "" 
-    sequence.append( make_VV_angles )
+    sequence.append( make_ZZ_angles )
 
 if args.WG:
-    def make_VV_angles( event, sample ):
+    def make_WG_angles( event, sample ):
         # SMP-20-005 (gen-level version) 
         #print  getCollection( event, 'genW', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenW' )
         event.genWs      = filter( lambda w: abs(w['daughter_pdgId']) in [11, 13, 15], getCollection( event, 'genW', ['pt', 'eta', 'phi', 'daughter_pdgId', 'l1_index', 'l2_index'], 'ngenW' ) )
@@ -235,174 +240,134 @@ if args.WG:
             l = event.all_leps
 
             v = [ ROOT.TLorentzVector() for i in range(2) ]
-            id1, id2 = (event.genWs[0]['l1_index'], event.genWs[0]['l2_index']) if event.genLep_pdgId[event.genWs[0]['l1_index']]>0 else (event.genWs[0]['l2_index'], event.genWs[0]['l1_index'])
+            id1, id2 = (event.genWs[0]['l1_index'], event.genWs[0]['l2_index']) if abs(event.genLep_pdgId[event.genWs[0]['l1_index']]) in [ 11, 13, 15 ] else (event.genWs[0]['l2_index'], event.genWs[0]['l1_index'])
 
             for i_id, id_ in enumerate( [id1, id2] ):
                 v[i_id].SetPtEtaPhiM(l[id_]['pt'], l[id_]['eta'], l[id_]['phi'], 0)
             v_photon = ROOT.TLorentzVector()
             v_photon.SetPtEtaPhiM(genPhoton['pt'], genPhoton['eta'],genPhoton['phi'], 0)
-            v.append( v_photon )
-            v.append( ROOT.TLorentzVector(0,0,0,0) )
 
-            event.WG_angles = VV_angles( *v, debug=False)
+            event.VV_Theta = VV_angles.getTheta( v[0], v[1], v_photon )
+            event.VV_theta1= VV_angles.gettheta( v[0], v[1], v_photon )
+            event.VV_phi1  = VV_angles.getphi( v[0], v[1], v_photon )
         else:
-            event.WG_angles = None
+            event.VV_Theta = float('nan') 
+            event.VV_theta1= float('nan') 
+            event.VV_phi1  = float('nan') 
+
         #print event.WG_angles
         #print 
-    sequence.append( make_VV_angles )
+    sequence.append( make_WG_angles )
 
-import re
-# make stack and construct weights
-def coeff_getter( coeff):
-    def getter_( event, sample):
-        #print "Filling with", coeff, event.p_C[coeff]
-        return event.p_C[coeff]
-    return getter_
-
-def add_fisher_plot( plot, fisher_string, color, legendText):
-    # the coefficients we need
-    required_coefficients = map( lambda s: int(s.replace('[','').replace(']','')), list(set(re.findall(r'\[[0-9][0-9]*\]', fisher_string ) )) )
-    # copy the plot
-    fisher_plot = copy.deepcopy( plot )
-    # modify weights etc
-    fisher_plot.name+="_fisher_coeffs"
-    fisher_plot.weight = [ [ coeff_getter(coeff) ] for coeff in required_coefficients ]
-    fisher_plot.stack  = Stack( *[[sample] for coeff in required_coefficients] )
-    # for computing the FI
-    fisher_plot.coefficients = required_coefficients
-    fisher_plot.formula      = re.sub(r'p_C\[([0-9][0-9]*)\]', r'{lambda_\1}', fisher_string)
-    # pass through information for plotting
-    fisher_plot.color        = color
-    fisher_plot.legendText   = legendText
-    # add the fisher_plot to the original plot so we know which is which
-    if hasattr( plot, "fisher_plots"):
-        plot.fisher_plots.append( fisher_plot )
-    else: 
-        plot.fisher_plots = [fisher_plot]
-    return fisher_plot 
-    
 # Use some defaults
 Plot.setDefaults(stack = stack, weight = weight, addOverFlowBin=None)
   
 plots        = []
 fisher_plots = []
 
-postfix = '_'+args.WC + ("_FIth" if args.FI_thresholds is not None else "") 
+postfix = "" #'_'+args.WC + ("_FIth" if args.FI_thresholds is not None else "") 
 
 if args.ZZ:
     plots.append(Plot( name = "phi1"+postfix,
       texX = '#phi_{1}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['phi1'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_phi1,
       binning=[40, -pi, pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "phi2"+postfix,
       texX = '#phi_{2}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['phi2'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_phi2,
       binning=[40, -pi, pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "theta1"+postfix,
+      texX = '#theta_{1}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta1,
+      binning=[40, 0, pi], addOverFlowBin="both",
+    ))
+
+    plots.append(Plot( name = "theta2"+postfix,
+      texX = '#theta_{2}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta2,
+      binning=[40, 0, pi], addOverFlowBin="both",
+    ))
+
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_Theta,
+      binning=[40, 0, pi], addOverFlowBin="both",
+    ))
 
     plots.append(Plot( name = "deltaPhi"+postfix,
       texX = '#Delta #Phi', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['deltaPhi'] if event.ZZ_angles is not None else float('nan'),
+      attribute = lambda event, sample: event.VV_dphi,
       binning=[40, 0, 2*pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "theta_V1"+postfix,
-      texX = '#theta(V1)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['theta_V1'] if event.ZZ_angles is not None else float('nan'),
-      binning=[20, 0, pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
-
-    plots.append(Plot( name = "theta_V2"+postfix,
-      texX = '(#theta(V2)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['theta_V2'] if event.ZZ_angles is not None else float('nan'),
-      binning=[20, 0, pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
-
-    plots.append(Plot( name = "theta"+postfix,
-      texX = '#theta', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['theta'] if event.ZZ_angles is not None else float('nan'),
-      binning=[20, 0,pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
 if 'g' in objects:
+
     plots.append(Plot( name = "Photon0_pt"+postfix,
       texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "Photon0_eta"+postfix,
       texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "Photon0_mother_pdgId"+postfix,
+      texX = 'id(#gamma_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genPhoton_mother_pdgId[0] if event.ngenPhoton>0 else float('nan'),
+      binning=[50,-25,25], 
+    ))
+
+    plots.append(Plot( name = "Photon0_pt_ljm"+postfix,
+      texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "Photon0_eta_ljm"+postfix,
+      texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
+
+    plots.append(Plot( name = "Photon0_pt_nljm"+postfix,
+      texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "Photon0_eta_nljm"+postfix,
+      texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
 
 if args.WG:
     plots.append(Plot( name = "phi1"+postfix,
       texX = '#phi_{1}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['phi1'] if event.WG_angles is not None else float('nan'),
-      binning=[20, -pi, pi], addOverFlowBin="both",
+      attribute = lambda event, sample: event.VV_phi1,
+      binning=[40, -pi, pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "phi2"+postfix,
-      texX = '#phi_{2}', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['phi2'] if event.WG_angles is not None else float('nan'),
-      binning=[20, -pi, pi], addOverFlowBin="both",
+    plots.append(Plot( name = "theta1"+postfix,
+      texX = '#theta_{1}', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_theta1,
+      binning=[40, 0, pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "deltaPhi"+postfix,
-      texX = '#Delta #Phi', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['deltaPhi'] if event.WG_angles is not None else float('nan'),
-      binning=[20, 0, 2*pi], addOverFlowBin="both",
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.VV_Theta,
+      binning=[40, 0, pi], addOverFlowBin="both",
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "theta_V1"+postfix,
-      texX = '#theta(V1)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['theta_V1'] if event.WG_angles is not None else float('nan'),
-      binning=[20, 0, pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
-
-    plots.append(Plot( name = "theta_V2"+postfix,
-      texX = '(#theta(V2)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['theta_V2'] if event.WG_angles is not None else float('nan'),
-      binning=[20, 0, pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
-
-    plots.append(Plot( name = "theta"+postfix,
-      texX = '#theta', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['theta'] if event.WG_angles is not None else float('nan'),
-      binning=[20, 0, pi], addOverFlowBin="both",
-    ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
 if 'Z' in objects:
     plots.append(Plot( name = "Z0_pt"+postfix,
@@ -410,16 +375,12 @@ if 'Z' in objects:
       attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "Z0_eta"+postfix,
       texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "Z1_pt"+postfix,
       texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events',
@@ -433,22 +394,48 @@ if 'Z' in objects:
       binning=[30,-3,3],
     ))
 
+    plots.append(Plot( name = "Z0_mother_pdgId"+postfix,
+      texX = 'id(Z_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genZ_mother_pdgId[0] if event.ngenZ>0 else float('nan'),
+      binning=[50,-25,25], 
+    ))
+
+    plots.append(Plot( name = "Z0_pt_ljm"+postfix,
+      texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "Z0_eta_ljm"+postfix,
+      texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
+
+    plots.append(Plot( name = "Z0_pt_nljm"+postfix,
+      texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "Z0_eta_nljm"+postfix,
+      texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
+
 if 'W' in objects:
     plots.append(Plot( name = "W0_pt"+postfix,
       texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "W0_eta"+postfix,
       texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "W1_pt"+postfix,
       texX = 'p_{T}(W_{1}) (GeV)', texY = 'Number of Events',
@@ -462,22 +449,48 @@ if 'W' in objects:
       binning=[30,-3,3],
     ))
 
+    plots.append(Plot( name = "W0_mother_pdgId"+postfix,
+      texX = 'id(W_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genW_mother_pdgId[0] if event.ngenW>0 else float('nan'),
+      binning=[50,-25,25],
+    ))
+
+    plots.append(Plot( name = "W0_pt_ljm"+postfix,
+      texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "W0_eta_ljm"+postfix,
+      texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
+
+    plots.append(Plot( name = "W0_pt_nljm"+postfix,
+      texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "W0_eta_nljm"+postfix,
+      texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+      binning=[30,-3,3],
+    ))
+
 if 't' in objects:
     plots.append(Plot( name = "top0_pt"+postfix,
       texX = 'p_{T}(top_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_pt[0] if event.ngenTop>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "top0_eta"+postfix,
       texX = '#eta(top_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_eta[0] if event.ngenTop>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "top1_pt"+postfix,
       texX = 'p_{T}(top_{1}) (GeV)', texY = 'Number of Events',
@@ -586,10 +599,10 @@ def drawPlots(plots, subDirectory=''):
       len_FI = len(plot.fisher_plots) if hasattr(plot, "fisher_plots") else 0
       plotting.draw(plot,
 	    plot_directory = plot_directory_,
-	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)} if args.FI_thresholds is None else None,
+	    ratio = {'histos':[(i,-1) for i in range(0,-1+len(plot.histos))], 'yRange':(0.1,1.9)},
 	    logX = False, logY = log, sorting = False,
 	    yRange = (0.03, "auto") if log else "auto",
-	    scaling = {},
+	    #scaling = {i:len(plot.histos) for i in range(len(plot.histos)-1)},
 	    legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2),
 	    drawObjects = drawObjects( ),
         copyIndexPHP = True,
@@ -598,46 +611,13 @@ def drawPlots(plots, subDirectory=''):
 plotting.fill(plots+fisher_plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 for plot in plots:
-    if args.FI_thresholds is None:
-        for i_h, hl in enumerate(plot.histos):
-            # dress up
-            hl[0].legendText = params[i_h]['legendText'] 
-            hl[0].style = params[i_h]['style']
-    else: 
-        for i_h, hl in enumerate(plot.histos[0]):
-            # dress up
-            hl.legendText = params[i_h]['legendText'] 
-            hl.style = params[i_h]['style']
-
-    # calculate & add FI histo
-    if hasattr(plot, "fisher_plots" ):
-        for fisher_plot in plot.fisher_plots:
-
-            # make empty histo
-            FI = plot.histos[0][0].Clone()
-            FI.Reset()
-
-            # calculate FI in each bin
-            for i_bin in range(1, FI.GetNbinsX()+1):
-                yields = {'lambda_%i'%coeff : fisher_plot.histos[i_coeff][0].GetBinContent(i_bin) for i_coeff, coeff in enumerate(fisher_plot.coefficients)}
-                try:
-                    FI.SetBinContent( i_bin,  eval(fisher_plot.formula.format(**yields)) )
-                except ZeroDivisionError:
-                    pass
-
-            # dress up
-            FI.legendText = fisher_plot.legendText
-            FI.style = styles.lineStyle( fisher_plot.color )
-
-            # scale the FI & indicate log(I) in the plot
-            if FI.Integral()>0:
-                FI.legendText += "(%3.2f)" % log(FI.Integral(),10)
-                FI.Scale(plot.histos[0][0].Integral()/FI.Integral())
-
-            # add the FI histos back to the plot and fake the stack so that the draw command does not get confused
-            plot.histos.append( [FI] )
-            stack.append( [sample] )
+    for i_h, hl in enumerate(plot.histos):
+        # dress up
+        hl[0].legendText = params[i_h]['legendText'] 
+        hl[0].style = params[i_h]['style']
 
 drawPlots(plots, subDirectory = subDirectory)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
+
+syncer.sync()

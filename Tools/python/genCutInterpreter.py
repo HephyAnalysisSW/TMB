@@ -8,6 +8,7 @@ special_cuts = {
 
 continous_variables  = [
     ("ptG","genPhoton_pt[0]"),
+    ("Z1pt", "genZ_pt[0]"), ("Z2pt", "genZ_pt[1]")
     ]
 
 discrete_variables  = [

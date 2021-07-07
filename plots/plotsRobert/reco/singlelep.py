@@ -27,7 +27,7 @@ from tWZ.Tools.objectSelection           import lepString # probably will merge 
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
-from TMB.Tools.WeightInfo                import WeightInfo
+from Analysis.Tools.WeightInfo                import WeightInfo
 import Analysis.Tools.syncer             as     syncer
 import numpy as np
 

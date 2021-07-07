@@ -3,10 +3,14 @@
 #python genPostProcessing.py --targetDir v6 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttG_noFullyHad_test #SPLIT10
 #python genPostProcessing.py --targetDir v6 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttg_noFullyHad_test2 #SPLIT10
 
-#python genPostProcessing.py --targetDir v5 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttG_noFullyHad #SPLIT200
-#python genPostProcessing.py --targetDir v5 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WGToLNu #SPLIT200
-#python genPostProcessing.py --targetDir v5 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT200
-#python genPostProcessing.py --targetDir v5 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttG_noFullyHad #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttW01j #SPLIT200
+python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WGToLNu #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ZGTo2L #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WW #SPLIT200
+#python genPostProcessing.py --targetDir v7 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZ #SPLIT200
 
 #python genPostProcessing.py --targetDir v4 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttg_noFullyHad #SPLIT200
 #python genPostProcessing.py --targetDir v4 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT200
