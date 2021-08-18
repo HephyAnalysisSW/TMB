@@ -133,26 +133,31 @@ reweight_pkl     = ttZ01j.reweight_pkl
 weightInfo       = WeightInfo( reweight_pkl )
 weightInfo.set_order(2)
 
-weights = []
-locsc   = []
+weight_derivatives = []
+weight_derivative_combinations = []
 for i_comb, comb in enumerate(weightInfo.make_combinations(weight_variables, max_order)):
     #print name, i_comb, comb, weightInfo.get_diff_weight_string(comb)
     weight = {}
     weight['string'] = weightInfo.get_diff_weight_string(comb)
     weight['func']   = weightInfo.get_diff_weight_func(comb)
     weight['name']   = '_'.join(comb)
-    weights.append( weight )
+    weight['comb']   = comb
+    weight_derivatives.append( weight )
+    weight_derivative_combinations.append(comb)
 
-    if len(comb)>0:
-        locsc.append({'comb':comb, 'name':weight['name']})
+def compute_weight_derivatives( event, sample ):
+    vector = [{'derivatives':weight['func'](event, sample)} for weight in weight_derivatives]
 
-def compute_weights( event, sample ):
-    nominal = weights[0]['func'](event, sample)
-    return  [{'weight':0 if nominal==0 else weight['func'](event, sample)/nominal} for weight in weights[1:]]
+    #print vector[115]
+    #m =  [abs(weight['func'](event, sample)/nominal) for weight in weights[1:]]
+    #if max(m)>100:
+    #    print max(m)
+    
+    return vector
     #for weight in weights[1:]:
     #    setattr( event, "locsc_"+weight['name'], 0 if nominal==0 else weight['func'](event, sample)/nominal )  
 
-sequence.append( compute_weights )
+sequence.append( compute_weight_derivatives )
 
 all_mva_variables = {
 
@@ -214,7 +219,7 @@ all_mva_variables = {
 #all_mva_variables.update( {  "locsc_"+weight['name']: (lambda event, sample, name="locsc_"+weight['name']: getattr( event, name) ) for weight in weights[1:] } )
 
 mva_vector_variables    =   {
-    "locsc":  { "name":"locsc", "func":compute_weights, "vars":["weight/F"], "varnames":["weight"], "selector": (lambda o: True), 'maxN':len(weights)-1} 
+    "weight":  { "name":"weight", "func":compute_weight_derivatives, "vars":["derivatives/F"], "varnames":["derivatives"], 'nMax':len(weight_derivatives)} 
 }
 
 ## Using all variables
@@ -233,3 +238,10 @@ def predict_inputs( event, sample, jet_lstm = False):
 from tWZ.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( 'trilepT-onZ1-btag1p-njet3p' )
 # selectionString = cutInterpreter.cutString( 'trilepT-minDLmass12-onZ1-njet4p-btag1' )
+
+bit_cfg = { 'n_trees': 50,
+            'max_depth'     : 2,
+            'learning_rate' : 0.20,
+            'min_size'      : 50,
+    }
+bit_derivatives  = [ ('cHq1Re11',), ('cHq1Re22',), ('cHq1Re33',), ('cHq1Re11','cHq1Re11'), ('cHq1Re22','cHq1Re22'), ('cHq1Re33','cHq1Re33')]
