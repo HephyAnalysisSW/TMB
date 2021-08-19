@@ -101,8 +101,13 @@ def getAngles(event, sample=None):
     event.jet2_Z1_deltaR       = deltaR({'eta':event.JetGood_eta[2], 'phi':event.JetGood_phi[2]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
     event.jet2_nonZ1_l1_deltaR = deltaR({'eta':event.JetGood_eta[2], 'phi':event.JetGood_phi[2]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
     i_bjet = getBJetindex(event)
-    event.bJet_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[i_bjet], 'phi':event.JetGood_phi[i_bjet]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-    event.bJet_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[i_bjet], 'phi':event.JetGood_phi[i_bjet]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
+    if i_bjet>=0:
+        event.bJet_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[i_bjet], 'phi':event.JetGood_phi[i_bjet]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
+        event.bJet_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[i_bjet], 'phi':event.JetGood_phi[i_bjet]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
+    else:
+        event.bJet_Z1_deltaR      = -1 
+        event.bJet_nonZ1l1_deltaR = -1
+    
 sequence.append( getAngles )
 
 def forwardJets( event, sample=None ):
@@ -157,7 +162,7 @@ def compute_weight_derivatives( event, sample ):
     #for weight in weights[1:]:
     #    setattr( event, "locsc_"+weight['name'], 0 if nominal==0 else weight['func'](event, sample)/nominal )  
 
-sequence.append( compute_weight_derivatives )
+#sequence.append( compute_weight_derivatives )
 
 all_mva_variables = {
 
@@ -231,8 +236,8 @@ import numpy as np
 import operator
 
 # make predictions to be used with keras.predict
-def predict_inputs( event, sample, jet_lstm = False):
-    return np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
+def predict_inputs( event, sample):
+    return np.array([getattr( event, mva_variable) for mva_variable, _ in mva_variables])
 
 # training selection
 from tWZ.Tools.cutInterpreter import cutInterpreter
@@ -244,4 +249,22 @@ bit_cfg = { 'n_trees': 50,
             'learning_rate' : 0.20,
             'min_size'      : 50,
     }
+
 bit_derivatives  = [ ('cHq1Re11',), ('cHq1Re22',), ('cHq1Re33',), ('cHq1Re11','cHq1Re11'), ('cHq1Re22','cHq1Re22'), ('cHq1Re33','cHq1Re33')]
+
+def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/ttZ_3l_flavor/', bit_derivatives=bit_derivatives):
+    import sys, os
+    sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
+    from BoostedInformationTree import BoostedInformationTree
+    bits = {} 
+    for derivative in bit_derivatives:
+        if derivative == tuple(): continue
+
+        filename = os.path.expandvars(os.path.join(directory, "bit_derivative_%s"% ('_'.join(derivative))) + '.pkl')
+        try:
+            print ("Loading %s for %r"%( filename, derivative))
+            bits[derivative] = BoostedInformationTree.load(filename) 
+        except IOError:
+            print ("Could not load %s for %r"%( filename, derivative))
+
+    return bits

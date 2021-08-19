@@ -13,6 +13,7 @@ argParser.add_argument('--variable_set',       action='store', type=str,   defau
 argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/scratch-cbe/users/$USER/BIT/training-ntuples-TTZ-flavor/MVA-training"))
 argParser.add_argument('--small',              action='store_true', help="small?")
+argParser.add_argument('--overwrite',          action='store_true', help="Overwrite output?")
 
 args = argParser.parse_args()
 
@@ -101,10 +102,15 @@ for derivative in config.bit_derivatives:
     if derivative == tuple(): continue
 
     filename = os.path.join(output_directory, "bit_derivative_%s"% ('_'.join(derivative))) + '.pkl'
+
     try:
         print ("Loading %s for %r"%( filename, derivative))
         bits[derivative] = BoostedInformationTree.load(filename)
     except IOError:
+        args.overwrite = True
+        pass
+
+    if args.overwrite:
         time1 = time.time()
         print ("Learning %s"%( str(derivative)))
         bits[derivative]= BoostedInformationTree(
@@ -113,7 +119,7 @@ for derivative in config.bit_derivatives:
                 training_diff_weights = weight_derivatives[:, config.weight_derivative_combinations.index(derivative)],
                 split_method          = 'vectorized_split_and_weight_sums',
                 weights_update_method = 'vectorized',
-                calibrated            = False,
+                calibrated            = True,
                 **config.bit_cfg
                     )
         bits[derivative].boost()
