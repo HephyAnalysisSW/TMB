@@ -119,14 +119,17 @@ for filename in plotfilename:
     
                 for e in estimates:  
                     expected = estimates[e].GetBinContent(b+1) 
+                    if e == 'signal':
+                        expected = expected - estimates['DY'].GetBinContent(b+1)
+
                     if args.lumi: 
                         # lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
                         expected = (expected/35.900)*args.lumi 
 
                     name = e
 
-                    if e == 'signal':
-                        expected = expected - estimates['DY'].GetBinContent(b+1)
+#                    if e == 'signal':
+#                        expected = expected - (estimates['DY'].GetBinContent(b+1)/35.900)*args.lumi
 
 
                     print expected, b,estimates[e].GetBinContent(b+1)
@@ -255,8 +258,8 @@ for filename in plotfilename:
 
         txtfilename = "lumi_vs_nll_TTZ_2l.txt"
         outfile = open(txtfilename, 'a')
-        if not "LSTM" in filename : outfile.write(str(args.lumi)+' '+str(nll['nll_abs']))
-        else  : outfile.write(' '+str(nll['nll_abs'])+'\n')
+        if not "LSTM" in filename : outfile.write(str(args.lumi)+' '+str(nll['nll']+nll['nll0']))
+        else  : outfile.write(' '+str(nll['nll']+nll['nll0'])+'\n')
         outfile.close()
     
     sample = 'ttZ_2l'
