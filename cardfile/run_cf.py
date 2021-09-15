@@ -5,7 +5,7 @@ from RootTools.core.Sample import Sample
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
 argParser.add_argument("--year",           action='store',      type=int, default=2016, choices = [ 2016, 2017, 20167 ], help='Which year?')
-argParser.add_argument("--lumi",           action='store',      type=float, default=1, help='Which lumi?')
+argParser.add_argument("--lumi",           action='store',      type=float, default=35.9 , help='Which lumi?')
 argParser.add_argument("--overwrite",      action='store_true', default = False,        help="Overwrite existing output files")
 
 
@@ -22,23 +22,24 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 plotfilename = []
 #plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_TTZ.root' )
 #plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_LSTM_TTZ.root' )
-plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_TTZ.root' )
-plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_LSTM_TTZ.root' )
+plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_TTZcoarse.root' )
+plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_LSTM_TTZcoarse.root' )
 
 for filename in plotfilename: 
     f = ROOT.TFile.Open(filename)
     canvas = f.Get(f.GetListOfKeys().At(0).GetName())
     #number of bins 
-    nbins = 50 
+    nbins = 18 
     #signal
-    sig = canvas.GetListOfPrimitives().At(1)
+    sig = canvas.GetListOfPrimitives().At(4)
     #backround(s)
-    bkg = [] 
-    bkg.append( canvas.GetListOfPrimitives().At(2) ) 
+    #bkg = [] 
+    #bkg.append( canvas.GetListOfPrimitives().At(2) ) 
     #all 
     estimates = {}
     estimates['signal']= sig 
     estimates['DY']=canvas.GetListOfPrimitives().At(2)
+    estimates['tt']=canvas.GetListOfPrimitives().At(3)
     print estimates 
     #estimates.append(sig)
     #estimates.append(canvas.GetListOfPrimitives().At(2))
@@ -117,14 +118,20 @@ for filename in plotfilename:
                 c.addBin(binname, [e for e in estimates if e != "signal"], niceName)
     
                 for e in estimates:  
-                    expected = estimates[e].GetBinContent(b) 
+                    expected = estimates[e].GetBinContent(b+1) 
                     if args.lumi: 
-    
                         # lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
-                        expected = expected*args.lumi/35900.0 
+                        expected = (expected/35.900)*args.lumi 
+
                     name = e
+
+                    if e == 'signal':
+                        expected = expected - estimates['DY'].GetBinContent(b+1)
+
+
+                    print expected, b,estimates[e].GetBinContent(b+1)
                     logger.info("Adding expectation %s for process %s", expected, name)
-                    print expected
+
                     c.specifyExpectation(binname, name, expected if expected > 0.01 else 0.01)
     
                     sigandback += expected
@@ -252,7 +259,9 @@ for filename in plotfilename:
         else  : outfile.write(' '+str(nll['nll_abs'])+'\n')
         outfile.close()
     
-    sample = 'ttZ_DY'
+    sample = 'ttZ_2l'
     if args.lumi : sample = sample +'_lumi' + str(args.lumi).replace('.','p')
-    wrapper(sample) 
+    if not "LSTM" in filename : sample = sample
+    else : sample = sample + '_lstm'
 
+    wrapper(sample) 

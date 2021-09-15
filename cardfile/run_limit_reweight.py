@@ -5,6 +5,7 @@ from RootTools.core.Sample import Sample
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
 argParser.add_argument("--year",           action='store',      type=int, default=2016, choices = [ 2016, 2017, 20167 ], help='Which year?')
+argParser.add_argument("--lumi",           action='store',      type=float, default=35.9, help='Which lumi?')
 argParser.add_argument("--overwrite",      action='store_true', default = False,        help="Overwrite existing output files")
 
 
@@ -18,20 +19,23 @@ import RootTools.core.logger as logger_rt
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 
 # MVA_HISTOS #
-filename = '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/ttZ_dy_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_TTZ.root'
+filename = '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_TTZcoarse.root'
+#filename = '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_TTZ.root'
 f = ROOT.TFile.Open(filename)
 canvas = f.Get(f.GetListOfKeys().At(0).GetName())
 #number of bins 
-nbins = 50 
+nbins = 18 
 #signal
 sig = canvas.GetListOfPrimitives().At(1)
-#backround(s)
-bkg = [] 
-bkg.append( canvas.GetListOfPrimitives().At(2) ) 
+bkg = canvas.GetListOfPrimitives().At(2)
+
+print "sig",sig.GetName()
+print "bkg",bkg.GetName()
+
 #all 
 estimates = {}
-estimates['TTZ']= sig 
-estimates['DY']=canvas.GetListOfPrimitives().At(2)
+estimates['signal']= sig 
+estimates['DY']= bkg
 print estimates 
 #estimates.append(sig)
 #estimates.append(canvas.GetListOfPrimitives().At(2))
@@ -44,6 +48,7 @@ from copy                               import deepcopy
 from TMB.Tools.user                     import combineReleaseLocation, results_directory, plot_directory
 from Analysis.Tools                     import u_float
 from Analysis.Tools.cardFileWriter      import cardFileWriter 
+#from Analysis.Tools      import CardFileWriter 
 
 year = int(args.year)
 limitDir = '/mnt/hephy/cms/rosmarie.schoefbeck/cardfiles'
@@ -55,6 +60,7 @@ def wrapper(s):
     logger.info("Now working on %s", s)
     xSecScale = 1
     c = cardFileWriter.cardFileWriter()
+#    c = CardFileWriter.CardFileWriter()
     c.releaseLocation = combineReleaseLocation
     
     cardFileName = os.path.join(limitDir, s+'.txt')
@@ -63,29 +69,29 @@ def wrapper(s):
         c.reset()
         c.setPrecision(3)
         postfix = '_%s'%args.year
-        c.addUncertainty('PU',                  'lnN') # correlated
+#        c.addUncertainty('PU',                  'lnN') # correlated
         c.addUncertainty('JEC',                 'lnN') # correlated
         c.addUncertainty('JER',                 'lnN') # correlated
         c.addUncertainty('btag_heavy'+postfix,  'lnN') # uncorrelated, wait for offical recommendation
         c.addUncertainty('btag_light'+postfix,  'lnN') # uncorrelated, wait for offical recommendation
         c.addUncertainty('trigger'+postfix,     'lnN') # uncorrelated, statistics dominated
-        c.addUncertainty('leptonSFSyst',        'lnN') # correlated
-        c.addUncertainty('leptonTracking',      'lnN') # correlated
-        c.addUncertainty('eleSFStat'+postfix,   'lnN') # uncorrelated
-        c.addUncertainty('muSFStat'+postfix,    'lnN') # uncorrelated
+#        c.addUncertainty('leptonSFSyst',        'lnN') # correlated
+#        c.addUncertainty('leptonTracking',      'lnN') # correlated
+#        c.addUncertainty('eleSFStat'+postfix,   'lnN') # uncorrelated
+#        c.addUncertainty('muSFStat'+postfix,    'lnN') # uncorrelated
         c.addUncertainty('scale',               'lnN') # correlated.
-        c.addUncertainty('scale_sig',           'lnN') # correlated.
+#        c.addUncertainty('scale_sig',           'lnN') # correlated.
         c.addUncertainty('PDF',                 'lnN') # correlated.
-        c.addUncertainty('PartonShower',        'lnN') # correlated.
-        c.addUncertainty('nonprompt',           'lnN') # correlated?!
-        c.addUncertainty('WZ_xsec',             'lnN') # correlated.
-        c.addUncertainty('WZ_bb',               'lnN') # correlated
-        c.addUncertainty('WZ_powheg',           'lnN') # correlated
-        c.addUncertainty('WZ_njet',             'lnN') # correlated
-        c.addUncertainty('ZZ_xsec',             'lnN') # correlated.
-        c.addUncertainty('XG_xsec',             'lnN') # correlated.
-        c.addUncertainty('rare',                'lnN') # correlated.
-        c.addUncertainty('ttX',                 'lnN') # correlated.
+#        c.addUncertainty('PartonShower',        'lnN') # correlated.
+#        c.addUncertainty('nonprompt',           'lnN') # correlated?!
+#        c.addUncertainty('WZ_xsec',             'lnN') # correlated.
+#        c.addUncertainty('WZ_bb',               'lnN') # correlated
+#        c.addUncertainty('WZ_powheg',           'lnN') # correlated
+#        c.addUncertainty('WZ_njet',             'lnN') # correlated
+#        c.addUncertainty('ZZ_xsec',             'lnN') # correlated.
+#        c.addUncertainty('XG_xsec',             'lnN') # correlated.
+#        c.addUncertainty('rare',                'lnN') # correlated.
+#        c.addUncertainty('ttX',                 'lnN') # correlated.
         c.addUncertainty('Lumi'+postfix,        'lnN')
 
         uncList = ['PU', 'JEC', 'btag_heavy', 'btag_light', 'leptonSFSyst', 'trigger']
@@ -93,27 +99,38 @@ def wrapper(s):
             uncertainties[unc] = []
         
         signal      = sig
-        siglist      = []
+        siglist     = []
 
         for b in range(nbins):
             #signalevents= sig.GetBinContent(b)
             totalBackground =  0. # u_float(0)
+            sigandback = 0.
             niceName = s  
             binname = 'Bin'+str(counter)
             logger.info("Working on %s", binname)
             print binname 
             for e in estimates: print e 
             counter += 1
-            c.addBin(binname, [e for e in estimates], niceName)
+            c.addBin(binname, [e for e in estimates if e != "signal"], niceName)
 
             for e in estimates:  
-                expected = estimates[e].GetBinContent(b) 
+                expected = estimates[e].GetBinContent(b+1) 
+                if args.lumi: 
+
+                    # lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
+                    expected = expected*args.lumi/35.9 
+
+                if e == 'signal':
+                    expected = expected - estimates['DY'].GetBinContent(b+1)
+                    
+                print expected, b, estimates[e].GetBinContent(18)
+
                 name = e
                 logger.info("Adding expectation %s for process %s", expected, name)
                 print expected
                 c.specifyExpectation(binname, name, expected if expected > 0.01 else 0.01)
 
-                totalBackground += expected
+                sigandback += expected
 
 #                # uncertainties
 #                pu          = 1 + e.PUSystematic( r, channel, setup).val            if expected.val>0.01 else 1.1
@@ -169,18 +186,18 @@ def wrapper(s):
 #                np = u_float(0)
 #                c.specifyExpectation(binname, 'nonPromptDD', np.val)
             
-            obs = totalBackground + sig.GetBinContent(b) 
+            obs = sigandback # + sig.GetBinContent(b) 
             c.specifyObservation(binname, int(round(obs,0)) )
 
             signalName = 'signal'
-            sigval = sig.GetBinContent(b)
+            #sigval = sig.GetBinContent(b)
             #c.specifyExpectation(binname, 'ttZ', 0) # this is just a fake signal for combine
             #c.specifyExpectation(binname, signalName, sigval * xSecScale * xSecMod ) # this is the real signal 
-            c.specifyExpectation(binname, signalName, sigval * xSecScale ) # this is the real signal 
+#            c.specifyExpectation(binname, signalName, sigval * xSecScale ) # this is the real signal 
             #logger.info('Adding signal %s'%(sigval * xSecScale * xSecMod))
-            logger.info('Adding signal %s'%(sigval * xSecScale ))
+#            logger.info('Adding signal %s'%(sigval * xSecScale ))
             
-            if sigval>0:
+            if False: #sigval>0:
                 if year == 2016:
                     c.specifyUncertainty('Lumi'+postfix, binname, signalName, 1.025 )
                 else:
@@ -230,7 +247,23 @@ def wrapper(s):
     else:
         logger.info("File %s found. Reusing.",cardFileName)
     
+    nll = c.calcNLL()
+    print nll
+    print type(nll) 
+    print nll['nll_abs']
+    txtfilename = "lumi_vs_nll_abs.txt"
+    outfile = open(txtfilename, 'a')
+    outfile.write(str(args.lumi)+','+str(nll['nll_abs'])+'\n')
+    outfile.close()
 
 sample = 'ttZ_DY'
+if args.lumi : sample = sample +'_lumi' + str(args.lumi).replace('.','p')
 wrapper(sample) 
 
+#txtfilename = "lumi_vs_nll.txt"
+#
+#outfile = open(txtfilename, 'a')
+#
+#outfile.write(str(args.lumi),str(nll))
+#
+#outfile.close()
