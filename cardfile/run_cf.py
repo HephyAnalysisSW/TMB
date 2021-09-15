@@ -22,14 +22,14 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 plotfilename = []
 #plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_TTZ.root' )
 #plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_DY_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_dy_LSTM_TTZ.root' )
-plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_TTZcoarse.root' )
-plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_LSTM_TTZcoarse.root' )
+plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_TTZscoarse.root' )
+plotfilename.append( '/mnt/hephy/cms/rosmarie.schoefbeck/www/tWZ/plots/analysisPlots/TTZ_2l_noData/Run2016/all/dilepM-onZ1-minDLmass12-njet5p-btag1p/ttz_2l_LSTM_TTZscoarse.root' )
 
 for filename in plotfilename: 
     f = ROOT.TFile.Open(filename)
     canvas = f.Get(f.GetListOfKeys().At(0).GetName())
     #number of bins 
-    nbins = 18 
+    nbins = 10 
     #signal
     sig = canvas.GetListOfPrimitives().At(4)
     #backround(s)
@@ -256,13 +256,13 @@ for filename in plotfilename:
         
         nll = c.calcNLL()
 
-        txtfilename = "lumi_vs_nll_TTZ_2l.txt"
+        txtfilename = "ttz2lsc.txt"
         outfile = open(txtfilename, 'a')
         if not "LSTM" in filename : outfile.write(str(args.lumi)+' '+str(nll['nll']+nll['nll0']))
         else  : outfile.write(' '+str(nll['nll']+nll['nll0'])+'\n')
         outfile.close()
     
-    sample = 'ttZ_2l'
+    sample = 'ttZ_2l_sc'
     if args.lumi : sample = sample +'_lumi' + str(args.lumi).replace('.','p')
     if not "LSTM" in filename : sample = sample
     else : sample = sample + '_lstm'
