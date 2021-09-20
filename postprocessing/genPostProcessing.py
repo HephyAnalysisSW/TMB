@@ -67,6 +67,8 @@ else:
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v7.py"
     elif args.targetDir.startswith('v8'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v8.py"
+    elif args.targetDir.startswith('v9'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v9.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )

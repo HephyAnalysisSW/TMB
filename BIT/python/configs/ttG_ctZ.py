@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'jetId/I', 'btagDeepFlavB/F', 'mass/F']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'jetId/I', 'btagDeepFlavB/F']
 
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
@@ -82,6 +82,8 @@ def compute_weight_derivatives( event, sample ):
     #for weight in weights[1:]:
     #    setattr( event, "locsc_"+weight['name'], 0 if nominal==0 else weight['func'](event, sample)/nominal )  
 
+sequence = []
+
 all_mva_variables = {
 
 # global event properties     
@@ -135,6 +137,7 @@ bit_cfg = { 'n_trees': 100,
             'max_depth'     : 2,
             'learning_rate' : 0.20,
             'min_size'      : 50,
+            'calibrated'    : False,
     }
 
 bit_derivatives  = [ ('ctZ',), ('ctZ','ctZ')]
