@@ -247,7 +247,8 @@ selectionString = cutInterpreter.cutString( 'trilepT-onZ1-btag1p-njet3p' )
 bit_cfg = { 'n_trees': 50,
             'max_depth'     : 2,
             'learning_rate' : 0.20,
-            'min_size'      : 50,
+            'min_size'      : 150,
+            'calibrated'    : False,
     }
 
 bit_derivatives  = [ ('cHq1Re11',), ('cHq1Re22',), ('cHq1Re33',), ('cHq1Re11','cHq1Re11'), ('cHq1Re22','cHq1Re22'), ('cHq1Re33','cHq1Re33')]
