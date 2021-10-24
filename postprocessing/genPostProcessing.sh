@@ -1,6 +1,13 @@
 #!/bin/sh
 
-python genPostProcessing.py --delphesEra RunII --targetDir v9 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT599
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WGToLNu #SPLIT598
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZjj #SPLIT513
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WGjj #SPLIT589
+
+#python genPostProcessing.py --delphesEra RunII --targetDir v9 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT599
+#python genPostProcessing.py --delphesEra RunII --targetDir v9 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT550
+
+#python genPostProcessing.py --delphesEra RunII --targetDir v5 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT600
 
 #python genPostProcessing.py --delphesEra RunII --targetDir v8 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT600
 #python genPostProcessing.py --delphesEra RunII --targetDir v8 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT600

@@ -154,7 +154,6 @@ for derivative in config.bit_derivatives:
         bits[derivative] = BoostedInformationTree.load(filename)
     except IOError:
         args.overwrite = True
-        pass
 
     if args.overwrite:
 
@@ -212,17 +211,6 @@ for derivative in config.bit_derivatives:
             training_score  = sum( training_scores )
             training_FIs   += training_weights_[i]*training_scores
 
-        #for i in range(n_trees):
-        #    test_scores     = bits[derivative].predict( test_features[i],     summed = False)
-        #    training_scores = bits[derivative].predict( training_features[i], summed = False)
-
-        #    test_score  = sum( test_scores )
-        #    train_score = sum( training_scores )
-
-        #    # compute test and training FI evolution during training
-        #    test_FIs     += test_weights_    [i]*test_scores
-        #    training_FIs += training_weights_[i]*training_scores
-
         training_FI_histo     = ROOT.TH1D("trainFI", "trainFI",          n_trees, 1, n_trees+1 )
         test_FI_histo         = ROOT.TH1D("testFI",  "testFI",           n_trees, 1, n_trees+1 )
 
@@ -256,3 +244,89 @@ for derivative in config.bit_derivatives:
         yRange                 = "auto" #( minY, maxY )
         plot1DHist( plot, plot_directory, yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
 
+# make score plot and score-binned feature plots
+for derivative in config.bit_derivatives:
+    if derivative == tuple(): continue
+    if args.derivative!=[] and derivative !=tuple(args.derivative): continue
+
+    # plot loss
+    test_scores     = bits[derivative].vectorized_predict(test_features)
+    #training_scores = bits[derivative].vectorized_predict(test_features)
+
+    n_digi    = 10
+    quantiles = np.quantile( test_scores,np.arange(0,1.1,.1))
+    try:
+        digi      = np.digitize( test_scores, quantiles)
+    except ValueError:
+        continue
+
+    h_score   = ROOT.TH1F("score","score", len(quantiles)-1, quantiles)
+    h_feature = { var[0]: {i_bin:ROOT.TH1F("%s_%i"%(var[0], i_bin), "%s_%i"%(var[0], i_bin), 50, min(test_features[:,i_var]), max(test_features[:,i_var])) for i_bin in range(n_digi)} for i_var, var in enumerate(config.mva_variables) }
+
+    test_weights_ = test_weights[:,config.weight_derivative_combinations.index(derivative)]
+    for i_event in range(len(test_scores)):
+        if i_event%10000==0: print "At",i_event
+        h_score.Fill(test_scores[i_event], test_weights_[i_event])
+        for i_var in range(len(config.mva_variables)):
+            h_feature[config.mva_variables[i_var][0]][min(n_digi,digi[i_event])-1].Fill(test_features[i_event][i_var], test_weights_[i_event])
+
+    # Plot Style
+    histModifications      = []
+    histModifications      += [ lambda h: h.GetYaxis().SetTitleOffset(1.4) ]
+    histModifications += [ lambda h: h.GetXaxis().SetTitleSize(26) ]
+    histModifications += [ lambda h: h.GetYaxis().SetTitleSize(26) ]
+    histModifications += [ lambda h: h.GetXaxis().SetLabelSize(22)  ]
+    histModifications += [ lambda h: h.GetYaxis().SetLabelSize(22)  ]
+
+    plot = Plot.fromHisto( 
+        "score", 
+        [[h_score]],
+        texX = "d_"+"_".join(derivative),
+        )
+
+    ratio                  = None
+    legend                 = None #[ (0.15,0.75,0.9,0.88), 3]
+    yRange                 = "auto" #( minY, maxY )
+    plot1DHist( plot, os.path.join(plot_directory, ('_'.join(derivative))), yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
+
+    for i_var in range(len(config.mva_variables)):
+        for i_digi in range(n_digi):
+            h_feature[config.mva_variables[i_var][0]][i_digi].style     = styles.fillStyle(ROOT.kMagenta-10+i_digi)
+            h_feature[config.mva_variables[i_var][0]][i_digi].legendText= "%4.3f #leq d(%s) < %4.3f" % ( quantiles[i_digi], "_".join(derivative), quantiles[i_digi+1] )
+        plot = Plot.fromHisto( 
+            config.mva_variables[i_var][0]+"_binned", 
+            [ [h_feature[config.mva_variables[i_var][0]][i_digi] for i_digi in range(n_digi)]],
+            texX = config.mva_variables[i_var][0],
+            )
+
+        ratio                  = None
+        legend                 = [ (0.15,0.75,0.9,0.88), 2]
+        yRange                 = "auto" #( minY, maxY )
+        plot1DHist( plot, os.path.join(plot_directory, ('_'.join(derivative))), yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
+
+#        # Histo style
+#        test_FI_histo    .style = styles.lineStyle( ROOT.kBlue, width=2 )
+#        training_FI_histo.style = styles.lineStyle( ROOT.kRed, width=2 )
+#        test_FI_histo    .legendText = "Test"
+#        training_FI_histo.legendText = "Training"
+#
+#        minY   = 0.01 * min( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
+#        maxY   = 1.5  * max( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
+#
+#        histos = [ [test_FI_histo], [training_FI_histo] ]
+#        plot   = Plot.fromHisto( "bit_derivative_%s_evolution"% ('_'.join(derivative)), histos, texX="b", texY="L(D,b)" )
+#
+#        # Plot Style
+#        histModifications      = []
+#        histModifications      += [ lambda h: h.GetYaxis().SetTitleOffset(1.4) ]
+#        histModifications += [ lambda h: h.GetXaxis().SetTitleSize(26) ]
+#        histModifications += [ lambda h: h.GetYaxis().SetTitleSize(26) ]
+#        histModifications += [ lambda h: h.GetXaxis().SetLabelSize(22)  ]
+#        histModifications += [ lambda h: h.GetYaxis().SetLabelSize(22)  ]
+#
+#        ratioHistModifications = []
+#        ratio                  = None
+#        legend                 = (0.6,0.75,0.9,0.88)
+#        yRange                 = "auto" #( minY, maxY )
+#        plot1DHist( plot, plot_directory, yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
+#

@@ -69,6 +69,8 @@ else:
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v8.py"
     elif args.targetDir.startswith('v9'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v9.py"
+    elif args.targetDir.startswith('v10'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v10.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )
@@ -384,6 +386,9 @@ def filler( event ):
     genZs_dict = [ {var: getattr(last, var)() for var in boson_varnames} for first, last in genZs ]
     for i_genZ, (first, last) in enumerate(genZs):
 
+        #if first.numberOfMothers()>1:
+        #    print "Two mothers", first.mother(0).pdgId(), search.ascend(first.mother(0)).pdgId(), first.mother(1).pdgId(), search.ascend(first.mother(1)).pdgId(), search.ascend(first.mother(0)).eta(), search.ascend(first.mother(1)).eta()
+
         mother = first.mother(0) if first.numberOfMothers()>0 else None
         if mother is not None:
             mother_pdgId      = mother.pdgId()
@@ -405,6 +410,10 @@ def filler( event ):
         genZs_dict[i_genZ]['l1_index'] = genLeps_from_bosons.index( last.daughter(0) )
         genZs_dict[i_genZ]['l2_index'] = genLeps_from_bosons.index( last.daughter(1) )
         genZs_dict[i_genZ]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), last.phi(), lm.pt(), lm.eta(), lm.phi())
+        
+        #if genZs_dict[i_genZ]['mother_pdgId']==21:
+        #    print genZs_dict[i_genZ]['eta']
+
     fill_vector_collection( event, "genZ", boson_all_varnames, genZs_dict ) 
 
     # generated W decaying to leptons

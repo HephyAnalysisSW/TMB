@@ -43,7 +43,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 
 # Import samples
-from TMB.Samples.pp_gen_v8 import *
+from TMB.Samples.pp_gen_v9 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -67,22 +67,27 @@ w.set_order(2)
 #]
 
 WCs = [
-    ('cHq1Re11', 1.0, ROOT.kRed),
-    ('cHq1Re22', 1.0, ROOT.kGreen),
+    #('cHq1Re11', 1.0, ROOT.kRed),
+    #('cHq1Re22', 1.0, ROOT.kGreen),
     ('cHq1Re33', 1.0, ROOT.kOrange),
-    ('cHq3Re11', 1.0, ROOT.kCyan),
-    ('cHq3Re22', 1.0, ROOT.kMagenta),
+    #('cHq3Re11', 1.0, ROOT.kCyan),
+    #('cHq3Re22', 1.0, ROOT.kMagenta),
     ('cHq3Re33', 1.0, ROOT.kBlue),
-    ('cHuRe11', 1.0, ROOT.kViolet),
-    ('cHuRe22', 1.0, ROOT.kAzure),
+    #('cHuRe11', 1.0, ROOT.kViolet),
+    #('cHuRe22', 1.0, ROOT.kAzure),
     ('cHuRe33', 1.0, ROOT.kRed+2),
-    ('cHdRe11', 1.0, ROOT.kGreen+2),
-    ('cHdRe22', 1.0, ROOT.kOrange+2),
+    #('cHdRe11', 1.0, ROOT.kGreen+2),
+    #('cHdRe22', 1.0, ROOT.kOrange+2),
     ('cHdRe33', 1.0, ROOT.kCyan+2),
-    ('cHudRe11', 1.0, ROOT.kMagenta+2),
-    ('cHudRe22', 1.0, ROOT.kBlue+2),
+    #('cHudRe11', 1.0, ROOT.kMagenta+2),
+    #('cHudRe22', 1.0, ROOT.kBlue+2),
     ('cHudRe33', 1.0, ROOT.kViolet+2),
+    
+    ('cW', 1.0, ROOT.kRed),
+    ('cWtil', 1.0, ROOT.kGreen),
 ]
+
+WCs = filter( lambda wc: wc[0] in w.variables, WCs )
 
 params =  [ ] 
 
@@ -343,29 +348,29 @@ if 'g' in objects:
       binning=[50,-25,25], 
     ))
 
-    plots.append(Plot( name = "Photon0_pt_ljm"+postfix,
-      texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "Photon0_pt_ljm"+postfix,
+    #  texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "Photon0_eta_ljm"+postfix,
-      texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "Photon0_eta_ljm"+postfix,
+    #  texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
-    plots.append(Plot( name = "Photon0_pt_nljm"+postfix,
-      texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "Photon0_pt_nljm"+postfix,
+    #  texX = 'p_{T}(#gamma_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "Photon0_eta_nljm"+postfix,
-      texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "Photon0_eta_nljm"+postfix,
+    #  texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 and abs(event.genPhoton_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
 if args.WG:
     plots.append(Plot( name = "phi1"+postfix,
@@ -418,29 +423,29 @@ if 'Z' in objects:
       binning=[50,-25,25], 
     ))
 
-    plots.append(Plot( name = "Z0_pt_ljm"+postfix,
-      texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "Z0_pt_ljm"+postfix,
+    #  texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "Z0_eta_ljm"+postfix,
-      texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "Z0_eta_ljm"+postfix,
+    #  texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
-    plots.append(Plot( name = "Z0_pt_nljm"+postfix,
-      texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "Z0_pt_nljm"+postfix,
+    #  texX = 'p_{T}(Z_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genZ_pt[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "Z0_eta_nljm"+postfix,
-      texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "Z0_eta_nljm"+postfix,
+    #  texX = '#eta(Z_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genZ_eta[0] if event.ngenZ>0 and abs(event.genZ_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
 if 'W' in objects:
     plots.append(Plot( name = "W0_pt"+postfix,
@@ -473,29 +478,29 @@ if 'W' in objects:
       binning=[50,-25,25],
     ))
 
-    plots.append(Plot( name = "W0_pt_ljm"+postfix,
-      texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "W0_pt_ljm"+postfix,
+    #  texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "W0_eta_ljm"+postfix,
-      texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "W0_eta_ljm"+postfix,
+    #  texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
-    plots.append(Plot( name = "W0_pt_nljm"+postfix,
-      texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[600/20,0,600],
-    ))
+    #plots.append(Plot( name = "W0_pt_nljm"+postfix,
+    #  texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[600/20,0,600],
+    #))
 
-    plots.append(Plot( name = "W0_eta_nljm"+postfix,
-      texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
-      binning=[30,-3,3],
-    ))
+    #plots.append(Plot( name = "W0_eta_nljm"+postfix,
+    #  texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
+    #  attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 and abs(event.genW_mother_pdgId[0]) not in [1,2,3,4] else float('nan'),
+    #  binning=[30,-3,3],
+    #))
 
 if 't' in objects:
     plots.append(Plot( name = "top0_pt"+postfix,

@@ -18,7 +18,9 @@ if __name__ == "__main__":
 gridpack_dir = "/mnt/hephy/cms/lukas.lechner/gridpacks/TTXPheno/gridpacks/"
 data_dir     = "/mnt/hephy/cms/robert.schoefbeck/afs/TTXPheno/"
 
-ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII               = Sample.fromDirectory("ttZ_ll_LO_order2_15weights_ref_ext",  texName = "ttZ",      directory = [os.path.join( data_dir, "fwlite_ttZ_ll_LO_order2_15weights_ref" )]) 
+#/mnt/hephy/cms/robert.schoefbeck/afs/TTXPheno/fwlite_ttZ_ll_LO_order2_15weights_ref_ext/
+
+ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII               = Sample.fromDirectory("ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII",  texName = "ttZ",      directory = [os.path.join( data_dir, "fwlite_ttZ_ll_LO_order2_15weights_ref_ext" )]) 
 ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII.reweight_pkl  = gridpack_dir + "18052018_ref/ttZ/order2/ttZ0j_rwgt_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.pkl"
 ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII.nEvents       = 1994*5000
 ttZ_ll_LO_order2_15weights_ref_ext_delphes_RunII.xsec          = 0.5205 * (0.0915 / 0.0565) #pb ttZ, Z->ll, ttZ gridpack * ttZ NLO Daniel / ttZ LO run.py UFO
