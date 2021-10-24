@@ -13,7 +13,7 @@ def isGoodRecoMuon( l ):
 def isGoodRecoElectron( l ):
     return abs( l['pdgId'] ) == 11 and abs( l['eta'] ) < max_lepton_abseta and l['pt'] > 40 #eta < 2.5
 
-def isGoodRecoJet( j, pt_var = 'pt'):
+def isGoodRecoJet( j, pt_var = 'pt', max_jet_abseta=max_jet_abseta):
     return  abs( j['eta'] ) < max_jet_abseta and j[pt_var] > 30 and j['nCharged']>1 and j['nNeutrals']>0 #eta < 2.4
 
 def isGoodRecoPhoton( g ):

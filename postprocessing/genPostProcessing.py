@@ -600,7 +600,7 @@ def filler( event ):
                 jet["bTag_"+btagWP] = btag
 
         # read jets
-        recoJets =  filter( isGoodRecoJet, allRecoJets) 
+        recoJets =  filter( lambda j: isGoodRecoJet(j, max_jet_abseta = 5.1), allRecoJets) 
         recoJets.sort( key = lambda p:-p['pt'] )
         addIndex( recoJets )
 
@@ -625,11 +625,6 @@ def filler( event ):
         #event.nBTag_JEC_up   = len( filter( lambda j: j["bTag_"+default_btagWP] and isGoodRecoJet(j, pt_var = 'pt_JEC_up'), allRecoJets ) )
         #event.nBTag_JEC_down = len( filter( lambda j: j["bTag_"+default_btagWP] and isGoodRecoJet(j, pt_var = 'pt_JEC_down'), allRecoJets ) )
         
-        # read jets
-        recoJets =  filter( isGoodRecoJet, allRecoJets ) 
-        recoJets.sort( key = lambda p:-p['pt'] )
-        addIndex( recoJets )
-
         # make reco b jets
         recoBJets    = filter( lambda j:j['bTag_'+default_btagWP], recoJets )
         recoNonBJets = filter( lambda j:not j['bTag_'+default_btagWP], recoJets )

@@ -5,11 +5,11 @@ import ROOT
 
 import Analysis.Tools.logger as _logger
 import RootTools.core.logger as _logger_rt
-logger    = _logger.get_logger(   'INFO', logFile = None)
+logger    = _logger.get_logger(   'DEBUG', logFile = None)
 logger_rt = _logger_rt.get_logger('INFO', logFile = None)
 
 #weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/test_reweighting/reweight_card.pkl")
-weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl")
+weightInfo = WeightInfo("/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/ttZ01j-vec_reweight_card.pkl")
 weightInfo.set_order(2)
 # get list of values of ref point in correct order
 ref_point_coordinates = [weightInfo.ref_point_coordinates[var] for var in weightInfo.variables]
@@ -29,7 +29,8 @@ def interpret_weight(weight_id):
 
 # from here on miniAOD specific:
 #miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/miniAODSIM.root"])
-miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/miniAODSim_fast_private/WGToLNu-v6_schoef-WGToLNu-v6-888b7a86c2f3c15fead55bb8986384d5_USER/MINIAODSIMoutput_201.root"])
+#miniAOD = FWLiteSample.fromFiles("miniAOD", ["/users/robert.schoefbeck/CMS/test/CMSSW_10_2_22/src/Samples/crab/gen/reco_FastSim_LO_0j_102X_CP5_FastSim.root"])
+miniAOD = FWLiteSample.fromFiles("miniAOD", ["/eos/vbc/user/robert.schoefbeck/miniAODSim_fast_private/flavor_vec_ttZ01j_schoef-flavor_vec_ttZ01j-c54a772d74cd107a1191ec379d5aa477_USER/MINIAODSIMoutput_338.root"])
 logger.info("Compute parametrisation from miniAOD relying on the same sequence of weights as in the card file.")
 
 fwliteReader = miniAOD.fwliteReader( products = { 'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")}} )
@@ -44,6 +45,8 @@ while fwliteReader.run( ):
     weights      = []
     param_points = []
     for weight in lhe_weights:
+
+        #print weight.id, weight.wgt
         # Store nominal weight (First position!) 
         if weight.id in ['rwgt_1','dummy']: rw_nominal = weight.wgt
         if not weight.id in weightInfo.id: continue
@@ -53,7 +56,7 @@ while fwliteReader.run( ):
         # weight data for interpolation
         if not hyperPoly.initialized:
             param_points.append( tuple(interpreted_weight[var] for var in weightInfo.variables) )
-            logger.debug( "Weight %s -> base point %r.", weight.id, param_points[-1] ) 
+            logger.debug( "Weight %s -> base point %r. val: %f", weight.id, param_points[-1], weight.wgt ) 
 
     rw_miniAOD_debug.append( weights ) 
     # Initialize with Reference Point
@@ -77,6 +80,7 @@ while fwliteReader.run( ):
     if counter>=max_n:
         break
 
+assert False, ""
 
 # from here on nanoAOD specific:
 #nanoAOD = Sample.fromFiles("nanoAOD", ["/eos/vbc/user/robert.schoefbeck/test_reweighting/nanoAOD.root"])
