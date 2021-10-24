@@ -134,7 +134,7 @@ class DataGenerator(Sequence):
         dataset = df.values
 
         # number of samples with 'small'
-        n_small_samples = 10000
+        n_small_samples = 1000000
 
         # small
         if self.small:

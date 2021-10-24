@@ -43,7 +43,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 
 # Import samples
-from TMB.Samples.pp_gen_v7 import *
+from TMB.Samples.pp_gen_v8 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -54,16 +54,34 @@ w.set_order(2)
 
 # define which Wilson coefficients to plot
 
+#WCs = [
+#    ('cWWW', 1.0, ROOT.kRed),
+#    ('cpq3i', 1.0,ROOT.kGreen),
+#    ('cpqMi', 1.0, ROOT.kOrange),
+#    ('cpu', 1.0, ROOT.kCyan),
+#    ('cpt', 1.0, ROOT.kMagenta),
+#    ('cpQ3', 1.0, ROOT.kBlue),
+#    ('cpQM', 1.0, ROOT.kViolet-9),
+#    ('cpb', 1.0, ROOT.kGray),
+#    ('cpd', 1.0, ROOT.kAzure+10),
+#]
+
 WCs = [
-    ('cWWW', 1.0, ROOT.kRed),
-    ('cpq3i', 1.0,ROOT.kGreen),
-    ('cpqMi', 1.0, ROOT.kOrange),
-    ('cpu', 1.0, ROOT.kCyan),
-    ('cpt', 1.0, ROOT.kMagenta),
-    ('cpQ3', 1.0, ROOT.kBlue),
-    ('cpQM', 1.0, ROOT.kViolet-9),
-    ('cpb', 1.0, ROOT.kGray),
-    ('cpd', 1.0, ROOT.kAzure+10),
+    ('cHq1Re11', 1.0, ROOT.kRed),
+    ('cHq1Re22', 1.0, ROOT.kGreen),
+    ('cHq1Re33', 1.0, ROOT.kOrange),
+    ('cHq3Re11', 1.0, ROOT.kCyan),
+    ('cHq3Re22', 1.0, ROOT.kMagenta),
+    ('cHq3Re33', 1.0, ROOT.kBlue),
+    ('cHuRe11', 1.0, ROOT.kViolet),
+    ('cHuRe22', 1.0, ROOT.kAzure),
+    ('cHuRe33', 1.0, ROOT.kRed+2),
+    ('cHdRe11', 1.0, ROOT.kGreen+2),
+    ('cHdRe22', 1.0, ROOT.kOrange+2),
+    ('cHdRe33', 1.0, ROOT.kCyan+2),
+    ('cHudRe11', 1.0, ROOT.kMagenta+2),
+    ('cHudRe22', 1.0, ROOT.kBlue+2),
+    ('cHudRe33', 1.0, ROOT.kViolet+2),
 ]
 
 params =  [ ] 
@@ -106,7 +124,7 @@ for sample in stack.samples:
     if selectionString != "":
         sample.addSelectionString( selectionString )
     if args.small:
-        sample.reduceFiles( to = 1 )
+        sample.reduceFiles( to = 10 )
 
 ## Helpers
 def addTransverseVector( p_dict ):

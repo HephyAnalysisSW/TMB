@@ -65,6 +65,10 @@ else:
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v6.py"
     elif args.targetDir.startswith('v7'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v7.py"
+    elif args.targetDir.startswith('v8'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v8.py"
+    elif args.targetDir.startswith('v9'):
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v9.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )
@@ -200,8 +204,8 @@ if args.delphesEra is not None:
     # reconstructed jets
     recoJet_vars    = 'pt/F,eta/F,phi/F,bTag/F,bTagPhys/I,nCharged/I,nNeutrals/I'#,pt_JEC_up/F,pt_JEC_up/F'
 
-    btagWPs = ["loose", "medium", "tight", "looswMTD", "mediumMTD", "tightMTD"]
-    default_btagWP = "medium"
+    btagWPs = ["loose"]#, "medium", "tight"] #, "looswMTD", "mediumMTD", "tightMTD"]
+    default_btagWP = "loose"
     variables.append( "nBTag/I" )
     #variables.append( "nrecoJets_JEC_down/I" )
     #variables.append( "nrecoJets_JEC_up/I" )
@@ -229,7 +233,7 @@ if args.delphesEra is not None:
 
     # Systematics
     from TMB.Tools.bTagEff.delphesBTaggingEff import getBTagSF_1a
-    variables      += ["reweight_BTag_B/F", "reweight_BTag_L/F"]
+    #variables      += ["reweight_BTag_B/F", "reweight_BTag_L/F"]
     variables      += ["reweight_id_mu/F", "reweight_id_ele/F"]
 
 if args.addReweights:
@@ -633,8 +637,8 @@ def filler( event ):
         if recoBj1: fill_vector( event, "recoBj1", recoJet_varnames, recoBj1) 
 
         # add b-tag reweights
-        event.reweight_BTag_B = getBTagSF_1a(default_btagWP, 'B', recoBJets, recoNonBJets )
-        event.reweight_BTag_L = getBTagSF_1a(default_btagWP, 'L', recoBJets, recoNonBJets )
+        #event.reweight_BTag_B = getBTagSF_1a(default_btagWP, 'B', recoBJets, recoNonBJets )
+        #event.reweight_BTag_L = getBTagSF_1a(default_btagWP, 'L', recoBJets, recoNonBJets )
 
         # read leptons
         allRecoLeps = delphesReader.muons() + delphesReader.electrons()

@@ -104,7 +104,7 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patien
 # train the model
 history = model.fit_generator(
                     training_data_generator,
-                    epochs=500, 
+                    epochs=100, 
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
                     #validation_split=0.1
                     validation_data = validation_data_generator,
