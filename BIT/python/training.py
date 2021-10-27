@@ -13,6 +13,8 @@ argParser.add_argument('--variable_set',       action='store', type=str,   defau
 argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/scratch-cbe/users/$USER/BIT/training-ntuples-TTZ-flavor/MVA-training"))
 argParser.add_argument('--small',              action='store_true', help="small?")
+argParser.add_argument('--debug',              action='store_true', help="Make debug plots?")
+#argParser.add_argument('--calibrated',         action='store_true', help="Calibrate output?")
 argParser.add_argument('--maxEvents',          action='store', default = None, type=int, help="Maximum number of training events")
 argParser.add_argument('--bagging_fraction',   action='store', default = 1., type=float, help="Bagging fraction")
 argParser.add_argument('--overwrite',          action='store_true', help="Overwrite output?")
@@ -41,6 +43,10 @@ configs = importlib.import_module(args.config_module)
 config  = getattr( configs, args.config)
 config.bit_cfg.update( extra_args )
 
+#if args.calibrated:
+#    args.name+="_calibrated"
+#    config.bit_cfg['calibrated'] = True
+#
 import uproot
 import awkward
 import numpy as np
@@ -51,7 +57,6 @@ import pandas as pd
 # variable definitions
 
 import Analysis.Tools.user as user
-
 # directories
 plot_directory   = os.path.join( user. plot_directory, 'MVA', args.config, args.name)
 output_directory = os.path.join( args.output_directory, 'models', args.config, args.name)
@@ -170,7 +175,7 @@ for derivative in config.bit_derivatives:
                 bagging_fraction      = args.bagging_fraction,
                 **config.bit_cfg
                     )
-        bits[derivative].boost(debug=True)
+        bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
         print ("Written %s"%( filename ))
 
@@ -190,15 +195,16 @@ for derivative in config.bit_derivatives:
         test_weights_     = test_weights    [:, config.weight_derivative_combinations.index(derivative)]
         training_weights_ = training_weights[:, config.weight_derivative_combinations.index(derivative)]
 
-        from debug import make_debug_plots
-        make_debug_plots( bits[derivative], 
-                          training_features, training_weights[:,0],  
-                          training_weights[:, config.weight_derivative_combinations.index(derivative)], 
-                          test_features, 
-                          test_weights[:,0], 
-                          test_weights_, 
-                          os.path.join(plot_directory, ('_'.join(derivative))),
-                          mva_variables = config.mva_variables) 
+        if args.debug:
+            from debug import make_debug_plots
+            make_debug_plots( bits[derivative], 
+                              training_features, training_weights[:,0],  
+                              training_weights[:, config.weight_derivative_combinations.index(derivative)], 
+                              test_features, 
+                              test_weights[:,0], 
+                              test_weights_, 
+                              os.path.join(plot_directory, ('_'.join(derivative))),
+                              mva_variables = config.mva_variables) 
 
         test_train_factor = (1.-train_test_options['test_size'])/train_test_options['test_size']
         

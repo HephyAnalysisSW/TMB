@@ -27,7 +27,7 @@ from tWZ.Tools.objectSelection           import lepString # probably will merge 
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
-from TMB.Tools.WeightInfo                import WeightInfo
+from Analysis.Tools.WeightInfo           import WeightInfo
 import Analysis.Tools.syncer             as     syncer
 import numpy as np
 
@@ -40,7 +40,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--plot_directory', action='store', default='analysis-v6')
 argParser.add_argument('--era',            action='store', type=str, default="Autumn18")
 argParser.add_argument('--sample',        action='store', type=str, default="ttG_noFullyHad_fast")
-argParser.add_argument('--WC',            action='store', type=str, default="ctZ")
+argParser.add_argument('--WC',            action='store', type=str, default="cWWW")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
 argParser.add_argument('--onlyMVA',       action='store', default=None, help='Plot only this MVA')
 args = argParser.parse_args()
@@ -125,42 +125,71 @@ def make_mva_inputs( event, sample ):
         setattr( event, mva_variable, func(event, sample) )
 sequence.append( make_mva_inputs )
 
-# load models
-from keras.models import load_model
+## load models
+#from keras.models import load_model
+#
+#if args.onlyMVA is not None:
+#    has_lstm = ('LSTM' in args.onlyMVA)
+#    name = args.onlyMVA.split('/')[-4]
+#    models = [ (name, has_lstm, load_model(args.onlyMVA) ), ]
+#else:
+#    if args.WC == 'ctZ':
+#        models = [
+#    #        ("FI_ctZ_BSM_TTG",      False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTG/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
+#    #        ("FI_ctZ_BSM_TTG_wq",   False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTG_wq/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
+#            ("FI_ctZ_BSM_TTGWG_wq", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTGWG_wq/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
+#            ("FI_ctZ_BSM_TTGWG",    False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTGWG/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
+#            ("FI_ctZ_BSM_TTGWG_LSTM_wq",  True, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_TTGWG_wq_LSTM/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
+#        ]
+#    elif args.WC == 'cWWW':
+#        models = [
+#            ("FI_cWWW_regression_ttGWG", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/train_ctZ_BSM_in_ttG_noFullyHad_WGToLNu/ttG_WG/FI_cWWW_BSM/regression_model.h5")),
+#            ("FI_cWWW_regression_WG",    False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/train_ctZ_BSM_in_WGToLNu/ttG_WG/FI_cWWW_BSM/regression_model.h5")),
+#        ]
+#
+#def keras_predict( event, sample ):
+#
+#    # get model inputs assuming lstm
+#    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+#    for name, has_lstm, model in models:
+#        #print has_lstm, flat_variables, lstm_jets
+#        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
+#        setattr( event, name, prediction )
+#        if not prediction>-float('inf'):
+#            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
+#            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
+#            raise RuntimeError("Found NAN prediction?")
+#
+#sequence.append( keras_predict )
 
-if args.onlyMVA is not None:
-    has_lstm = ('LSTM' in args.onlyMVA)
-    name = args.onlyMVA.split('/')[-4]
-    models = [ (name, has_lstm, load_model(args.onlyMVA) ), ]
-else:
-    if args.WC == 'ctZ':
-        models = [
-    #        ("FI_ctZ_BSM_TTG",      False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTG/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
-    #        ("FI_ctZ_BSM_TTG_wq",   False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTG_wq/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
-            ("FI_ctZ_BSM_TTGWG_wq", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTGWG_wq/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
-            ("FI_ctZ_BSM_TTGWG",    False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_BSM_TTGWG/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
-            ("FI_ctZ_BSM_TTGWG_LSTM_wq",  True, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/ctZ_TTGWG_wq_LSTM/ttG_WG/FI_ctZ_BSM/regression_model.h5")),
-        ]
-    elif args.WC == 'cWWW':
-        models = [
-            ("FI_cWWW_regression_ttGWG", False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/train_ctZ_BSM_in_ttG_noFullyHad_WGToLNu/ttG_WG/FI_cWWW_BSM/regression_model.h5")),
-            ("FI_cWWW_regression_WG",    False, load_model("/mnt/hephy/cms/robert.schoefbeck/TMB/models/train_ctZ_BSM_in_WGToLNu/ttG_WG/FI_cWWW_BSM/regression_model.h5")),
-        ]
+#BITs
+import sys, os, time
+sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
+from BoostedInformationTree import BoostedInformationTree 
+import TMB.BIT.configs.ttG_WG as config
 
-def keras_predict( event, sample ):
+bits = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/capPtG/")
+
+models = [
+    ("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 1.5,]),
+    ("BIT_cWWW",    bits[('cWWW',)], [50, -5, 0,]),
+]
+
+def bit_predict( event, sample ):
 
     # get model inputs assuming lstm
-    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
-    for name, has_lstm, model in models:
+    features = config.predict_inputs( event, sample)
+    for name, model, _ in models:
         #print has_lstm, flat_variables, lstm_jets
-        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
+        prediction = model.predict( features )
         setattr( event, name, prediction )
-        if not prediction>-float('inf'):
-            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
-            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
-            raise RuntimeError("Found NAN prediction?")
+#        if not prediction>-float('inf'):
+#            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
+#            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
+#            raise RuntimeError("Found NAN prediction?")
 
-sequence.append( keras_predict )
+sequence.append( bit_predict )
+
 
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
@@ -181,12 +210,12 @@ Plot.setDefaults(stack = stack, weight = staticmethod(lumi_weight), selectionStr
 plots        = []
 fisher_plots = []
 
-for model_name, _, _ in models:
+for model_name, _, binning in models:
     plots.append(Plot(
         name = model_name,
         texX = model_name, texY = 'Number of Events / 10 GeV',
         attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
-        binning=[50,0,1],
+        binning=binning,
         addOverFlowBin='upper',
     ))
 

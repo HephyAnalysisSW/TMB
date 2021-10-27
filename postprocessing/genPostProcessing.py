@@ -8,7 +8,7 @@ import ROOT
 import os, sys
 ROOT.gROOT.SetBatch(True)
 import itertools
-from math                                import sqrt, cos, sin, pi, acos
+from math                                import sqrt, cos, sin, pi, acos, cosh
 import imp
 
 #RootTools
@@ -128,6 +128,8 @@ if args.nJobs>1:
     n_files_after  = len(sample.files)
     logger.info( "Running job %i/%i over %i files from a total of %i.", args.job, args.nJobs, n_files_after, n_files_before)
 
+max_jet_abseta = 5.1
+
 products = {
     'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
     'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
@@ -167,6 +169,10 @@ jet_write_varnames  =  varnames( jet_write_vars )
 variables += ["genJet[%s]"%jet_write_vars]
 variables += ["genBj0_%s"%var for var in jet_write_vars.split(',')]
 variables += ["genBj1_%s"%var for var in jet_write_vars.split(',')]
+#VBS (gen)
+variables += ["genVBSj0_%s"%var for var in jet_write_vars.split(',')]
+variables += ["genVBSj1_%s"%var for var in jet_write_vars.split(',')]
+variables += ["genVBSj0_index/I", "genVBSj1_index/I","genVBS_dEta/F", "genVBS_dPhi/F", "genVBS_mjj/F"]
 # lepton vector 
 lep_vars       =  "pt/F,eta/F,phi/F,pdgId/I,status/I"
 lep_extra_vars =  "mother_pdgId/I,grandmother_pdgId/I"
@@ -225,6 +231,11 @@ if args.delphesEra is not None:
     # associated jet indices
     variables += [ "recoBjNonZlep_index/I", "recoBjNonZhad_index/I" ]
     variables += [ "recoBjLeadlep_index/I", "recoBjLeadhad_index/I" ]
+
+    #VBS (gen)
+    variables += ["recoVBSj0_%s"%var for var in recoJet_vars.split(',')]
+    variables += ["recoVBSj1_%s"%var for var in recoJet_vars.split(',')]
+    variables += ["recoVBSj0_index/I", "recoVBSj1_index/I", "recoVBS_dEta/F", "recoVBS_dPhi/F", "recoVBS_mjj/F"]
 
     # reconstructed photons
     recoPhoton_vars = 'pt/F,eta/F,phi/F,isolationVar/F,isolationVarRhoCorr/F,sumPtCharged/F,sumPtNeutral/F,sumPtChargedPU/F,sumPt/F,ehadOverEem/F,minLeptonDR/F,minLeptonPt/F,minJetDR/F'#genIndex/I
@@ -516,9 +527,10 @@ def filler( event ):
 
     # jets
     fwlite_genJets = filter( genJetId, fwliteReader.products['genJets'] )
-    genJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
+    allGenJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
     # filter genJets
-    genJets = list( filter( lambda j:isGoodGenJet( j ), genJets ) )
+    genJets = list( filter( lambda j:isGoodGenJet( j, max_jet_abseta = max_jet_abseta), allGenJets ) )
+
     ## cleaning of jets with isolated photons
     #genJets = list( filter( lambda j:min([999]+[deltaR2(j, p) for p in genPhotons_ ])>0.4**2, genJets))
 
@@ -546,7 +558,22 @@ def filler( event ):
     genBj0, genBj1 = ( trueBjets + trueNonBjets + [None, None] )[:2]
     if genBj0: fill_vector( event, "genBj0", jet_write_varnames, genBj0) 
     if genBj1: fill_vector( event, "genBj1", jet_write_varnames, genBj1) 
-#
+
+    # VBS jets
+    combs = list(itertools.combinations(range(len(genJets)),2))
+    combs.sort(key=lambda comb:-genJets[comb[0]]['pt']-genJets[comb[1]]['pt'])
+    for i_j1, i_j2 in combs:
+        if genJets[i_j1]['eta']*genJets[i_j2]['eta']<0:
+            vbsGenJet0 = genJets[i_j1]
+            vbsGenJet1 = genJets[i_j2]
+            event.genVBSj0_index, event.genVBSj1_index = i_j1, i_j2
+            fill_vector( event, "genVBSj0", jet_write_varnames, vbsGenJet0)
+            fill_vector( event, "genVBSj1", jet_write_varnames, vbsGenJet1)
+            event.genVBS_dEta= vbsGenJet0['eta']-vbsGenJet1['eta']
+            event.genVBS_dPhi= deltaPhi(vbsGenJet0['phi'],vbsGenJet1['phi'])
+            event.genVBS_mjj = sqrt( 2*vbsGenJet0['pt']*vbsGenJet1['pt']*(cosh(event.genVBS_dEta)-cos(event.genVBS_dPhi)))
+            break
+
 #        # reco-bjet/leading lepton association
 #        if len(promptGenLeps)>0 and genBj0 and genBj1:
 #            if vecSumPt( genBj0, promptGenLeps[0], genMet ) > vecSumPt( genBj1, promptGenLeps[0], genMet ):
@@ -613,7 +640,7 @@ def filler( event ):
                 jet["bTag_"+btagWP] = btag
 
         # read jets
-        recoJets =  filter( lambda j: isGoodRecoJet(j, max_jet_abseta = 5.1), allRecoJets) 
+        recoJets =  filter( lambda j: isGoodRecoJet(j, max_jet_abseta = max_jet_abseta), allRecoJets) 
         recoJets.sort( key = lambda p:-p['pt'] )
         addIndex( recoJets )
 
@@ -648,6 +675,22 @@ def filler( event ):
         # add b-tag reweights
         #event.reweight_BTag_B = getBTagSF_1a(default_btagWP, 'B', recoBJets, recoNonBJets )
         #event.reweight_BTag_L = getBTagSF_1a(default_btagWP, 'L', recoBJets, recoNonBJets )
+
+        # VBS jets
+    
+        combs = list(itertools.combinations(range(len(recoJets)),2))
+        combs.sort(key=lambda comb:-recoJets[comb[0]]['pt']-recoJets[comb[1]]['pt'])
+        for i_j1, i_j2 in combs:
+            if recoJets[i_j1]['eta']*recoJets[i_j2]['eta']<0:
+                vbsRecoJet0 = recoJets[i_j1]
+                vbsRecoJet1 = recoJets[i_j2]
+                event.recoVBSj0_index, event.recoVBSj1_index = i_j1, i_j2
+                fill_vector( event, "recoVBSj0", recoJet_varnames, vbsRecoJet0)
+                fill_vector( event, "recoVBSj1", recoJet_varnames, vbsRecoJet1)
+                event.recoVBS_dEta= vbsRecoJet0['eta']-vbsRecoJet1['eta']
+                event.recoVBS_dPhi= deltaPhi(vbsRecoJet0['phi'],vbsRecoJet1['phi'])
+                event.recoVBS_mjj = sqrt( 2*vbsRecoJet0['pt']*vbsRecoJet1['pt']*(cosh(event.recoVBS_dEta)-cos(event.recoVBS_dPhi)))
+                break
 
         # read leptons
         allRecoLeps = delphesReader.muons() + delphesReader.electrons()

@@ -33,8 +33,10 @@ WGToLNu.xsec = 6.275e+01
 WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "WGToLNu_reweight_card.pkl")
 WGToLNu.nEvents      = 11298801
 
-#ZZ  = FWLiteSample.fromDAS("ZZ", "/ZZ/schoef-ZZ-4d8081e3495990e85b27c44ea3ccd438/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-#ZZ.xsec = 2.245e-01
+ZZ  = FWLiteSample.fromDAS("ZZ", "/ZZ/schoef-ZZ-3d151550d5cebaa869431ac7c227b1f2/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+ZZ.xsec = 1.187e-01
+ZZ.reweight_pkl = os.path.join(gridpack_directory, "ZZ_reweight_card.pkl")
+ZZ.nEvents      = 15139425
 
 ZZjj  = FWLiteSample.fromDAS("ZZjj", "/ZZjj_VBF/schoef-ZZjj_VBF-fb8d234640c8186dca4b1e7cc5fc4553/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 ZZjj.xsec=1.096e-03
