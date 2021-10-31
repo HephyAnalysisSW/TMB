@@ -20,6 +20,7 @@ argParser.add_argument('--bagging_fraction',   action='store', default = 1., typ
 argParser.add_argument('--overwrite',          action='store_true', help="Overwrite output?")
 argParser.add_argument('--derivative',         action='store', nargs = '*', default = [], help="What to train?")
 argParser.add_argument('--lumi_norm',          action='store_true', help="Normalize the events according to lumiweight1fb?")
+argParser.add_argument('--max_local_score',    action='store_true', default = None, help="Maximum local score")
 
 #args = argParser.parse_args()
 args, extra = argParser.parse_known_args(sys.argv[1:])
@@ -175,6 +176,10 @@ for derivative in config.bit_derivatives:
                 bagging_fraction      = args.bagging_fraction,
                 **config.bit_cfg
                     )
+        #Maximum Local Score
+        if args.max_local_score is not None:
+                bits[derivative].training_diff_weights[np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights, out = np.zeros_like(bits[derivative].training_diff_weights), where=bits[derivative].training_weights!=0) > args.max_local_score] = args.max_local_score * bits[derivative].training_weights[np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights, out = np.zeros_like(bits[derivative].training_diff_weights), where=bits[derivative].training_weights!=0) > args.max_local_score]
+
         bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
         print ("Written %s"%( filename ))
