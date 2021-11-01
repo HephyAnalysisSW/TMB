@@ -177,10 +177,6 @@ for derivative in config.bit_derivatives:
                 **config.bit_cfg
                     )
         #Maximum Local Score
-        #for max_loc in [0.1,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,50.0,100.0]:
-        #        mask = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) > max_loc
-        #        print ("Maximum Local Score: ",max_loc, " Number of Adjusted Values: ", bits[derivative].training_diff_weights[mask].size)
-        #print("max_local_score: ", args.max_local_score)
         if args.max_local_score is not None:
                 mask = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) > args.max_local_score
                 bits[derivative].training_diff_weights[mask] = args.max_local_score * bits[derivative].training_weights[mask]
