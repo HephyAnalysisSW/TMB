@@ -20,7 +20,7 @@ argParser.add_argument('--bagging_fraction',   action='store', default = 1., typ
 argParser.add_argument('--overwrite',          action='store_true', help="Overwrite output?")
 argParser.add_argument('--derivative',         action='store', nargs = '*', default = [], help="What to train?")
 argParser.add_argument('--lumi_norm',          action='store_true', help="Normalize the events according to lumiweight1fb?")
-argParser.add_argument('--max_local_score',    action='store_true', default = None, help="Maximum local score")
+argParser.add_argument('--max_local_score',    action='store', type=float, default = None, help="Maximum local score")
 
 #args = argParser.parse_args()
 args, extra = argParser.parse_known_args(sys.argv[1:])
@@ -177,8 +177,13 @@ for derivative in config.bit_derivatives:
                 **config.bit_cfg
                     )
         #Maximum Local Score
+        #for max_loc in [0.1,1.0,1.5,2.0,2.5,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,50.0,100.0]:
+        #        mask = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) > max_loc
+        #        print ("Maximum Local Score: ",max_loc, " Number of Adjusted Values: ", bits[derivative].training_diff_weights[mask].size)
+        #print("max_local_score: ", args.max_local_score)
         if args.max_local_score is not None:
-                bits[derivative].training_diff_weights[np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights, out = np.zeros_like(bits[derivative].training_diff_weights), where=bits[derivative].training_weights!=0) > args.max_local_score] = args.max_local_score * bits[derivative].training_weights[np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights, out = np.zeros_like(bits[derivative].training_diff_weights), where=bits[derivative].training_weights!=0) > args.max_local_score]
+                mask = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) > args.max_local_score
+                bits[derivative].training_diff_weights[mask] = args.max_local_score * bits[derivative].training_weights[mask]
 
         bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
