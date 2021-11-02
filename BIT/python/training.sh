@@ -117,8 +117,43 @@
 #python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_1.0 --derivative  ctZ --max_local_score 1.0
 #python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_1.0 --derivative  ctZ ctZ --max_local_score 1.0
 
-python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  cWWW --max_local_score 0.5
-python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  cWWW cWWW --max_local_score 0.5
-python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  ctZ --max_local_score 0.5
-python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  ctZ ctZ --max_local_score 0.5
+#python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  cWWW --max_local_score 0.5
+#python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  cWWW cWWW --max_local_score 0.5
+#python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  ctZ --max_local_score 0.5
+#python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_0.5 --derivative  ctZ ctZ --max_local_score 0.5
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  cWWW --rel_max_local_score 0.005
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  cWWW cWWW --rel_max_local_score 0.005
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  ctZ --rel_max_local_score 0.005
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  ctZ ctZ --rel_max_local_score 0.005
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.0075 --derivative  cWWW --rel_max_local_score 0.0075
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.0075 --derivative  cWWW cWWW --rel_max_local_score 0.0075
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.0075 --derivative  ctZ --rel_max_local_score 0.0075
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.0075 --derivative  ctZ ctZ --rel_max_local_score 0.0075
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.01 --derivative  cWWW --rel_max_local_score 0.01
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.01 --derivative  cWWW cWWW --rel_max_local_score 0.01
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.01 --derivative  ctZ --rel_max_local_score 0.01
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.01 --derivative  ctZ ctZ --rel_max_local_score 0.01
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.025 --derivative  cWWW --rel_max_local_score 0.025
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.025 --derivative  cWWW cWWW --rel_max_local_score 0.025
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.025 --derivative  ctZ --rel_max_local_score 0.025
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.025 --derivative  ctZ ctZ --rel_max_local_score 0.025
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.05 --derivative  cWWW --rel_max_local_score 0.05
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.05 --derivative  cWWW cWWW --rel_max_local_score 0.05
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.05 --derivative  ctZ --rel_max_local_score 0.05
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.05 --derivative  ctZ ctZ --rel_max_local_score 0.05
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.075 --derivative  cWWW --rel_max_local_score 0.075
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.075 --derivative  cWWW cWWW --rel_max_local_score 0.075
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.075 --derivative  ctZ --rel_max_local_score 0.075
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.075 --derivative  ctZ ctZ --rel_max_local_score 0.075
+
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.1 --derivative  cWWW --rel_max_local_score 0.1
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.1 --derivative  cWWW cWWW --rel_max_local_score 0.1
+python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.1 --derivative  ctZ --rel_max_local_score 0.1
+python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.1 --derivative  ctZ ctZ --rel_max_local_score 0.1
 
