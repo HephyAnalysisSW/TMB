@@ -186,7 +186,7 @@ bit_cfg = { derivative : { 'n_trees': 100,
             'max_depth'     : 4,
             'learning_rate' : 0.25,
             'min_size'      : 50,
-            'clip_score_percentage': None,
+            'clip_score_quantile': None,
             'calibrated'    : False,} for derivative in bit_derivatives }
 
 def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/ttG_ctZ/', bit_derivatives=bit_derivatives):

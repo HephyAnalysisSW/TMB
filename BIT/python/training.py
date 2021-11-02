@@ -139,22 +139,22 @@ if args.lumi_norm:
 
 # Clip the most extreme scores 
 for derivative in config.bit_derivatives:
-    if config.bit_cfg[derivative]['clip_score_percentage'] is None: continue
+    if config.bit_cfg[derivative]['clip_score_quantile'] is None: continue
     i_derivative          = config.weight_derivative_combinations.index(derivative)
-    clip_score_percentage = config.bit_cfg[derivative]['clip_score_percentage']
+    clip_score_quantile = config.bit_cfg[derivative]['clip_score_quantile']
 
     derivative = config.weight_derivative_combinations[i_derivative]
     training_scores          = np.divide( weight_derivatives[:,i_derivative], weight_derivatives[:,0], np.zeros_like(weight_derivatives[:,i_derivative]), where=weight_derivatives[:,0]!=0 )
-    training_score_quantiles = np.quantile( training_scores, [1-clip_score_percentage] if len(derivative)%2==0 else [clip_score_percentage, 1-clip_score_percentage] )
+    training_score_quantiles = np.quantile( training_scores, [1-clip_score_quantile] if len(derivative)%2==0 else [clip_score_quantile, 1-clip_score_quantile] )
     if len(derivative)%2==0:
         # quadratic: Clip only positive values
-        print "Clip score at percentile %3.2f for %r: s>%3.2f" % (1-clip_score_percentage, derivative, training_score_quantiles[0] )
+        print "Clip score at percentile %3.2f for %r: s>%3.2f" % (1-clip_score_quantile, derivative, training_score_quantiles[0] )
         to_clip                         = training_scores>training_score_quantiles[0]
         weight_derivatives[:,i_derivative][to_clip] = training_score_quantiles[0]*weight_derivatives[:,0][to_clip]
 
     else:
         # linear: Clip positive and negative values
-        print "Clip score at percentiles %3.2f and %3.2f for %r: s<%3.2f and s>%3.2f" % (clip_score_percentage, 1-clip_score_percentage, derivative, training_score_quantiles[0], training_score_quantiles[1] )
+        print "Clip score at percentiles %3.2f and %3.2f for %r: s<%3.2f and s>%3.2f" % (clip_score_quantile, 1-clip_score_quantile, derivative, training_score_quantiles[0], training_score_quantiles[1] )
         to_clip                  = training_scores>training_score_quantiles[1]
         weight_derivatives[:,i_derivative][to_clip] = training_score_quantiles[1]*weight_derivatives[:,0][to_clip]
         to_clip                  = training_scores<training_score_quantiles[0]
