@@ -187,10 +187,6 @@ for derivative in config.bit_derivatives:
                 score_store = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) 
                 threshold = np.quantile(score_store,1.0-args.rel_max_local_score/100.0)
                 bits[derivative].training_diff_weights[score_store > threshold] = threshold * bits[derivative].training_weights[score_store > threshold]
-                #print("number of values total: ", bits[derivative].training_diff_weights.size)
-                #for share in [0.001,0.005,0.01,0.05,0.1,0.5,1.0,5.0,10.0]:
-                #        threshold_test = np.quantile(score_store,1.0-share/100.0)
-                #        print("rel_max_local_score: ",share, " ,threshold = max_local_score: ",threshold_test," ,number of capped values: ",bits[derivative].training_diff_weights[score_store > threshold_test].size)
 
         bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
