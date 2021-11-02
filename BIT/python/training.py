@@ -137,12 +137,6 @@ features  = features[:,0:n_var_flat]
 if args.lumi_norm:
     weight_derivatives = weight_derivatives * lumi_weights[:,np.newaxis]
 
-#mask = np.divide( bits[derivative].training_diff_weights, bits[derivative].training_weights, 
-#                  out = np.zeros_like(bits[derivative].training_diff_weights), 
-#                  where=bits[derivative].training_weights!=0) > args.max_local_score
-#bits[derivative].training_diff_weights[mask] = args.max_local_score * bits[derivative].training_weights[mask]
-
-
 # Clip the most extreme scores 
 for derivative in config.bit_derivatives:
     if config.bit_cfg[derivative]['clip_score_percentage'] is None: continue
@@ -227,6 +221,7 @@ for derivative in config.bit_derivatives:
                 bagging_fraction      = args.bagging_fraction,
                 **config.bit_cfg[derivative]
                     )
+
         bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
         print ("Written %s"%( filename ))
