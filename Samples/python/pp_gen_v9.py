@@ -17,8 +17,6 @@ if __name__ == "__main__":
     import RootTools.core.logger as logger_rt
     logger_rt = logger_rt.get_logger('DEBUG')
 
-import glob
-
 gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
 pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v9"
 

@@ -62,7 +62,7 @@
 
 #python training.py --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-TTZ-delphes/MVA-training/ttZ_3l_delphes --config ttZ_3l_delphes --lumi_norm --name gss 
 
-python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capPtG --derivative  cWWW
-#python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capPtG --derivative  cWWW cWWW
-#python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capPtG --derivative  ctZ
-python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capPtG --derivative  ctZ ctZ
+#python training.py --overwrite  --debug  --clip_score_percentage 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clipScore2 --derivative  cWWW
+python training.py --overwrite  --debug  --clip_score_percentage 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  cWWW cWWW --positive_score 
+#python training.py --overwrite  --debug  --clip_score_percentage 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clipScore2 --derivative  ctZ
+python training.py --overwrite  --debug  --clip_score_percentage 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  ctZ ctZ --positive_score 

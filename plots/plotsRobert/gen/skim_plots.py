@@ -19,7 +19,7 @@ from RootTools.core.standard        import *
 from TMB.Tools.user                 import plot_directory
 from TMB.Tools.helpers              import deltaPhi, getCollection, deltaR, mZ
 from TMB.Tools.genCutInterpreter    import cutInterpreter
-from TMB.Tools.VV_angles            import VV_angles
+import TMB.Tools.VV_angles          as VV_angles
 from TMB.Tools.genObjectSelection   import isGoodGenJet
 
 # Arguments
@@ -47,7 +47,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 
 # Import samples
-from TMB.Samples.pp_gen_v5 import *
+from TMB.Samples.pp_gen_v10 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -117,7 +117,7 @@ for sample in stack.samples:
     if selectionString != "":
         sample.addSelectionString( selectionString )
     if args.small:
-        sample.reduceFiles( to = 1 )
+        sample.reduceFiles( to = 10 )
 
 ## Helpers
 def addTransverseVector( p_dict ):
