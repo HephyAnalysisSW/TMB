@@ -47,6 +47,10 @@ WG500ToLNu = Sample.fromDirectory("WG500ToLNu", texName = "WG500ToLNu", director
 WG500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG500ToLNu_reweight_card.pkl")
 WG500ToLNu.objects      = ['g', 'W']
 
+WGToLNu_ptG_binned = Sample.combine( "WGToLNu_ptG_binned", [WG20To130ToLNu, WG130To300ToLNu, WG300To500ToLNu, WG500ToLNu] )
+WGToLNu_ptG_binned.reweight_pkl = os.path.join(gridpack_directory, "WGToLNu_reweight_card.pkl")
+WGToLNu_ptG_binned.objects      = ['g', 'W']
+
 ZZ = Sample.fromDirectory("ZZ", texName = "ZZ", directory = [os.path.join( pp_dir, "ZZ" )]) 
 ZZ.reweight_pkl = os.path.join(gridpack_directory, "ZZ_reweight_card.pkl")
 ZZ.objects      = ['Z']

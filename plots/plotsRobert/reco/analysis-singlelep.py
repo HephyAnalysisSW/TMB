@@ -114,7 +114,6 @@ read_variables = [
     "photonJetdR/F", "photonLepdR/F", "m3/F",
 ]
 
-read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F'] #'reweightTrigger/F']
 # define 3l selections
 
 import TMB.Tools.VV_angles          as VV_angles

@@ -31,7 +31,7 @@ argParser.add_argument('--selection',          action='store',      default=None
 argParser.add_argument('--sample',             action='store',      default='ttG_noFullyHad')
 argParser.add_argument('--WC',                 action='store',      default='cWWW')
 argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient')
-argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[0.0],  help='Values of the Wilson coefficient to show FI for.')
+argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[],  help='Values of the Wilson coefficient to show FI for.')
 argParser.add_argument('--FI_thresholds',      action='store',      nargs = '*',             type=float,    default=None,   help='Bins in FI?')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 argParser.add_argument('--ZZ',                                      action='store_true',     help='Add diboson ZZ angles?')
@@ -106,7 +106,7 @@ read_variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=2000) )
 
 preselection = [ 
     #( "SMP-20-005",  "genPhoton_pt[0]>300&&genMet_pt>80&&genLep_pt[genW_l1_index[0]]>80&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
-    #( "SMP-20-005-light",  "genPhoton_pt[0]>150&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
+    #( "SMP-20-005-light",  "genPhoton_pt[0]>80&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
     ( "SMP-20-005-ul",  "genPhoton_pt[0]>40&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
 ]
 
@@ -119,7 +119,7 @@ for sample in stack.samples:
     if selectionString != "":
         sample.addSelectionString( selectionString )
     if args.small:
-        sample.reduceFiles( to = 10 )
+        sample.reduceFiles( factor = 10 )
 
 ## Helpers
 def addTransverseVector( p_dict ):
