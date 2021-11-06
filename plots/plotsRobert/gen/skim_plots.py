@@ -48,6 +48,7 @@ if args.small: args.plot_directory += "_small"
 
 # Import samples
 from TMB.Samples.pp_gen_v10 import *
+#from TMB.Samples.pp_gen_v4 import *
 sample = eval(args.sample) 
 # objects to plot
 objects = sample.objects if hasattr( sample, "objects") else []
@@ -106,6 +107,7 @@ read_variables.append( VectorTreeVariable.fromString('p[C/F]', nMax=2000) )
 preselection = [ 
     #( "SMP-20-005",  "genPhoton_pt[0]>300&&genMet_pt>80&&genLep_pt[genW_l1_index[0]]>80&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
     #( "SMP-20-005-light",  "genPhoton_pt[0]>150&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
+    ( "SMP-20-005-ul",  "genPhoton_pt[0]>40&genMet_pt>30&&genLep_pt[genW_l1_index[0]]>30&&sqrt(acos(cos(genLep_phi[genW_l1_index[0]]-genPhoton_phi[0]))**2+(genLep_eta[genW_l1_index[0]]-genPhoton_eta[0])**2)>3.0"),
 ]
 
 selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
@@ -214,7 +216,7 @@ if args.ZZ:
                 #print "Lepton",i_id, l[id_]
                 v[i_id].SetPtEtaPhiM(l[id_]['pt'], l[id_]['eta'], l[id_]['phi'], 0)
             #print
-            event.ZZ_angles = VV_angles( *v, debug=False)
+            event.ZZ_angles = VV_angles.VV_angles( *v, debug=False)
         else:
             event.ZZ_angles = None
         #print event.ZZ_angles
@@ -244,7 +246,7 @@ if args.WG:
             v.append( v_photon )
             v.append( ROOT.TLorentzVector(0,0,0,0) )
 
-            event.WG_angles = VV_angles( *v, debug=False)
+            event.WG_angles = VV_angles.VV_angles( *v, debug=False)
         else:
             event.WG_angles = None
         #print event.WG_angles
@@ -396,9 +398,9 @@ if args.WG:
     for color, legendText, fisher_string in FIs:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "theta"+postfix,
-      texX = '#theta', texY = 'Number of Events',
-      attribute = lambda event, sample: event.WG_angles['theta'] if event.WG_angles is not None else float('nan'),
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.WG_angles['Theta'] if event.WG_angles is not None else float('nan'),
       binning=[20, 0, pi], addOverFlowBin="both",
     ))
     for color, legendText, fisher_string in FIs:

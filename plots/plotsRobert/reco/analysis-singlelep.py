@@ -58,7 +58,10 @@ import TMB.Samples.pp_tWZ_v6 as samples
 lumi_scale  = 137
 lumi_weight = lambda event, sample: lumi_scale*event.weight
 
-mc = [ samples.ttG_noFullyHad_fast, samples.WGToLNu_fast ]
+if args.WC == 'cWWW':
+    mc = [ samples.WGToLNu_fast, samples.ttG_noFullyHad_fast ]
+else:
+    mc = [ samples.ttG_noFullyHad_fast, samples.WGToLNu_fast ]
 
 for sample in mc:
     sample.style  = styles.fillStyle( sample.color )
@@ -95,7 +98,7 @@ sequence       = []
 
 read_variables = [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
-    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
+    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_pdgId/I", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
     #"l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
     #"l3_pt/F", "l3_eta/F" , "l3_phi/F", "l3_mvaTOP/F", "l3_mvaTOPWP/I", "l3_index/I",
     "JetGood[pt/F,eta/F,phi/F]",
@@ -108,11 +111,54 @@ read_variables = [
     "photon_pt/F",
     "photon_eta/F",
     "photon_phi/F",
-    "photonJetdR/F", "photonLepdR/F",
+    "photonJetdR/F", "photonLepdR/F", "m3/F",
 ]
 
 read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F'] #'reweightTrigger/F']
 # define 3l selections
+
+import TMB.Tools.VV_angles          as VV_angles
+import random
+def make_VV( event, sample ):
+    ##AN2019_059_v8 p22
+    #mW      = 80.4
+    #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
+    #delta   = sqrt((mW**2-mt2)/(2.*event.l1_pt*event.met_pt)) 
+    #if mW**2<mt2: 
+    #    random_sign  = 2*(-.5+(random.random()>0.5))
+    #    eta_neu = l1_eta + random_sign*log(1.+delta*sqrt(2+delta**2)+delta**2)
+    #else:
+    #    eta_neu = l1_eta
+
+    # A. Wulzer lep decay angles in 2007.10356:  The latter angles are in the rest frame of each boson and they are 
+    # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
+    # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
+
+    lep_4 = ROOT.TLorentzVector()
+    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
+
+    random_number = ROOT.gRandom.Uniform() 
+    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number ) 
+
+    # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
+    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
+
+    gamma_4 = ROOT.TLorentzVector()
+    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
+
+    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
+    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
+    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
+
+    #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
+    #lep_4.Print()
+    #neu_4.Print()
+    #gamma_4.Print()
+
+    #print event.thetaW, event.Theta, event.phiW
+    #print
+
+sequence.append( make_VV )
 
 #MVA
 import TMB.MVA.configs as configs
@@ -172,11 +218,11 @@ bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cl
 bit_ctZ_ctZ_clipped   = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_ctZ_ctZ.pkl')
 bit_cWWW_cWWW_clipped = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_cWWW_cWWW.pkl')
 models = [
-    #("BIT_ctZ", bits[('ctZ',)], [50, -.4, .6,]),
-    #("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 9,]),
+    ("BIT_ctZ", bits[('ctZ',)], [50, -.4, .6,]),
+    ("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 9,]),
     ("BIT_ctZ_ctZ_clipped", bit_ctZ_ctZ_clipped, [50, -1, 9,]),
-    #("BIT_cWWW",    bits[('cWWW',)], [50, -.1, .1,]),
-    #("BIT_cWWW_cWWW",  bits[('cWWW','cWWW')], [50, -.02, .04,]),
+    ("BIT_cWWW",    bits[('cWWW',)], [50, -.1, .1,]),
+    ("BIT_cWWW_cWWW",  bits[('cWWW','cWWW')], [50, -.02, .04,]),
     ("BIT_cWWW_cWWW_clipped", bit_cWWW_cWWW_clipped, [50, -0.02, 0.04,]),
 ]
 
@@ -236,9 +282,9 @@ if args.onlyMVA is None:
     plots.append(Plot(
         name = 'M3',
         texX = 'M_{3} (GeV)', texY = 'Number of Events / 10 GeV',
-        attribute = TreeVariable.fromString( "m3/F" ),
+        attribute = lambda event, sample: event.m3 if event.nJetGood >=3 else 0,
         binning=[30,0,600],
-        addOverFlowBin='upper',
+        addOverFlowBin='both',
     ))
 
     plots.append(Plot(
@@ -333,6 +379,28 @@ if args.onlyMVA is None:
       binning=[600/30,0,600],
     ))
 
+    plots.append(Plot(
+        name = 'phiW',
+        texX = '#phi(W)', texY = 'Number of Events',
+        attribute = lambda event, sample: event.phiW,
+        binning=[30,-pi,pi],
+        addOverFlowBin='upper',
+    ))
+    plots.append(Plot(
+        name = 'thetaW',
+        texX = '#theta(W)', texY = 'Number of Events',
+        attribute = lambda event, sample: event.thetaW,
+        binning=[30,0,pi],
+        addOverFlowBin='both',
+    ))
+    plots.append(Plot(
+        name = 'Theta',
+        texX = '#Theta', texY = 'Number of Events',
+        attribute = lambda event, sample: event.Theta,
+        binning=[30,0,pi],
+        addOverFlowBin='both',
+    ))
+
 # Text on the plots
 def drawObjects( dev = None, hasData = False ):
     tex = ROOT.TLatex()
@@ -379,6 +447,9 @@ for p in plots:
 #        # dress up
 #        hl[0].legendText = params[i_h]['legendText']
 #        hl[0].style = params[i_h]['style']
+#for p in plots:
+#    if p.histos[0][0].Integral()<p.histos[0][1].Integral():
+#        p.histos[0][0], p.histos[0][1] = p.histos[0][1], p.histos[0][0]
 
 drawPlots(plots)
 

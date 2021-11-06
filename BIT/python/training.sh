@@ -63,9 +63,16 @@
 #python training.py --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-TTZ-delphes/MVA-training/ttZ_3l_delphes --config ttZ_3l_delphes --lumi_norm --name gss 
 
 #python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clipScore2 --derivative  cWWW
-python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  cWWW cWWW --positive_score 
+#python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  cWWW cWWW --positive_score 
 #python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clipScore2 --derivative  ctZ
-python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  ctZ ctZ --positive_score 
+#python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name cpSfix --derivative  ctZ ctZ --positive_score 
+
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10 --derivative  cWWW
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10_psc --derivative  cWWW cWWW --positive_score 
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10 --derivative  cWWW cWWW 
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10 --derivative  ctZ
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10_psc --derivative  ctZ ctZ --positive_score 
+python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name clip1p_v10 --derivative  ctZ ctZ 
 
 #python training.py  --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  cWWW --rel_max_local_score 0.005
 #python training.py --overwrite  --debug --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG  --name capScore_rel_0.005 --derivative  cWWW cWWW --rel_max_local_score 0.005
