@@ -31,6 +31,22 @@ WGToLNu = Sample.fromDirectory("WGToLNu", texName = "WGToLNu", directory = [os.p
 WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "WGToLNu_reweight_card.pkl")
 WGToLNu.objects      = ['g', 'W']
 
+WG20To130ToLNu = Sample.fromDirectory("WG20To130ToLNu", texName = "WG20To130ToLNu", directory = [os.path.join( pp_dir, "WG20To130ToLNu" )]) 
+WG20To130ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG20To130ToLNu_reweight_card.pkl")
+WG20To130ToLNu.objects      = ['g', 'W']
+
+WG130To300ToLNu = Sample.fromDirectory("WG130To300ToLNu", texName = "WG130To300ToLNu", directory = [os.path.join( pp_dir, "WG130To300ToLNu" )]) 
+WG130To300ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG130To300ToLNu_reweight_card.pkl")
+WG130To300ToLNu.objects      = ['g', 'W']
+
+WG300To500ToLNu = Sample.fromDirectory("WG300To500ToLNu", texName = "WG300To500ToLNu", directory = [os.path.join( pp_dir, "WG300To500ToLNu" )]) 
+WG300To500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG300To500ToLNu_reweight_card.pkl")
+WG300To500ToLNu.objects      = ['g', 'W']
+
+WG500ToLNu = Sample.fromDirectory("WG500ToLNu", texName = "WG500ToLNu", directory = [os.path.join( pp_dir, "WG500ToLNu" )]) 
+WG500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG500ToLNu_reweight_card.pkl")
+WG500ToLNu.objects      = ['g', 'W']
+
 ZZ = Sample.fromDirectory("ZZ", texName = "ZZ", directory = [os.path.join( pp_dir, "ZZ" )]) 
 ZZ.reweight_pkl = os.path.join(gridpack_directory, "ZZ_reweight_card.pkl")
 ZZ.objects      = ['Z']
