@@ -215,15 +215,15 @@ from BoostedInformationTree import BoostedInformationTree
 import TMB.BIT.configs.ttG_WG as config
 
 bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/clipScore/")
-bit_ctZ_ctZ_clipped   = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_ctZ_ctZ.pkl')
-bit_cWWW_cWWW_clipped = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_cWWW_cWWW.pkl')
+#bit_ctZ_ctZ_clipped   = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_ctZ_ctZ.pkl')
+#bit_cWWW_cWWW_clipped = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_cWWW_cWWW.pkl')
 models = [
     ("BIT_ctZ", bits[('ctZ',)], [50, -.4, .6,]),
     ("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 9,]),
-    ("BIT_ctZ_ctZ_clipped", bit_ctZ_ctZ_clipped, [50, -1, 9,]),
+#    ("BIT_ctZ_ctZ_clipped", bit_ctZ_ctZ_clipped, [50, -1, 9,]),
     ("BIT_cWWW",    bits[('cWWW',)], [50, -.1, .1,]),
     ("BIT_cWWW_cWWW",  bits[('cWWW','cWWW')], [50, -.02, .04,]),
-    ("BIT_cWWW_cWWW_clipped", bit_cWWW_cWWW_clipped, [50, -0.02, 0.04,]),
+#    ("BIT_cWWW_cWWW_clipped", bit_cWWW_cWWW_clipped, [50, -0.02, 0.04,]),
 ]
 
 def bit_predict( event, sample ):

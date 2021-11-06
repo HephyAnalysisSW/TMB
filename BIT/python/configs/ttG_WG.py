@@ -164,9 +164,9 @@ all_mva_variables = {
      "mva_photon_eta"            :(lambda event, sample: event.photon_eta),
      "mva_photon_phi"            :(lambda event, sample: event.photon_phi),
 #VV angles
-     "mva_thetaW"                :(lambda event, sample: event.thetaW),
-     "mva_Theta"                 :(lambda event, sample: event.Theta),
-     "mva_phiW"                  :(lambda event, sample: event.phiW),
+#     "mva_thetaW"                :(lambda event, sample: event.thetaW),
+#     "mva_Theta"                 :(lambda event, sample: event.Theta),
+#     "mva_phiW"                  :(lambda event, sample: event.phiW),
 # jet kinmatics
      "mva_jet0_pt"               :(lambda event, sample: min( event.JetGood_pt[0]     if event.nJetGood >=1 else 0, 1500)),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -6),
