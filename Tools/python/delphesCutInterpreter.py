@@ -8,12 +8,15 @@ jetSelection    = "nJetGood"
 bJetSelectionM  = "nBTag"
 
 special_cuts = {
+    "photon" : "(recoPhoton_pt[0]>20)",
+    "singlelep": "(nrecoLep>=1)&&(recoLep_pt[0]>30)",
     "trilep":         "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
     "onZ"   : "abs(recoZ_mass-91.2)<10",
+    "LepGBB":   "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
   }
 
-continous_variables = [ ]
-discrete_variables  = [ ("njet", "nrecoJet"), ("btag", "nBTag")]
+continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt")]
+discrete_variables  = [ ("njet", "nrecoJet"), ("btag", "nBTag") ]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.

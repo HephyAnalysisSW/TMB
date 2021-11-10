@@ -320,7 +320,7 @@ for derivative in config.bit_derivatives:
     test_weights_ = test_weights[:,config.weight_derivative_combinations.index(derivative)]
     for i_event in range(len(test_scores)):
         if i_event%10000==0: print "At",i_event
-        h_score.Fill(test_scores[i_event], test_weights_[i_event])
+        h_score.Fill(test_scores[i_event], test_weights[i_event][0])
         for i_var in range(len(config.mva_variables)):
             h_feature[config.mva_variables[i_var][0]][min(n_digi,digi[i_event])-1].Fill(test_features[i_event][i_var], test_weights_[i_event])
 
@@ -343,6 +343,7 @@ for derivative in config.bit_derivatives:
     yRange                 = "auto" #( minY, maxY )
     plot1DHist( plot, os.path.join(plot_directory, ('_'.join(derivative))), yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
 
+    #assert False, ""
     for i_var in range(len(config.mva_variables)):
         for i_digi in range(n_digi):
             h_feature[config.mva_variables[i_var][0]][i_digi].style     = styles.fillStyle(ROOT.kMagenta-10+i_digi)

@@ -26,7 +26,7 @@ jetVarNames      = [x.split('/')[0] for x in jetVars]
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolationVarRhoCorr/F']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
 
-photonVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolationVarRhoCorr/F', 'minLeptonDR/F', 'minJetDR/F']
+photonVars          = ['pt/F','eta/F','phi/F','isolationVar/F', 'isolationVarRhoCorr/F', 'minLeptonDR/F', 'minJetDR/F']
 photonVarNames      = [x.split('/')[0] for x in lepVars]
 
 # Training variables
@@ -52,8 +52,8 @@ max_order        = 2
 
 import TMB.Samples.pp_gen_v10 as samples
 
-wg = samples.WGToLNu_ptG_binned 
-training_samples = [wg]
+WGToLNu_ptG_binned = samples.WGToLNu_ptG_binned 
+training_samples = [WGToLNu_ptG_binned]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
@@ -64,7 +64,7 @@ for sample in training_samples:
 
 # make all combinations
 weight_derivative_combinations = []
-for i_comb, comb in enumerate(wg.weightInfo.make_combinations(weight_variables, max_order)):
+for i_comb, comb in enumerate(WGToLNu_ptG_binned.weightInfo.make_combinations(weight_variables, max_order)):
     weight_derivative_combinations.append(comb)
 
 for sample in training_samples:
@@ -76,8 +76,8 @@ for sample in training_samples:
             # func_ takes care of p_C. We also normalize with the lumi-weight 'weight' from the original sample
             func_            = sample.weightInfo.get_diff_weight_func(comb)
             weight = {}
-            weight['string'] = "weight*("+sample.weightInfo.get_diff_weight_string(comb)+")"
-            weight['func']   = lambda event, sample, func_=func_: func_(event,sample)*event.weight 
+            #weight['string'] = "weight*("+sample.weightInfo.get_diff_weight_string(comb)+")"
+            weight['func']   = lambda event, sample, func_=func_: func_(event,sample)#*event.lumiweight1fb 
             weight['name']   = '_'.join(comb)
             weight['comb']   = comb
             sample.weight_derivatives.append( weight )
@@ -115,83 +115,80 @@ from TMB.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'recoJet_', jetVarNames, i) for i in range(int(event.nrecoJet))]
     event.bJets    = filter(lambda j:j['bTag']>=1 and abs(j['eta'])<=2.4    , event.jets)
+    
+    #print len(event.jets), event.jets
+    #print len(event.bJets), event.bJets
+    #print
+
 sequence.append( make_jets )
 
+import TMB.Tools.VV_angles          as VV_angles
+import random
+def make_VV( event, sample ):
+    ##AN2019_059_v8 p22
+    #mW      = 80.4
+    #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
+    #delta   = sqrt((mW**2-mt2)/(2.*event.l1_pt*event.met_pt)) 
+    #if mW**2<mt2: 
+    #    random_sign  = 2*(-.5+(random.random()>0.5))
+    #    eta_neu = l1_eta + random_sign*log(1.+delta*sqrt(2+delta**2)+delta**2)
+    #else:
+    #    eta_neu = l1_eta
 
-#sequence = []
-#
-#import TMB.Tools.VV_angles          as VV_angles
-#import random
-#def make_VV( event, sample ):
-#    ##AN2019_059_v8 p22
-#    #mW      = 80.4
-#    #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
-#    #delta   = sqrt((mW**2-mt2)/(2.*event.l1_pt*event.met_pt)) 
-#    #if mW**2<mt2: 
-#    #    random_sign  = 2*(-.5+(random.random()>0.5))
-#    #    eta_neu = l1_eta + random_sign*log(1.+delta*sqrt(2+delta**2)+delta**2)
-#    #else:
-#    #    eta_neu = l1_eta
-#
-#    # A. Wulzer lep decay angles in 2007.10356:  The latter angles are in the rest frame of each boson and they are 
-#    # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
-#    # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
-#
-#    lep_4 = ROOT.TLorentzVector()
-#    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
-#
-#    random_number = ROOT.gRandom.Uniform()
-#    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number )
-#
-#    # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
-#    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
-#
-#    gamma_4 = ROOT.TLorentzVector()
-#    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
-#
-#    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
-#    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
-#    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
-#
-#    #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
-#    #lep_4.Print()
-#    #neu_4.Print()
-#    #gamma_4.Print()
-#
-#    #print event.thetaW, event.Theta, event.phiW
-#    #print
-#
-#sequence.append( make_VV )
+    # A. Wulzer lep decay angles in 2007.10356:  The latter angles are in the rest frame of each boson and they are 
+    # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
+    # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
+
+    lep_4 = ROOT.TLorentzVector()
+    lep_4.SetPtEtaPhiM(event.recoLep_pt[0], event.recoLep_eta[0], event.recoLep_phi[0], 0)
+
+    random_number = ROOT.gRandom.Uniform()
+    neu_4         = VV_angles.neutrino_mom( lep_4, event.recoMet_pt, event.recoMet_phi, random_number )
+
+    # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
+    lep_m, lep_p  = (neu_4, lep_4) if event.recoLep_pdgId[0]<0 else (lep_4, neu_4)
+
+    gamma_4 = ROOT.TLorentzVector()
+    gamma_4.SetPtEtaPhiM(event.recoPhoton_pt[0], event.recoPhoton_eta[0], event.recoPhoton_phi[0], 0)
+
+    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
+    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
+    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
+
+    #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
+    #lep_4.Print()
+    #neu_4.Print()
+    #gamma_4.Print()
+
+    #print event.thetaW, event.Theta, event.phiW, pi/2
+    #print
+
+sequence.append( make_VV )
 #
 all_mva_variables = {
 
 ## global event properties     
-#     "mva_mT"                    :(lambda event, sample: min( sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi))), 1000) ),
-#     "mva_m3"                    :(lambda event, sample: event.m3 if event.nJetGood >=3 else 0),
-#     "mva_met_pt"                :(lambda event, sample: event.met_pt),
-#     "mva_nJetGood"              :(lambda event, sample: min(event.nJetGood,8) ),
-#     "mva_nBTag"                 :(lambda event, sample: event.nBTag),
-#     "mva_l1_pt"                 :(lambda event, sample: min(event.l1_pt, 800)),
-#     "mva_l1_eta"                :(lambda event, sample: event.l1_eta),
-#     "mva_l1_phi"                :(lambda event, sample: event.l1_phi),
-#     "mva_photon_pt"             :(lambda event, sample: min(event.photon_pt,400)),
-#     "mva_photon_eta"            :(lambda event, sample: event.photon_eta),
-#     "mva_photon_phi"            :(lambda event, sample: event.photon_phi),
-##VV angles
-#     "mva_thetaW"                :(lambda event, sample: event.thetaW),
-#     "mva_Theta"                 :(lambda event, sample: event.Theta),
-#     "mva_phiW"                  :(lambda event, sample: event.phiW),
-##lep vs. gamma
-#     "mva_g1l1DR"                :(lambda event, sample: max(7., deltaR({'phi':event.l1_phi,'eta':event.l1_eta}, {'phi':event.photon_phi,'eta':event.photon_eta}) )),
-#     "mva_g1l1DPhi"              :(lambda event, sample: deltaPhi(event.l1_phi, event.photon_phi) ),
-#     "mva_g1l1DEta"              :(lambda event, sample: abs(event.l1_eta-event.photon_eta)),
-
-# global event properties
-     "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
-     "mva_met_pt"                :(lambda event, sample: event.recoMet_pt),
-     "mva_nrecoJet"              :(lambda event, sample: event.nrecoJet),
+     "mva_mT"                    :(lambda event, sample: min( sqrt(2*event.recoLep_pt[0]*event.recoMet_pt*(1-cos(event.recoLep_phi[0]-event.recoMet_phi))), 800.) ),
+     #"mva_m3"                    :(lambda event, sample: event.m3 if event.nJetGood >=3 else 0),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
-
+     #"mva_nBTag_loose"           :(lambda event, sample: event.nBTag_loose),
+     "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
+     "mva_met_pt"                :(lambda event, sample: min(event.recoMet_pt, 800.)),
+     "mva_nrecoJet"              :(lambda event, sample: min(event.nrecoJet,8)),
+     "mva_recoLep_pt"                 :(lambda event, sample: min(event.recoLep_pt[0], 800)),
+     "mva_recoLep_eta"                :(lambda event, sample: event.recoLep_eta[0]),
+     #"mva_recoLep_phi"                :(lambda event, sample: event.recoLep_phi[0]),
+     "mva_recoPhoton_pt"             :(lambda event, sample: min(event.recoPhoton_pt[0], 650)),
+     "mva_recoPhoton_eta"            :(lambda event, sample: event.recoPhoton_eta[0]),
+     #"mva_recoPhoton_phi"            :(lambda event, sample: event.recoPhoton_phi[0]),
+#VV angles
+     "mva_thetaW"                :(lambda event, sample: event.thetaW),
+     "mva_Theta"                 :(lambda event, sample: event.Theta),
+     "mva_phiW"                  :(lambda event, sample: event.phiW),
+#lep vs. gamma
+     "mva_g1recoLepDR"                :(lambda event, sample: min(7., deltaR({'phi':event.recoLep_phi[0],'eta':event.recoLep_eta[0]}, {'phi':event.recoPhoton_phi[0],'eta':event.recoPhoton_eta[0]}) )),
+     "mva_g1recoLepDPhi"              :(lambda event, sample: deltaPhi(event.recoLep_phi[0], event.recoPhoton_phi[0]) ),
+     "mva_g1recoLepDEta"              :(lambda event, sample: abs(event.recoLep_eta[0]-event.recoPhoton_eta[0])),
 # jet kinmatics
      "mva_jet0_pt"               :(lambda event, sample: event.recoJet_pt[0]          if event.nrecoJet >=1 else 0),
      "mva_jet0_eta"              :(lambda event, sample: event.recoJet_eta[0]         if event.nrecoJet >=1 else -10),
@@ -204,40 +201,43 @@ all_mva_variables = {
      "mva_jet2_btag"             :(lambda event, sample: event.recoJet_bTag[2]        if event.nrecoJet >=3 else -1),
 
 
-#     "mva_photonJetdR"           :(lambda event, sample: min(event.photonJetdR,7)),
+     "mva_photonJetdR"           :(lambda event, sample: min([deltaR({'phi':event.recoPhoton_phi[0],'eta':event.recoPhoton_eta[0]}, j) for j in event.jets],7)),
 #     "mva_photonLepdR"           :(lambda event, sample: event.photonLepdR),
                 }
-#
-#plot_options = {
-#     "mva_ht"              :{'tex':'H_{T} (GeV)'}, 
-#     "mva_mT"              :{'tex':'M_{T} (GeV)'}, 
-#     "mva_m3"              :{'tex':'M_3 (GeV)'},
-#     "mva_met_pt"          :{'tex':'p_{T}^{miss}'},
-#     "mva_nJetGood"        :{'tex':'N_{jet}',   'binning':[8,0,8]},
-#     "mva_nBTag"           :{'tex':'N_{b-tag}', 'binning':[4,0,4]},
-#     "mva_l1_pt"           :{'tex':'p_{T}(l) (GeV)'},
-#     "mva_l1_eta"          :{'tex':'#eta (l)'},
-#     "mva_l1_phi"          :{'tex':'#phi (l)'},
-#     "mva_thetaW"          :{'tex':'#theta(W)', 'binning':[30,0,pi]},
-#     "mva_Theta"           :{'tex':'#Theta', 'binning':[30,0,pi]},
-#     "mva_phiW"            :{'tex':'#phi (W)', 'binning':[30,-pi,pi]},
-#     "mva_photon_pt"       :{'tex':'p_{T} (#gamma) (GeV)'},
-#     "mva_photon_eta"      :{'tex':'#eta (#gamma)'},
-#     "mva_photon_phi"      :{'tex':'#phi (#gamma)'},
-## jet kinmatics
-#     "mva_jet0_pt"         :{'tex':'p_{T}(j_{0}) (GeV)'},
-#     "mva_jet0_eta"        :{'tex':'#eta (j_{0})'},
-#     "mva_jet0_btagDeepB"  :{'tex':'b-jet disc. of j_{0}'}, 
-#     "mva_jet1_pt"         :{'tex':'p_{T}(j_{1}) (GeV)'},
-#     "mva_jet1_eta"        :{'tex':'#eta (j_{1})'},
-#     "mva_jet1_btagDeepB"  :{'tex':'b-jet disc. of j_{1}'}, 
-#     "mva_jet2_pt"         :{'tex':'p_{T}(j_{2}) (GeV)'},
-#     "mva_jet2_eta"        :{'tex':'#eta (j_{2})'},
-#     "mva_jet2_btagDeepB"  :{'tex':'b-jet disc. of j_{2}'}, 
-#     "mva_photonJetdR"     :{'tex':'min #Delta R(#gamma, j)'},
-#     "mva_photonLepdR"     :{'tex':'min #Delta R(#gamma, l)'}
-#}
-#
+
+plot_options = {
+     "mva_mT"              :{'tex':'M_{T} (GeV)'}, 
+     "mva_nBTag"           :{'tex':'N_{b-tag}', 'binning':[4,0,4]},
+     "mva_nBTag_loose"     :{'tex':'N_{b-tag}', 'binning':[4,0,4]},
+     "mva_ht"              :{'tex':'H_{T} (GeV)'}, 
+     "mva_met_pt"          :{'tex':'p_{T}^{miss}'},
+     "mva_nrecoJet"        :{'tex':'N_{jet}',   'binning':[8,0,8]},
+     "mva_recoLep_pt"           :{'tex':'p_{T}(l) (GeV)'},
+     "mva_recoLep_eta"          :{'tex':'#eta (l)'},
+     "mva_recoLep_phi"          :{'tex':'#phi (l)'},
+     "mva_recoPhoton_pt"       :{'tex':'p_{T} (#gamma) (GeV)'},
+     "mva_recoPhoton_eta"      :{'tex':'#eta (#gamma)'},
+     "mva_recoPhoton_phi"      :{'tex':'#phi (#gamma)'},
+     "mva_thetaW"          :{'tex':'#theta(W)', 'binning':[30,0,pi]},
+     "mva_Theta"           :{'tex':'#Theta', 'binning':[30,0,pi]},
+     "mva_phiW"            :{'tex':'#phi (W)', 'binning':[30,-pi,pi]},
+     "mva_g1recoLepDR":   {'tex':'#Delta R(#gamma, l)'},
+     "mva_g1recoLepDPhi": {'tex':'#Delta #phi(#gamma, l)'},
+     "mva_g1recoLepDEta": {'tex':'#Delta #eta(#gamma, l)'},
+# jet kinmatics
+     "mva_jet0_pt"         :{'tex':'p_{T}(j_{0}) (GeV)'},
+     "mva_jet0_eta"        :{'tex':'#eta (j_{0})'},
+     "mva_jet0_btag"  :{'tex':'b-jet disc. of j_{0}'}, 
+     "mva_jet1_pt"    :{'tex':'p_{T}(j_{1}) (GeV)'},
+     "mva_jet1_eta"   :{'tex':'#eta (j_{1})'},
+     "mva_jet1_btag"  :{'tex':'b-jet disc. of j_{1}'}, 
+     "mva_jet2_pt"    :{'tex':'p_{T}(j_{2}) (GeV)'},
+     "mva_jet2_eta"   :{'tex':'#eta (j_{2})'},
+     "mva_jet2_btag"  :{'tex':'b-jet disc. of j_{2}'}, 
+     "mva_photonJetdR"     :{'tex':'min #Delta R(#gamma, j)'},
+     #"mva_photonLepdR"     :{'tex':'min #Delta R(#gamma, l)'}
+}
+
 mva_vector_variables    =   {
     "weight":  { "name":"weight", "func":compute_weight_derivatives, "vars":["derivatives/F"], "varnames":["derivatives"],}# 'nMax':len(weight_derivatives)} 
 }
@@ -256,7 +256,7 @@ def predict_inputs( event, sample):
 
 # training selection
 from TMB.Tools.delphesCutInterpreter import cutInterpreter
-selectionString = "(1)" #FIXME cutInterpreter.cutString( 'photon-singlelep' )
+selectionString = cutInterpreter.cutString( 'photon-ptG40-met30-singlelep-LepGBB' )
 
 bit_derivatives  = [ ('cWWW',), ('cWWW','cWWW')]
 

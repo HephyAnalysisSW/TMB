@@ -501,59 +501,59 @@ for i in range(test_features[:,17].size):
 #        h_quad_true.Fill(test_features[i,17],bin_true_quad[i]/bin_weight_0[i])
 
 
-h_lin_pred.Draw("hist")
-filename2 = "h_lin_pred_without.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_quad_pred.Draw("hist")
-filename2 = "h_quad_pred_without.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_lin_true.Draw("hist")
-filename2 = "h_lin_true_without.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_quad_true.Draw("hist")
-filename2 = "h_quad_true_without.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-
-h_lin_pred.Divide(h_weight_0)
-h_quad_pred.Divide(h_weight_0)
-h_lin_true.Divide(h_weight_0)
-h_quad_true.Divide(h_weight_0)
-
-
-h_lin_pred.Draw("hist")
-filename2 = "h_lin_pred.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_quad_pred.Draw("hist")
-filename2 = "h_quad_pred.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_lin_true.Draw("hist")
-filename2 = "h_lin_true.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_quad_true.Draw("hist")
-filename2 = "h_quad_true.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-
-h_lin_pred.Divide(h_lin_true)
-h_quad_pred.Divide(h_quad_true)
-
-h_lin_pred.Draw("hist")
-filename2 = "h_lin_pred_vs_true.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-h_quad_pred.Draw("hist")
-filename2 = "h_quad_pred_vs_true.png"
-c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-
-
-#h2 = ROOT.TH1D("h2", "Histogramm New", 10,0,100)
-#x_list = np.random.uniform(0,100,1000)
-#w_list = np.random.uniform(0,1,1000)
-#for i in range(x_list.size):
-#    h2.Fill(x_list[i],w_list[i])
-#h2.Draw("hist") #Draw Histogramm
-#filename = "test_histo.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',filename))
-
-print "Success"
+#h_lin_pred.Draw("hist")
+#filename2 = "h_lin_pred_without.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_quad_pred.Draw("hist")
+#filename2 = "h_quad_pred_without.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_lin_true.Draw("hist")
+#filename2 = "h_lin_true_without.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_quad_true.Draw("hist")
+#filename2 = "h_quad_true_without.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#
+#h_lin_pred.Divide(h_weight_0)
+#h_quad_pred.Divide(h_weight_0)
+#h_lin_true.Divide(h_weight_0)
+#h_quad_true.Divide(h_weight_0)
+#
+#
+#h_lin_pred.Draw("hist")
+#filename2 = "h_lin_pred.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_quad_pred.Draw("hist")
+#filename2 = "h_quad_pred.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_lin_true.Draw("hist")
+#filename2 = "h_lin_true.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_quad_true.Draw("hist")
+#filename2 = "h_quad_true.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#
+#h_lin_pred.Divide(h_lin_true)
+#h_quad_pred.Divide(h_quad_true)
+#
+#h_lin_pred.Draw("hist")
+#filename2 = "h_lin_pred_vs_true.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#h_quad_pred.Draw("hist")
+#filename2 = "h_quad_pred_vs_true.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+#
+#
+##h2 = ROOT.TH1D("h2", "Histogramm New", 10,0,100)
+##x_list = np.random.uniform(0,100,1000)
+##w_list = np.random.uniform(0,1,1000)
+##for i in range(x_list.size):
+##    h2.Fill(x_list[i],w_list[i])
+##h2.Draw("hist") #Draw Histogramm
+##filename = "test_histo.png"
+##c1.Print(os.path.join(plot_directory, 'Plot_LLR',filename))
+#
+#print "Success"
 
 #def compute_weights(weights, theta, theta_ref, param):
 #        return weights[()] \
