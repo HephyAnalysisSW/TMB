@@ -21,7 +21,7 @@ argParser.add_argument('--overwrite',          action='store_true', help="Overwr
 argParser.add_argument('--derivative',         action='store', nargs = '*', default = [], help="What to train?")
 argParser.add_argument('--lumi_norm',          action='store_true', help="Normalize the events according to lumiweight1fb?")
 argParser.add_argument('--max_local_score',    action='store', type=float, default = None, help="Maximum local score")
-argParser.add_argument('--rel_max_local_score',action='store', type=float, default = None, help="Relative maximum local score - share (in percent) of highest scores capped")
+argParser.add_argument('--rel_max_local_score',action='store', type=float, default = None, help="Relative maximum local score - share of highest scores capped")
 
 #args = argParser.parse_args()
 args, extra = argParser.parse_known_args(sys.argv[1:])
@@ -185,7 +185,7 @@ for derivative in config.bit_derivatives:
                 bits[derivative].training_diff_weights[mask] = args.max_local_score * bits[derivative].training_weights[mask]
         if args.rel_max_local_score is not None:
                 score_store = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) 
-                threshold = np.quantile(score_store,1.0-args.rel_max_local_score/100.0)
+                threshold = np.quantile(score_store,1.0-args.rel_max_local_score)
                 bits[derivative].training_diff_weights[score_store > threshold] = threshold * bits[derivative].training_weights[score_store > threshold]
 
         bits[derivative].boost(debug=args.debug)

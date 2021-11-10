@@ -41,3 +41,16 @@ if os.environ['USER'] in ['nikolaus.frohner']:
     gridpack_directory                  = "/eos/vbc/user/nikolaus.frohner/gridpacks/"
 
     cache_directory                     = "/users/nikolaus.frohner/public/cache/TMB/"
+if os.environ['USER'] in ['stefan.rohshap']:
+
+    #tmp_directory                       = "/mnt/hephy/cms/rosmarie.schoefbeck/tmp/TMB/"
+    results_directory                   = "/mnt/hephy/cms/stefan.rohshap/TMB/results/"
+    skim_output_directory               = "/scratch-cbe/users/stefan.rohshap/TMB/postprocessed/"
+
+    #mva_directory                       = "/mnt/hephy/cms/rosmarie.schoefbeck/TMB/mva/"
+    plot_directory                      = "/mnt/hephy/cms/stefan.rohshap/www/TMB/"
+
+    #postprocessing_output_directory     = "/scratch/rosmarie.schoefbeck/TMB/nanoTuples/postprocessed/"
+    gridpack_directory                  = "/eos/vbc/user/stefan.rohshap/gridpacks/"
+
+    cache_directory                     = "/users/robert.schoefbeck/public/cache/TMB/"
