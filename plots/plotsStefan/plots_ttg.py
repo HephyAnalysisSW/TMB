@@ -3,6 +3,7 @@
 import ROOT, os, sys
 from RootTools.core.standard import *
 import Analysis.Tools.syncer as syncer
+from TMB.Tools.user import plot_directory
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
@@ -166,7 +167,7 @@ for derivative in config.bit_derivatives:
 
     if args.overwrite:
 
-        n_trees = config.bit_cfg['n_trees']
+        n_trees = config.bit_cfg[derivative]['n_trees']
 
         time1 = time.time()
         print ("Learning %s"%( str(derivative)))
@@ -177,7 +178,7 @@ for derivative in config.bit_derivatives:
                 split_method          = 'vectorized_split_and_weight_sums',
                 weights_update_method = 'vectorized',
                 bagging_fraction      = args.bagging_fraction,
-                **config.bit_cfg
+                **config.bit_cfg[derivative]
                     )
         #Maximum Local Score
         if args.max_local_score is not None and args.rel_max_local_score is not None:
@@ -469,7 +470,6 @@ for i in range(bin_weight_0.size):
         print "Bin: from ", i*10, " to ", (i+1)*10
         print "Linear Pred: ", bin_pred_lin[i]/bin_weight_0[i], " Linear True: ", bin_true_lin[i]/bin_weight_0[i], " Quad Pred: ", bin_pred_quad[i]/bin_weight_0[i], " Quad True: ", bin_true_quad[i]/bin_weight_0[i] 
 
-plot_directory = "/mnt/hephy/cms/stefan.rohshap/www/TMB/"
 directory = os.path.join(plot_directory, 'Plot_LLR',args.name_dir)
 if not os.path.exists(directory):
         try:
@@ -478,11 +478,13 @@ if not os.path.exists(directory):
             pass
 
 c1 = ROOT.TCanvas()
-h_lin_pred = ROOT.TH1D("h_lin_pred","Linear Prediction",40,0,400)
-h_quad_pred = ROOT.TH1D("h_quad_pred","Quadratic Prediction",40,0,400)
-h_lin_true = ROOT.TH1D("h_lin_true","Linear True",40,0,400)
-h_quad_true = ROOT.TH1D("h_quad_true","Quadratic True",40,0,400)
-h_weight_0 = ROOT.TH1D("h_quad_true","Quadratic True",40,0,400)
+h_lin_pred = ROOT.TH1D("h_lin_pred","Linear Prediction",20,0,400)
+h_quad_pred = ROOT.TH1D("h_quad_pred","Quadratic Prediction",20,0,400)
+h_lin_true = ROOT.TH1D("h_lin_true","Linear True",20,0,400)
+h_quad_true = ROOT.TH1D("h_quad_true","Quadratic True",20,0,400)
+h_weight_0 = ROOT.TH1D("h_quad_true","Quadratic True",20,0,400)
+
+
 for i in range(test_features[:,17].size):
         pred_lin_inter =bit_predictions[('ctZ',)][i]*test_weights[i,0]
         pred_quad_inter =bit_predictions[('ctZ','ctZ')][i]*test_weights[i,0]
@@ -500,7 +502,20 @@ for i in range(test_features[:,17].size):
 #        h_lin_true.Fill(test_features[i,17],bin_true_lin[i]/bin_weight_0[i])
 #        h_quad_true.Fill(test_features[i,17],bin_true_quad[i]/bin_weight_0[i])
 
+h_quad_pred.legendText = "s_{tZ} (pred.)"
+h_quad_true.legendText = "s_{tZ} (true)"
+h_quad_pred.style = styles.lineStyle(ROOT.kRed)
+h_quad_true.style = styles.lineStyle(ROOT.kBlue)
 
+histos = [[h_quad_true], [h_quad_pred]]
+plot   = Plot.fromHisto( "closure",  histos, texX = "p_{T}(#gamma) (GeV)", texY = "s_{tZ}" )
+plotting.draw(plot, 
+        plot_directory = os.path.join( plot_directory, "closure"),
+        yRange = 'auto',
+        #legend = None,
+        ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False, 
+#        drawObjects = [h_nom]
+    )
 #h_lin_pred.Draw("hist")
 #filename2 = "h_lin_pred_without.png"
 #c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
