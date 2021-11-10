@@ -23,6 +23,8 @@ argParser.add_argument('--lumi_norm',          action='store_true', help="Normal
 argParser.add_argument('--max_local_score',    action='store', type=float, default = None, help="Maximum local score")
 argParser.add_argument('--rel_max_local_score',action='store', type=float, default = None, help="Relative maximum local score - share of highest scores capped")
 
+argParser.add_argument('--name_dir',               action='store', type=str,   default='default', help="Name of Plot Directory")
+
 #args = argParser.parse_args()
 args, extra = argParser.parse_known_args(sys.argv[1:])
 
@@ -342,6 +344,13 @@ bit_predictions  = { key:bits[key].vectorized_predict(test_features) for key in 
 #print "test_weights ctZ Index", config.weight_derivative_combinations.index(('ctZ',))
 #print "test_weights ctZ ctZ", test_weights[:, config.weight_derivative_combinations.index(('ctZ','ctZ'))]
 #print "test_weights ctZ ctZ Index", config.weight_derivative_combinations.index(('ctZ','ctZ'))
+#print "test_weights ctZ Sum", test_weights[:, config.weight_derivative_combinations.index(('ctZ',))].sum()
+#print "test_weights ctZ ctZ Sum", test_weights[:, config.weight_derivative_combinations.index(('ctZ','ctZ'))].sum()
+#print "test features", test_features
+#print "test features - variables", mva_variables
+#print "test features - variables length", len(mva_variables)
+#print "test features length (1 event)", test_features[1,:].size
+#print "test features length (1 variable)", test_features[:,1].size
 
 #bit_predictions  = { key:bits[key].vectorized_predict(test_features) for key in  [('ctZ',),('ctZ','ctZ')] if key!=tuple() }
 def compute_weights(weights, theta, theta_ref):
@@ -356,6 +365,9 @@ def predict_weight_ratio(bit_predictions, theta, theta_ref):
 
 theta_ref = np.array([0.])
 
+true = np.array([])
+pred = np.array([])
+theta_vec = np.array([])
 for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05).reshape(-1,1)):
         w1 = compute_weights( test_weights, plot_theta, theta_ref )
         w0 = compute_weights( test_weights, theta_ref , theta_ref )
@@ -372,6 +384,177 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05).reshape(-1,1)
 #        print "weight 1: ", w1
         ext_Delta_NLL_pred = w1 - w0 - w0*np.log(predict_weight_ratio(bit_predictions, plot_theta, theta_ref))
         print plot_theta, "true", ext_Delta_NLL.sum(), "pred", ext_Delta_NLL_pred.sum()
+#        print "true ratio (first value): ", div[1], "pred ratio: ", predict_weight_ratio(bit_predictions,plot_theta,theta_ref)[1]
+#        print "true ratio (second value): ", div[2], "pred ratio: ", predict_weight_ratio(bit_predictions,plot_theta,theta_ref)[2]
+#        print "true ratio (third value): ", div[3], "pred ratio: ", predict_weight_ratio(bit_predictions,plot_theta,theta_ref)[3]
+#print "#########################################################################################"
+#for i in range(len(bit_predictions[('ctZ',)])):
+#                print "ctZ predict: ", bit_predictions[('ctZ',)][i], " weights: ", test_weights[i,config.weight_derivative_combinations.index(('ctZ',))]
+#                print "ctZ ctZ predict: ", bit_predictions[('ctZ','ctZ')][i], " weights: ", test_weights[i,config.weight_derivative_combinations.index(('ctZ','ctZ'))]
+#print "ctZ predict: ", bit_predictions[('ctZ',)], " weights: ", test_weights[:,config.weight_derivative_combinations.index(('ctZ',))]/ test_weights[:,0]
+#print "ctZ ctZ predict: ", bit_predictions[('ctZ','ctZ')], " weights: ", test_weights[:,config.weight_derivative_combinations.index(('ctZ','ctZ'))]/ test_weights[:,0]
+#print "#####################################################################"
+#print "ctZ predict one: ", bit_predictions[('ctZ',)][1], " weights: ", test_weights[1,config.weight_derivative_combinations.index(('ctZ',))]/ test_weights[:,0]
+#print "ctZ ctZ predict one: ", bit_predictions[('ctZ','ctZ')][1], " weights: ", test_weights[1,config.weight_derivative_combinations.index(('ctZ','ctZ'))]/ test_weights[:,0]
+#print "ctZ predict two: ", bit_predictions[('ctZ',)][2], " weights: ", test_weights[2,config.weight_derivative_combinations.index(('ctZ',))]/ test_weights[:,0]
+#print "ctZ ctZ predict two: ", bit_predictions[('ctZ','ctZ')][2], " weights: ", test_weights[2,config.weight_derivative_combinations.index(('ctZ','ctZ'))]/ test_weights[:,0]
+#print "##########################################################################################################"
+#counter = 0
+#for i in range(test_features[:,17].size):
+#        if test_features[i,17] > 390.:
+#                print "Event: ", i, "Photon pt: ", test_features[i,17], " Bit-Pred Lin: ", bit_predictions[('ctZ',)][i]," Bit-Pred Quad: ", bit_predictions[('ctZ','ctZ')][i], " weights lin: ", test_weights[i,config.weight_derivative_combinations.index(('ctZ',))]/ test_weights[i,0], " weights quad: ", test_weights[i,config.weight_derivative_combinations.index(('ctZ','ctZ'))]/ test_weights[i,0]
+#                print "########################"
+#                counter += 1
+#                if counter >= 20:
+#                        break
+#bin_150_200_pred_lin = np.array([0.,0.,0.,0.,0.])
+#bin_150_200_true_lin = np.array([0.,0.,0.,0.,0.])
+#bin_150_200_pred_quad = np.array([0.,0.,0.,0.,0.])
+#bin_150_200_true_quad = np.array([0.,0.,0.,0.,0.])
+#bin_150_200_weight_0 = np.array([0.,0.,0.,0.,0.])
+#for i in range(test_features[:,17].size):
+#        if test_features[i,17] >= 150. and test_features[i,17] < 200.:
+#                pred_lin_inter =bit_predictions[('ctZ',)][i]*test_weights[i,0]
+#                pred_quad_inter =bit_predictions[('ctZ','ctZ')][i]*test_weights[i,0]
+#                true_lin_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ',))]#/ test_weights[i,0]
+#                true_quad_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ','ctZ'))]#/ test_weights[i,0] 
+#                index_var = 0
+#                if test_features[i,17] < 160:
+#                        index_var = 0
+#                elif test_features[i,17] < 170:
+#                        index_var = 1
+#                elif test_features[i,17] < 180:
+#                        index_var = 2
+#                elif test_features[i,17] < 190:
+#                        index_var = 3
+#                else:
+#                        index_var = 4
+#                bin_150_200_pred_lin[index_var] += pred_lin_inter
+#                bin_150_200_pred_quad[index_var] += pred_quad_inter
+#                bin_150_200_true_lin[index_var] += true_lin_inter
+#                bin_150_200_true_quad[index_var] += true_quad_inter
+#                bin_150_200_weight_0[index_var] += test_weights[i,0]
+
+#print "##################################################################################################"
+#print "##################################################################################################"
+#print "Sums in 5 bins from 150 to 200 in ptGamma"
+#print "Linear Pred: ", bin_150_200_pred_lin/bin_150_200_weight_0, " Linear True: ", bin_150_200_true_lin/bin_150_200_weight_0, " Quad Pred: ", bin_150_200_pred_quad/bin_150_200_weight_0, " Quad True: ", bin_150_200_true_quad/bin_150_200_weight_0
+
+bin_pred_lin = np.zeros(40)
+bin_true_lin = np.zeros(40) 
+bin_pred_quad = np.zeros(40) 
+bin_true_quad = np.zeros(40) 
+bin_weight_0 =np.zeros(40)  
+for i in range(test_features[:,17].size):
+                pred_lin_inter =bit_predictions[('ctZ',)][i]*test_weights[i,0]
+                pred_quad_inter =bit_predictions[('ctZ','ctZ')][i]*test_weights[i,0]
+                true_lin_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ',))]#/ test_weights[i,0]
+                true_quad_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ','ctZ'))]#/ test_weights[i,0] 
+                index_var = 0
+                for j in range(40):
+                        if test_features[i,17] > j*10 and test_features[i,17] <= (j+1)*10:
+                                bin_pred_lin[j] += pred_lin_inter
+                                bin_pred_quad[j] += pred_quad_inter
+                                bin_true_lin[j] += true_lin_inter
+                                bin_true_quad[j] += true_quad_inter
+                                bin_weight_0[j] += test_weights[i,0]
+
+print "##################################################################################################"
+print "##################################################################################################"
+print "Sums in ptGamma bins (10, from 0 to 400)"
+print "Linear Pred: ", bin_pred_lin/bin_weight_0, " Linear True: ", bin_true_lin/bin_weight_0, " Quad Pred: ", bin_pred_quad/bin_weight_0, " Quad True: ", bin_true_quad/bin_weight_0
+
+for i in range(bin_weight_0.size):
+        print "#################################"
+        print "Bin: from ", i*10, " to ", (i+1)*10
+        print "Linear Pred: ", bin_pred_lin[i]/bin_weight_0[i], " Linear True: ", bin_true_lin[i]/bin_weight_0[i], " Quad Pred: ", bin_pred_quad[i]/bin_weight_0[i], " Quad True: ", bin_true_quad[i]/bin_weight_0[i] 
+
+plot_directory = "/mnt/hephy/cms/stefan.rohshap/www/TMB/"
+directory = os.path.join(plot_directory, 'Plot_LLR',args.name_dir)
+if not os.path.exists(directory):
+        try:
+            os.makedirs(directory)
+        except IOError:
+            pass
+
+c1 = ROOT.TCanvas()
+h_lin_pred = ROOT.TH1D("h_lin_pred","Linear Prediction",40,0,400)
+h_quad_pred = ROOT.TH1D("h_quad_pred","Quadratic Prediction",40,0,400)
+h_lin_true = ROOT.TH1D("h_lin_true","Linear True",40,0,400)
+h_quad_true = ROOT.TH1D("h_quad_true","Quadratic True",40,0,400)
+h_weight_0 = ROOT.TH1D("h_quad_true","Quadratic True",40,0,400)
+for i in range(test_features[:,17].size):
+        pred_lin_inter =bit_predictions[('ctZ',)][i]*test_weights[i,0]
+        pred_quad_inter =bit_predictions[('ctZ','ctZ')][i]*test_weights[i,0]
+        true_lin_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ',))]#/ test_weights[i,0]
+        true_quad_inter =test_weights[i,config.weight_derivative_combinations.index(('ctZ','ctZ'))]#/ test_weights[i,0] 
+        h_lin_pred.Fill(test_features[i,17],pred_lin_inter)
+        h_quad_pred.Fill(test_features[i,17],pred_quad_inter)
+        h_lin_true.Fill(test_features[i,17],true_lin_inter)
+        h_quad_true.Fill(test_features[i,17],true_quad_inter)
+        h_weight_0.Fill(test_features[i,17],test_weights[i,0])
+
+#for i in range(bin_weight_0.size):
+#        h_lin_pred.Fill(test_features[i,17],bin_pred_lin[i]/bin_weight_0[i])
+#        h_quad_pred.Fill(test_features[i,17],bin_pred_quad[i]/bin_weight_0[i])
+#        h_lin_true.Fill(test_features[i,17],bin_true_lin[i]/bin_weight_0[i])
+#        h_quad_true.Fill(test_features[i,17],bin_true_quad[i]/bin_weight_0[i])
+
+
+h_lin_pred.Draw("hist")
+filename2 = "h_lin_pred_without.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_quad_pred.Draw("hist")
+filename2 = "h_quad_pred_without.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_lin_true.Draw("hist")
+filename2 = "h_lin_true_without.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_quad_true.Draw("hist")
+filename2 = "h_quad_true_without.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+
+h_lin_pred.Divide(h_weight_0)
+h_quad_pred.Divide(h_weight_0)
+h_lin_true.Divide(h_weight_0)
+h_quad_true.Divide(h_weight_0)
+
+
+h_lin_pred.Draw("hist")
+filename2 = "h_lin_pred.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_quad_pred.Draw("hist")
+filename2 = "h_quad_pred.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_lin_true.Draw("hist")
+filename2 = "h_lin_true.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_quad_true.Draw("hist")
+filename2 = "h_quad_true.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+
+h_lin_pred.Divide(h_lin_true)
+h_quad_pred.Divide(h_quad_true)
+
+h_lin_pred.Draw("hist")
+filename2 = "h_lin_pred_vs_true.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+h_quad_pred.Draw("hist")
+filename2 = "h_quad_pred_vs_true.png"
+c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
+
+
+#h2 = ROOT.TH1D("h2", "Histogramm New", 10,0,100)
+#x_list = np.random.uniform(0,100,1000)
+#w_list = np.random.uniform(0,1,1000)
+#for i in range(x_list.size):
+#    h2.Fill(x_list[i],w_list[i])
+#h2.Draw("hist") #Draw Histogramm
+#filename = "test_histo.png"
+#c1.Print(os.path.join(plot_directory, 'Plot_LLR',filename))
+
+print "Success"
+
 #def compute_weights(weights, theta, theta_ref, param):
 #        return weights[()] \
 #                        + np.array( [ (theta-theta_ref)*weights[(param,)]]).sum(axis=0)\
