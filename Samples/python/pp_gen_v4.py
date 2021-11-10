@@ -55,10 +55,10 @@ pp_dir      = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v4/"
 #ZA.reweight_pkl   = os.path.join( gridpack_dir, "boson_v1_reweight_card.pkl" )
 #ZA.objects        = ['Z', 'g']
 #
-#WA                = Sample.fromDirectory("WA", texName = "WA", directory = [os.path.join( pp_dir, "WA" )])
-#WA.reweight_pkl   = os.path.join( gridpack_dir, "boson_v1_reweight_card.pkl" )
-#WA.objects        = ['W', 'g']
-#
+WA                = Sample.fromDirectory("WA", texName = "WA", directory = [os.path.join( pp_dir, "WA" )])
+WA.reweight_pkl   = os.path.join( gridpack_dir, "boson_v1_reweight_card.pkl" )
+WA.objects        = ['W', 'g']
+
 #WA_LO             = Sample.fromDirectory("WA_LO", texName = "WA_LO", directory = [os.path.join( pp_dir, "WA_LO" )])
 #WA_LO.reweight_pkl= os.path.join( gridpack_dir, "boson_v1_reweight_card.pkl" )
 #WA_LO.objects     = ['W', 'g']

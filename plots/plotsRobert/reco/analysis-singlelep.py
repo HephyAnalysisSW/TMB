@@ -39,7 +39,6 @@ argParser.add_argument('--small',                             action='store_true
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--plot_directory', action='store', default='analysis-v6')
 argParser.add_argument('--era',            action='store', type=str, default="Autumn18")
-argParser.add_argument('--sample',        action='store', type=str, default="ttG_noFullyHad_fast")
 argParser.add_argument('--WC',            action='store', type=str, default="cWWW")
 argParser.add_argument('--selection',      action='store', default='singlelep-photon')
 argParser.add_argument('--onlyMVA',       action='store', default=None, help='Plot only this MVA')
@@ -114,12 +113,11 @@ read_variables = [
     "photonJetdR/F", "photonLepdR/F", "m3/F",
 ]
 
-read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F'] #'reweightTrigger/F']
 # define 3l selections
 
-#import TMB.Tools.VV_angles          as VV_angles
-#import random
-#def make_VV( event, sample ):
+import TMB.Tools.VV_angles          as VV_angles
+import random
+def make_VV( event, sample ):
     ##AN2019_059_v8 p22
     #mW      = 80.4
     #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
@@ -134,21 +132,21 @@ read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F',
     # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
     # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
 
-#    lep_4 = ROOT.TLorentzVector()
-#    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
+    lep_4 = ROOT.TLorentzVector()
+    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
 
-#    random_number = ROOT.gRandom.Uniform() 
-#    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number ) 
+    random_number = ROOT.gRandom.Uniform() 
+    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number ) 
 
     # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
-#    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
+    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
 
-#    gamma_4 = ROOT.TLorentzVector()
-#    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
+    gamma_4 = ROOT.TLorentzVector()
+    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
 
-#    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
-#    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
-#    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
+    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
+    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
+    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
 
     #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
     #lep_4.Print()
@@ -158,7 +156,7 @@ read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F',
     #print event.thetaW, event.Theta, event.phiW
     #print
 
-#sequence.append( make_VV )
+sequence.append( make_VV )
 
 #MVA
 import TMB.MVA.configs as configs
@@ -219,10 +217,12 @@ bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cl
 #bit_cWWW_cWWW_clipped = BoostedInformationTree.load('/mnt/hephy/cms/robert.schoefbeck/BIT/models/ttG_WG/cpSfix/bit_derivative_cWWW_cWWW.pkl')
 models = [
     ("BIT_ctZ", bits[('ctZ',)], [50, -.4, .6,]),
-    ("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 9,]),
+    ("BIT_ctZ_ctZ", bits[('ctZ','ctZ')], [50, -1, 4,]),
+    ("BIT_ctZ_ctZ_coarse", bits[('ctZ','ctZ')], [10, -1, 9,]),
 #    ("BIT_ctZ_ctZ_clipped", bit_ctZ_ctZ_clipped, [50, -1, 9,]),
     ("BIT_cWWW",    bits[('cWWW',)], [50, -.1, .1,]),
-    ("BIT_cWWW_cWWW",  bits[('cWWW','cWWW')], [50, -.02, .04,]),
+    ("BIT_cWWW_cWWW",  bits[('cWWW','cWWW')], [50, -.01, .03,]),
+    ("BIT_cWWW_cWWW_coarse",  bits[('cWWW','cWWW')], [7, -.005, .03,]),
 #    ("BIT_cWWW_cWWW_clipped", bit_cWWW_cWWW_clipped, [50, -0.02, 0.04,]),
 ]
 
@@ -270,6 +270,33 @@ for model_name, _, binning in models:
         addOverFlowBin='upper',
     ))
 
+    yield_w       = [ sample.weightInfo.get_diff_weight_func(tuple()) for sample in mc ]
+    first_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+    second_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC,args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+    plots.append(Plot(
+        stack = Stack(mc, mc, mc),
+        weight= [ yield_w, first_der_w, second_der_w ],
+        name = model_name+'_coeff',
+        texX = model_name, texY = 'Number of Events / 10 GeV',
+        attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+        binning=binning,
+        addOverFlowBin='upper',
+    ))
+
+yield_w       = [ sample.weightInfo.get_diff_weight_func(tuple()) for sample in mc ]
+first_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+second_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC,args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+plots.append(Plot(
+    stack = Stack(mc, mc, mc),
+    weight= [ yield_w, first_der_w, second_der_w ],
+    name = 'photon_pt_coarse_coeff',
+    texX = 'p_{T}(#gamma) (GeV)', texY = 'Number of Events / 50 GeV',
+    attribute = lambda event, sample:event.photon_pt,
+    binning=[10,0,50],
+    addOverFlowBin='upper',
+))
+
+
 if args.onlyMVA is None:
 
     plots.append(Plot(
@@ -313,8 +340,16 @@ if args.onlyMVA is None:
 
     plots.append(Plot(
         name = 'photon_pt',
-        texX = 'p_{T}(#gamma) (GeV)', texY = 'Number of Events / 40 GeV',
-        attribute = lambda event, sample: event.photon_pt if (event.nJetGood >=3 and event.nBTag >= 1) else 0,
+        texX = 'p_{T}(#gamma) (GeV)', texY = 'Number of Events / 20 GeV',
+        attribute = lambda event, sample:event.photon_pt,
+        binning=[25,0,500],
+        addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+        name = 'photon_pt_coarse',
+        texX = 'p_{T}(#gamma) (GeV)', texY = 'Number of Events / 50 GeV',
+        attribute = lambda event, sample:event.photon_pt,
         binning=[10,0,500],
         addOverFlowBin='upper',
     ))
@@ -436,7 +471,24 @@ def drawPlots(plots):
 plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 for p in plots:
+    if p.name.endswith('_coeff'):
+        #p.histos = p.histos_added
+        p.histos[0][0].legendText = "yield"
+        p.histos[1][0].legendText = "1^{st.} der."
+        p.histos[2][0].legendText = "2^{nd.} der."
+        p.histos[0][1].legendText = "yield"
+        p.histos[1][1].legendText = "1^{st.} der."
+        p.histos[2][1].legendText = "2^{nd.} der."
+        p.histos[0][0].style = styles.lineStyle(ROOT.kBlack)
+        p.histos[1][0].style = styles.lineStyle(ROOT.kBlue)
+        p.histos[2][0].style = styles.lineStyle(ROOT.kRed)
+        p.histos[0][1].style = styles.lineStyle(ROOT.kBlack, dashed=True)
+        p.histos[1][1].style = styles.lineStyle(ROOT.kBlue, dashed=True)
+        p.histos[2][1].style = styles.lineStyle(ROOT.kRed, dashed=True)
+
+for p in plots:
     h = p.histos_added
+    if p.name.endswith("_coeff"): continue
     p.dev = 0
     for i_bin in range(1,h[0][0].GetNbinsX()+1):
         if h[0][0].GetBinContent(i_bin)>0:

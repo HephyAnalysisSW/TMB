@@ -20,8 +20,6 @@ argParser.add_argument('--bagging_fraction',   action='store', default = 1., typ
 argParser.add_argument('--overwrite',          action='store_true', help="Overwrite output?")
 argParser.add_argument('--derivative',         action='store', nargs = '*', default = [], help="What to train?")
 argParser.add_argument('--lumi_norm',          action='store_true', help="Normalize the events according to lumiweight1fb?")
-argParser.add_argument('--max_local_score',    action='store', type=float, default = None, help="Maximum local score")
-argParser.add_argument('--rel_max_local_score',action='store', type=float, default = None, help="Relative maximum local score - share of highest scores capped")
 
 #args = argParser.parse_args()
 args, extra = argParser.parse_known_args(sys.argv[1:])
@@ -30,11 +28,33 @@ def parse_value( s ):
     try:
         r = int( s )
     except ValueError:
-        r = float(s)
+        try:
+            r = float(s)
+        except ValueError:
+            r = s
     return r
         
-extra_args = {key.lstrip('-'):parse_value(value) for key, value in zip(extra[::2], extra[1::2])}
+#extra_args = {key.lstrip('-'):parse_value(value) for key, value in zip(extra[::2], extra[1::2])}
 
+extra_args = {}
+key        = None
+for arg in extra:
+    if arg.startswith('--'):
+        # previous no value? -> Interpret as flag
+        #if key is not None and extra_args[key] is None:
+        #    extra_args[key]=True
+        key = arg.lstrip('-')
+        extra_args[key] = True # without values, interpret as flag
+        continue
+    else:
+        if type(extra_args[key])==type([]):
+            extra_args[key].append( parse_value(arg) )
+        else:
+            extra_args[key] = [parse_value(arg)]
+for key, val in extra_args.iteritems():
+    if type(val)==type([]) and len(val)==1:
+        extra_args[key]=val[0]
+        
 #Logger
 import Analysis.Tools.logger as logger
 logger = logger.get_logger("INFO", logFile = None )
@@ -43,12 +63,9 @@ logger = logger.get_logger("INFO", logFile = None )
 import importlib
 configs = importlib.import_module(args.config_module)
 config  = getattr( configs, args.config)
-config.bit_cfg.update( extra_args )
+for derivative in config.bit_derivatives:
+    config.bit_cfg[derivative].update( extra_args )
 
-#if args.calibrated:
-#    args.name+="_calibrated"
-#    config.bit_cfg['calibrated'] = True
-#
 import uproot
 import awkward
 import numpy as np
@@ -57,14 +74,18 @@ import pandas as pd
 
 #########################################################################################
 # variable definitions
-
+if args.small:
+    args.name+='_small'
 import Analysis.Tools.user as user
 # directories
 plot_directory   = os.path.join( user. plot_directory, 'MVA', args.config, args.name)
 output_directory = os.path.join( args.output_directory, 'models', args.config, args.name)
 # saving
 if not os.path.exists(output_directory):
-    os.makedirs(output_directory)
+    try:
+        os.makedirs(output_directory)
+    except OSError:
+        pass
 
 # fix random seed for reproducibility
 np.random.seed(1)
@@ -116,6 +137,29 @@ features  = features[:,0:n_var_flat]
 if args.lumi_norm:
     weight_derivatives = weight_derivatives * lumi_weights[:,np.newaxis]
 
+# Clip the most extreme scores 
+for derivative in config.bit_derivatives:
+    if config.bit_cfg[derivative]['clip_score_quantile'] is None: continue
+    i_derivative          = config.weight_derivative_combinations.index(derivative)
+    clip_score_quantile = config.bit_cfg[derivative]['clip_score_quantile']
+
+    derivative = config.weight_derivative_combinations[i_derivative]
+    training_scores          = np.divide( weight_derivatives[:,i_derivative], weight_derivatives[:,0], np.zeros_like(weight_derivatives[:,i_derivative]), where=weight_derivatives[:,0]!=0 )
+    training_score_quantiles = np.quantile( training_scores, [1-clip_score_quantile] if len(derivative)%2==0 else [clip_score_quantile, 1-clip_score_quantile] )
+    if len(derivative)%2==0:
+        # quadratic: Clip only positive values
+        print "Clip score at percentile %3.2f for %r: s>%3.2f" % (1-clip_score_quantile, derivative, training_score_quantiles[0] )
+        to_clip                         = training_scores>training_score_quantiles[0]
+        weight_derivatives[:,i_derivative][to_clip] = training_score_quantiles[0]*weight_derivatives[:,0][to_clip]
+
+    else:
+        # linear: Clip positive and negative values
+        print "Clip score at percentiles %3.2f and %3.2f for %r: s<%3.2f and s>%3.2f" % (clip_score_quantile, 1-clip_score_quantile, derivative, training_score_quantiles[0], training_score_quantiles[1] )
+        to_clip                  = training_scores>training_score_quantiles[1]
+        weight_derivatives[:,i_derivative][to_clip] = training_score_quantiles[1]*weight_derivatives[:,0][to_clip]
+        to_clip                  = training_scores<training_score_quantiles[0]
+        weight_derivatives[:,i_derivative][to_clip] = training_score_quantiles[0]*weight_derivatives[:,0][to_clip]
+
 ## split data into train and test, test_size = 0.2 is quite standard for this
 from sklearn.model_selection import train_test_split
 train_test_options = {'test_size':0.5, 'random_state':7, 'shuffle':True}
@@ -164,7 +208,7 @@ for derivative in config.bit_derivatives:
 
     if args.overwrite:
 
-        n_trees = config.bit_cfg['n_trees']
+        n_trees = config.bit_cfg[derivative]['n_trees']
 
         time1 = time.time()
         print ("Learning %s"%( str(derivative)))
@@ -175,18 +219,8 @@ for derivative in config.bit_derivatives:
                 split_method          = 'vectorized_split_and_weight_sums',
                 weights_update_method = 'vectorized',
                 bagging_fraction      = args.bagging_fraction,
-                **config.bit_cfg
+                **config.bit_cfg[derivative]
                     )
-        #Maximum Local Score
-        if args.max_local_score is not None and args.rel_max_local_score is not None:
-                raise NameError('max_local_score and rel_max_local_score defined')
-        if args.max_local_score is not None:
-                mask = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) > args.max_local_score
-                bits[derivative].training_diff_weights[mask] = args.max_local_score * bits[derivative].training_weights[mask]
-        if args.rel_max_local_score is not None:
-                score_store = np.divide(bits[derivative].training_diff_weights, bits[derivative].training_weights,out = np.zeros_like(bits[derivative].training_diff_weights),where=bits[derivative].training_weights!=0) 
-                threshold = np.quantile(score_store,1.0-args.rel_max_local_score)
-                bits[derivative].training_diff_weights[score_store > threshold] = threshold * bits[derivative].training_weights[score_store > threshold]
 
         bits[derivative].boost(debug=args.debug)
         bits[derivative].save(filename)
@@ -217,7 +251,8 @@ for derivative in config.bit_derivatives:
                               test_weights[:,0], 
                               test_weights_, 
                               os.path.join(plot_directory, ('_'.join(derivative))),
-                              mva_variables = config.mva_variables) 
+                              mva_variables = [ config.plot_options[mva_variable[0]]['tex'] for mva_variable in  config.mva_variables ],
+                            )
 
         test_train_factor = (1.-train_test_options['test_size'])/train_test_options['test_size']
         
@@ -273,7 +308,7 @@ for derivative in config.bit_derivatives:
     #training_scores = bits[derivative].vectorized_predict(test_features)
 
     n_digi    = 10
-    quantiles = np.quantile( test_scores,np.arange(0,1.1,.1))
+    quantiles = np.quantile( test_scores, np.arange(0,1.1,.1))
     try:
         digi      = np.digitize( test_scores, quantiles)
     except ValueError:
@@ -285,7 +320,7 @@ for derivative in config.bit_derivatives:
     test_weights_ = test_weights[:,config.weight_derivative_combinations.index(derivative)]
     for i_event in range(len(test_scores)):
         if i_event%10000==0: print "At",i_event
-        h_score.Fill(test_scores[i_event], test_weights_[i_event])
+        h_score.Fill(test_scores[i_event], test_weights[i_event][0])
         for i_var in range(len(config.mva_variables)):
             h_feature[config.mva_variables[i_var][0]][min(n_digi,digi[i_event])-1].Fill(test_features[i_event][i_var], test_weights_[i_event])
 
@@ -308,6 +343,7 @@ for derivative in config.bit_derivatives:
     yRange                 = "auto" #( minY, maxY )
     plot1DHist( plot, os.path.join(plot_directory, ('_'.join(derivative))), yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
 
+    #assert False, ""
     for i_var in range(len(config.mva_variables)):
         for i_digi in range(n_digi):
             h_feature[config.mva_variables[i_var][0]][i_digi].style     = styles.fillStyle(ROOT.kMagenta-10+i_digi)
