@@ -119,7 +119,8 @@ for sample in stack.samples:
     if selectionString != "":
         sample.addSelectionString( selectionString )
     if args.small:
-        sample.reduceFiles( factor = 10 )
+        #sample.reduceFiles( factor = 30 )
+        sample.reduceFiles( to = 2 )
 
 ## Helpers
 def addTransverseVector( p_dict ):
@@ -262,6 +263,7 @@ def coeff_getter( coeff):
     return getter_
 
 def add_fisher_plot( plot, fisher_string, color, legendText):
+
     # the coefficients we need
     required_coefficients = map( lambda s: int(s.replace('[','').replace(']','')), list(set(re.findall(r'\[[0-9][0-9]*\]', fisher_string ) )) )
     # copy the plot
@@ -317,7 +319,7 @@ if args.ZZ:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "theta_V1"+postfix,
-      texX = '#theta(V1)', texY = 'Number of Events',
+      texX = '#theta(V_{1})', texY = 'Number of Events',
       attribute = lambda event, sample: event.ZZ_angles['theta_V1'] if event.ZZ_angles is not None else float('nan'),
       binning=[20, 0, pi], addOverFlowBin="both",
     ))
@@ -325,17 +327,41 @@ if args.ZZ:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "theta_V2"+postfix,
-      texX = '(#theta(V2)', texY = 'Number of Events',
+      texX = '#theta(V_{2})', texY = 'Number of Events',
       attribute = lambda event, sample: event.ZZ_angles['theta_V2'] if event.ZZ_angles is not None else float('nan'),
       binning=[20, 0, pi], addOverFlowBin="both",
     ))
     for color, legendText, fisher_string in FIs:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-    plots.append(Plot( name = "theta"+postfix,
-      texX = '#theta', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ZZ_angles['theta'] if event.ZZ_angles is not None else float('nan'),
+    plots.append(Plot( name = "Theta"+postfix,
+      texX = '#Theta', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ZZ_angles['Theta'] if event.ZZ_angles is not None else float('nan'),
       binning=[20, 0,pi], addOverFlowBin="both",
+    ))
+    for color, legendText, fisher_string in FIs:
+        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "Theta_sinPhiZ1_sinPiZ2"+postfix,
+      texX = '#Theta*sin(#phi(Z_{1}))*sin(#phi(Z_{2}))', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ZZ_angles['Theta']*sin(event.ZZ_angles['phi1'])*sin(event.ZZ_angles['phi2']) if event.ZZ_angles is not None else float('nan'),
+      binning=[20, -pi,pi], addOverFlowBin="both",
+    ))
+    for color, legendText, fisher_string in FIs:
+        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "theta_V1_sinPhiZ1_sinPiZ2"+postfix,
+      texX = '#theta(V_{1})*sin(#phi(Z_{1}))*sin(#phi(Z_{2}))', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ZZ_angles['theta_V1']*sin(event.ZZ_angles['phi1'])*sin(event.ZZ_angles['phi2']) if event.ZZ_angles is not None else float('nan'),
+      binning=[20, -pi,pi], addOverFlowBin="both",
+    ))
+    for color, legendText, fisher_string in FIs:
+        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "theta_V2_sinPhiZ1_sinPiZ2"+postfix,
+      texX = '#theta(V_{2})*sin(#phi(Z_{1}))*sin(#phi(Z_{2}))', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ZZ_angles['theta_V2']*sin(event.ZZ_angles['phi1'])*sin(event.ZZ_angles['phi2']) if event.ZZ_angles is not None else float('nan'),
+      binning=[20, -pi,pi], addOverFlowBin="both",
     ))
     for color, legendText, fisher_string in FIs:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
@@ -383,7 +409,7 @@ if args.WG:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "theta_V1"+postfix,
-      texX = '#theta(V1)', texY = 'Number of Events',
+      texX = '#theta(V_{1})', texY = 'Number of Events',
       attribute = lambda event, sample: event.WG_angles['theta_V1'] if event.WG_angles is not None else float('nan'),
       binning=[20, 0, pi], addOverFlowBin="both",
     ))
@@ -391,7 +417,7 @@ if args.WG:
         fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "theta_V2"+postfix,
-      texX = '(#theta(V2)', texY = 'Number of Events',
+      texX = '(#theta(V_{2})', texY = 'Number of Events',
       attribute = lambda event, sample: event.WG_angles['theta_V2'] if event.WG_angles is not None else float('nan'),
       binning=[20, 0, pi], addOverFlowBin="both",
     ))
