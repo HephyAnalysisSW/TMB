@@ -256,7 +256,7 @@ def neutrino_mom(vec_lep, MET_pt, MET_phi, random):
 
     if vec_lep.E()<0:
         pnu.etPtEtaPhiM(0,-100,-100,0)
-        raise RuntimeError("Negative lepton energy. Should not happen.")
+        raise RuntimeError("Negative lepton energy %3.2f. Should not happen." % vec_lep.E())
     else:
         mT2 = 2*vec_lep.Pt()*MET_pt*(1-cos(deltaPhi(vec_lep.Phi(),MET_phi)))
         Delta2 = (W_mass*W_mass - mT2)*1./(2*MET_pt*vec_lep.Pt())

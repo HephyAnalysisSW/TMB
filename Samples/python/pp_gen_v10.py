@@ -2,6 +2,7 @@
 
 # standard imports
 import os
+import ROOT
 
 # RootTools
 from RootTools.core.standard import *
@@ -9,6 +10,9 @@ from RootTools.core.standard import *
 # Logging
 import logging
 logger = logging.getLogger(__name__)
+
+#TMB
+from TMB.Samples.color import color
 
 # Logging
 if __name__ == "__main__":
@@ -58,3 +62,13 @@ ZZ.objects      = ['Z']
 ZZjj = Sample.fromDirectory("ZZjj", texName = "ZZjj", directory = [os.path.join( pp_dir, "ZZjj" )]) 
 ZZjj.reweight_pkl = os.path.join(gridpack_directory, "ZZjj_VBF_reweight_card.pkl")
 ZZjj.objects      = ['Z']
+
+#DYJets     = Sample.fromDirectory("DYJets", texName = "DYJets", directory = [os.path.join( pp_dir, "DYJets" )], color=color.DY) 
+WJetsToLNu = Sample.fromDirectory("WJetsToLNu", texName = "WJetsToLNu", directory = [os.path.join( pp_dir, "WJetsToLNu" )], color=color.WJets) 
+TTJets = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path.join( pp_dir, "TTJets" )], color=color.TT) 
+
+WH = Sample.fromDirectory("WH", texName = "WH", directory = [os.path.join( pp_dir, "WH" )], color = ROOT.kGreen+3) 
+WH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+
+ZH = Sample.fromDirectory("ZH", texName = "ZH", directory = [os.path.join( pp_dir, "ZH" )], color = ROOT.kBlue+1) 
+ZH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
