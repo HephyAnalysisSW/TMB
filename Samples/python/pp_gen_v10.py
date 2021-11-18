@@ -63,7 +63,7 @@ ZZjj = Sample.fromDirectory("ZZjj", texName = "ZZjj", directory = [os.path.join(
 ZZjj.reweight_pkl = os.path.join(gridpack_directory, "ZZjj_VBF_reweight_card.pkl")
 ZZjj.objects      = ['Z']
 
-#DYJets     = Sample.fromDirectory("DYJets", texName = "DYJets", directory = [os.path.join( pp_dir, "DYJets" )], color=color.DY) 
+DYJets     = Sample.fromDirectory("DYJets", texName = "DYJets", directory = [os.path.join( pp_dir, "DYJets" )], color=color.DY) 
 WJetsToLNu = Sample.fromDirectory("WJetsToLNu", texName = "WJetsToLNu", directory = [os.path.join( pp_dir, "WJetsToLNu" )], color=color.WJets) 
 TTJets = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path.join( pp_dir, "TTJets" )], color=color.TT) 
 
