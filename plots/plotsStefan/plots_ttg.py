@@ -216,17 +216,6 @@ for derivative in config.bit_derivatives:
         test_weights_     = test_weights    [:, config.weight_derivative_combinations.index(derivative)]
         training_weights_ = training_weights[:, config.weight_derivative_combinations.index(derivative)]
 
-#        if args.debug:
-#            from debug import make_debug_plots
-#            make_debug_plots( bits[derivative], 
-#                              training_features, training_weights[:,0],  
-#                              training_weights[:, config.weight_derivative_combinations.index(derivative)], 
-#                              test_features, 
-#                              test_weights[:,0], 
-#                              test_weights_, 
-#                              os.path.join(plot_directory, ('_'.join(derivative))),
-#                              mva_variables = config.mva_variables) 
-
         test_train_factor = (1.-train_test_options['test_size'])/train_test_options['test_size']
         
         for i in range(len(test_features)): 
@@ -245,31 +234,6 @@ for derivative in config.bit_derivatives:
             test_FI_histo    .SetBinContent( i_tree+1, -sum(test_FIs[:i_tree]) )
             training_FI_histo.SetBinContent( i_tree+1, -sum(training_FIs[:i_tree]) )
 
-        # Histo style
-#        test_FI_histo    .style = styles.lineStyle( ROOT.kBlue, width=2 )
-#        training_FI_histo.style = styles.lineStyle( ROOT.kRed, width=2 )
-#        test_FI_histo    .legendText = "Test"
-#        training_FI_histo.legendText = "Training"
-#
-#        minY   = 0.01 * min( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
-#        maxY   = 1.5  * max( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
-
-#        histos = [ [test_FI_histo], [training_FI_histo] ]
-#        plot   = Plot.fromHisto( "bit_derivative_%s_evolution"% ('_'.join(derivative)), histos, texX="b", texY="L(D,b)" )
-
-        # Plot Style
-#        histModifications      = []
-#        histModifications      += [ lambda h: h.GetYaxis().SetTitleOffset(1.4) ]
-#        histModifications += [ lambda h: h.GetXaxis().SetTitleSize(26) ]
-#        histModifications += [ lambda h: h.GetYaxis().SetTitleSize(26) ]
-#        histModifications += [ lambda h: h.GetXaxis().SetLabelSize(22)  ]
-#        histModifications += [ lambda h: h.GetYaxis().SetLabelSize(22)  ]
-
-#        ratioHistModifications = []
-#        ratio                  = None
-#        legend                 = (0.6,0.75,0.9,0.88)
-#        yRange                 = "auto" #( minY, maxY )
-#        plot1DHist( plot, plot_directory, yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
 test_weights_capped = np.copy(test_weights)
 
 for derivative in config.bit_derivatives:
@@ -292,17 +256,16 @@ if not os.path.exists(directory):
 
 
 c1 = ROOT.TCanvas()
-def compute_weights(weights, theta, theta_ref):
-        return weights[:,0] \
-                        + np.array( [ (theta[i]-theta_ref[i])*weights[:,config.weight_derivative_combinations.index(('ctZ',))] for i in range(len(theta)) ] ).sum(axis=0)\
-                        + np.array( [ 0.5*(theta[i]-theta_ref[i])*(theta[j]-theta_ref[j])*weights[:,config.weight_derivative_combinations.index(('ctZ','ctZ'))] for i in range(len(theta)) for j in range(len(theta)) ] ).sum(axis=0)
+#def compute_weights(weights, theta, theta_ref):
+#        return weights[:,0] \
+#                        + np.array( [ (theta[i]-theta_ref[i])*weights[:,config.weight_derivative_combinations.index(('ctZ',))] for i in range(len(theta)) ] ).sum(axis=0)\
+#                        + np.array( [ 0.5*(theta[i]-theta_ref[i])*(theta[j]-theta_ref[j])*weights[:,config.weight_derivative_combinations.index(('ctZ','ctZ'))] for i in range(len(theta)) for j in range(len(theta)) ] ).sum(axis=0)
 
-def predict_weight_ratio(bit_predictions, theta, theta_ref):
-        return 1.+ \
-                        + np.array( [ (theta[i]-theta_ref[i])*bit_predictions[('ctZ',)] for i in range(len(theta)) ] ).sum(axis=0)\
-                        + np.array( [ 0.5*(theta[i]-theta_ref[i])*(theta[j]-theta_ref[j])*bit_predictions[('ctZ','ctZ')] for i in range(len(theta)) for j in range(len(theta)) ] ).sum(axis=0)
+#def predict_weight_ratio(bit_predictions, theta, theta_ref):
+#        return 1.+ \
+#                        + np.array( [ (theta[i]-theta_ref[i])*bit_predictions[('ctZ',)] for i in range(len(theta)) ] ).sum(axis=0)\
+#                        + np.array( [ 0.5*(theta[i]-theta_ref[i])*(theta[j]-theta_ref[j])*bit_predictions[('ctZ','ctZ')] for i in range(len(theta)) for j in range(len(theta)) ] ).sum(axis=0)
 
-#theta_vec = np.array([])
 print "#######################################################"
 
 h_LLR_true = ROOT.TH1D("h_LLR_true","LLR Weights Summed",40,-1.0,1.0)
@@ -313,8 +276,6 @@ h_LLR_pred_lin = ROOT.TH1D("h_LLR_pred_lin","LLR Weights Summed",40,-1.0,1.0)
 h_LLR_pred_lin_event = ROOT.TH1D("h_LLR_pred_lin","LLR Eventwise",40,-1.0,1.0)
 h_LLR_pred_quad = ROOT.TH1D("h_LLR_pred_quad","LLR Weights Summed",40,-1.0,1.0)
 h_LLR_pred_quad_event = ROOT.TH1D("h_LLR_pred_quad","LLR Eventwise",40,-1.0,1.0)
-#h_LLR_true.GetXAxis().SetTitle(args.binning_var)
-#h_LLR_true.GetYAxis().SetTitle("LLR")
 for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
         w0_sum = 0
         w0_capped_sum = 0
@@ -332,21 +293,11 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
             w0_inter = test_weights[j,0]
             w0_capped_inter = test_weights_capped[j,0]
             div = np.divide(w1_true_inter,w0_inter,out = np.zeros_like(w1_true_inter),where=w0_inter!=0)
-            #print div
-#            div_capped = np.divide(w1_true_capped_inter,w0_inter,out = np.zeros_like(w1_true_capped_inter),where=w0_inter!=0)
             LLR_true_event += w1_true_inter - w0_inter -w0_inter*np.log(div,out = np.zeros_like(div),where=div!=0)
             w1_true_sum += w1_true_inter
-#            if plot_theta < 0.11 and plot_theta > -0.06 and w1_true_capped_inter <= 0:
-#                    print "J: ", j
-#                    print "Log: ",np.log(div,out = np.zeros_like(div),where=div!=0), ", Div: ", div
-#                    print "Weight Diff: ",w1_true_inter, " Weight: ", w0_inter, " Added:",w1_true_inter - w0_inter -w0_inter*np.log(div,out = np.zeros_like(div),where=div!=0), "LLR: ", LLR_true_event
-#            LLR_true_capped_event += w1_true_capped_inter - w0_inter -w0_inter*np.log(div_capped,out = np.zeros_like(div_capped),where=div_capped!=0)
             w1_true_capped_sum += w1_true_capped_inter
             div = np.divide(w1_true_capped_inter,w0_capped_inter,out = np.zeros_like(w1_true_capped_inter),where=w0_capped_inter!=0)
             LLR_true_capped_event += w1_true_capped_inter - w0_capped_inter -w0_capped_inter*np.log(div,out = np.zeros_like(div),where=div>0) #changed - set log to zero if encounter negative div value
-#            if plot_theta < 0.11 and plot_theta > -0.06 and w1_true_capped_inter <= 0:
-#                    print "Cap Log: ",np.log(div,out = np.zeros_like(div),where=div>0), ", Div: ", div
-#                    print "Cap Weight Diff: ",w1_true_capped_inter, " Cap Weight: ", w0_capped_inter, " Added: ", w1_true_capped_inter - w0_capped_inter -w0_capped_inter*np.log(div,out = np.zeros_like(div),where=div>0), "LLR: ", LLR_true_capped_event
             w0_sum += w0_inter
             w0_capped_sum += w0_capped_inter
             w1_pred_quad_inter = test_weights[j,0] + plot_theta * bit_predictions[('ctZ',)][j]*test_weights[j,0] + 0.5*plot_theta**2 * bit_predictions[('ctZ','ctZ')][j]*test_weights[j,0]
@@ -374,8 +325,6 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
 print "########################################################"
 h_LLR_true.SetTitle("LLR Weights Summed;ctZ;LLR")
 h_LLR_true.GetYaxis().SetTitleOffset(1.4)
-#h_LLR_true.GetXaxis().SetTitleSize(0.15)
-#h_LLR_true.GetYaxis().SetTitleSize(0.15)
 h_LLR_true.SetLineColor(ROOT.kRed)
 h_LLR_true_event.SetLineColor(ROOT.kRed)
 h_LLR_true_capped.SetLineColor(ROOT.kRed)
@@ -435,8 +384,6 @@ bin_number = args.bin_number
 binning_var = args.binning_var
 min_bin = args.min_bin
 max_bin = args.max_bin
-#print np.where(mva_variables == binning_var)
-#bin_index = np.where(mva_variables == binning_var)[0][0]
 bin_index = mva_variables.index(binning_var)
 for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
         h_w1_pred_lin = ROOT.TH1D("h_w1_pred_lin","Linear Prediction",bin_number,min_bin,max_bin)
@@ -503,20 +450,11 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
         LLR_true = h_w1_true.Clone("LLR_true")
         LLR_true_capped = h_w1_true_capped.Clone("LLR_true_capped")
 
-        #LLR_true.legendText = "LLR (true)"
-        #LLR_pred_lin.legendText = "LLR lin (pred)"
-        #LLR_pred_quad.legendText = "LLR quad (pred)"
-        #LLR_true.style = styles.lineStyle(ROOT.kRed)
-        #LLR_pred_lin.style = styles.lineStyle(ROOT.kBlue)
-        #LLR_pred_quad.style = styles.lineStyle(ROOT.kGreen)
         LLR_true.SetLineColor(ROOT.kRed)
         LLR_true_capped.SetLineColor(ROOT.kRed)
         LLR_true_capped.SetLineStyle(2)
-        #LLR_true.UseCurrentStyle()
         LLR_pred_lin.SetLineColor(ROOT.kGreen)
-        #LLR_pred_lin.UseCurrentStyle()
         LLR_pred_quad.SetLineColor(ROOT.kBlue)
-        #LLR_pred_quad.UseCurrentStyle()
         true_inter = 0
         true_capped_inter = 0
         lin_inter = 0
@@ -581,25 +519,7 @@ h_LLR_pred_quad.Draw("histsame")
 legend.Draw()
 filename = "LLR_binned.png"
 c1.Print(os.path.join(directory,filename))
-#print binning_var
-#print bin_index
-#print mva_variables
-#        histos = [[LLR_true], [LLR_pred_lin], [LLR_pred_quad]]
-#        plot = Plot.fromHisto( "LLR_Theta_%s"% ('_'.join([str(plot_theta)])), histos, texX="p_{T}(#gamma) (GeV)", texY="LLR" )
-#        plotting.draw(plot, 
-#            plot_directory = plot_directory,
-#            yRange = 'auto',
-            #legend = None,
-            #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False, 
-#            drawObjects = [h_nom]
-#        )
 
-
-        
-
-#        ext_Delta_NLL[pd.isna(ext_Delta_NLL)] = 0.0
-#        ext_Delta_NLL_pred = w1 - w0 - w0*np.log(predict_weight_ratio(bit_predictions, plot_theta, theta_ref))
-#        print plot_theta, "true", ext_Delta_NLL.sum(), "pred", ext_Delta_NLL_pred.sum()
 h_lin_pred = ROOT.TH1D("h_lin_pred","Linear Prediction",20,0,400)
 h_quad_pred = ROOT.TH1D("h_quad_pred","Quadratic Prediction",20,0,400)
 h_lin_true = ROOT.TH1D("h_lin_true","Linear True",20,0,400)
@@ -619,14 +539,6 @@ for i in range(test_features[:,17].size):
         h_quad_true.Fill(test_features[i,17],true_quad_inter)
         h_weight_0.Fill(test_features[i,17],test_weights[i,0])
 
-#cloning histogramm
-#h_new = h.Clone("h_new")
-
-#for i in range(bin_weight_0.size):
-#        h_lin_pred.Fill(test_features[i,17],bin_pred_lin[i]/bin_weight_0[i])
-#        h_quad_pred.Fill(test_features[i,17],bin_pred_quad[i]/bin_weight_0[i])
-#        h_lin_true.Fill(test_features[i,17],bin_true_lin[i]/bin_weight_0[i])
-#        h_quad_true.Fill(test_features[i,17],bin_true_quad[i]/bin_weight_0[i])
 
 h_quad_pred.legendText = "s_{tZ} (pred.)"
 h_quad_true.legendText = "s_{tZ} (true)"
@@ -642,106 +554,3 @@ plotting.draw(plot,
         ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False, 
         #drawObjects = [h_nom]
     )
-#h_lin_pred.Draw("hist")
-#filename2 = "h_lin_pred_without.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_quad_pred.Draw("hist")
-#filename2 = "h_quad_pred_without.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_lin_true.Draw("hist")
-#filename2 = "h_lin_true_without.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_quad_true.Draw("hist")
-#filename2 = "h_quad_true_without.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#
-#h_lin_pred.Divide(h_weight_0)
-#h_quad_pred.Divide(h_weight_0)
-#h_lin_true.Divide(h_weight_0)
-#h_quad_true.Divide(h_weight_0)
-#
-#
-#h_lin_pred.Draw("hist")
-#filename2 = "h_lin_pred.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_quad_pred.Draw("hist")
-#filename2 = "h_quad_pred.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_lin_true.Draw("hist")
-#filename2 = "h_lin_true.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_quad_true.Draw("hist")
-#filename2 = "h_quad_true.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#
-#h_lin_pred.Divide(h_lin_true)
-#h_quad_pred.Divide(h_quad_true)
-#
-#h_lin_pred.Draw("hist")
-#filename2 = "h_lin_pred_vs_true.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#h_quad_pred.Draw("hist")
-#filename2 = "h_quad_pred_vs_true.png"
-#c1.Print(os.path.join(plot_directory, 'Plot_LLR',args.name_dir,filename2))
-#
-#
-##h2 = ROOT.TH1D("h2", "Histogramm New", 10,0,100)
-##x_list = np.random.uniform(0,100,1000)
-##w_list = np.random.uniform(0,1,1000)
-##for i in range(x_list.size):
-##    h2.Fill(x_list[i],w_list[i])
-##h2.Draw("hist") #Draw Histogramm
-##filename = "test_histo.png"
-##c1.Print(os.path.join(plot_directory, 'Plot_LLR',filename))
-#
-#print "Success"
-
-#def compute_weights(weights, theta, theta_ref, param):
-#        return weights[()] \
-#                        + np.array( [ (theta-theta_ref)*weights[(param,)]]).sum(axis=0)\
-#                        #+ np.array( [ 0.5*(theta-theta_ref)*(theta-theta_ref)*weights[(param, param)]] ).sum(axis=0)
-
-#def predict_weight_ratio(bit_predictions, theta, theta_ref, param):
-#        lin       = np.array( [ (theta-theta_ref)*bit_predictions[(param,)] ] ).sum(axis=0)
-#        #quadratic = np.array( [ 0.5*(theta-theta_ref)*(theta-theta_ref)*bit_predictions[(param, param)] ] ).sum(axis=0)
-#        return 1.+lin #, 1.+lin+quadratic
-
-#for i_plot_theta, plot_theta in enumerate(np.arange(-.03,.05,.002)):
-#        param = 'ctZ'
-#        w1 = compute_weights( test_weights, plot_theta, 0, param)
-#        w0 = compute_weights( test_weights, 0,0, param)
-
-#        ext_Delta_NLL      = w1 - w0 - w0*np.log(w1/w0)
-
-#        lin = np.log(predict_weight_ratio(bit_predictions, plot_theta, 0, param))
-        #ext_Delta_NLL_pred     = w1 - w0 - w0*quad
-#        ext_Delta_NLL_pred_lin = w1 - w0 - w0*lin
-
-#        print plot_theta, "true", ext_Delta_NLL.sum(), "lin", ext_Delta_NLL_pred_lin.sum()
-
-#        # Histo style
-#        test_FI_histo    .style = styles.lineStyle( ROOT.kBlue, width=2 )
-#        training_FI_histo.style = styles.lineStyle( ROOT.kRed, width=2 )
-#        test_FI_histo    .legendText = "Test"
-#        training_FI_histo.legendText = "Training"
-#
-#        minY   = 0.01 * min( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
-#        maxY   = 1.5  * max( test_FI_histo.GetBinContent(test_FI_histo.GetMaximumBin()), training_FI_histo.GetBinContent(training_FI_histo.GetMaximumBin()))
-#
-#        histos = [ [test_FI_histo], [training_FI_histo] ]
-#        plot   = Plot.fromHisto( "bit_derivative_%s_evolution"% ('_'.join(derivative)), histos, texX="b", texY="L(D,b)" )
-#
-#        # Plot Style
-#        histModifications      = []
-#        histModifications      += [ lambda h: h.GetYaxis().SetTitleOffset(1.4) ]
-#        histModifications += [ lambda h: h.GetXaxis().SetTitleSize(26) ]
-#        histModifications += [ lambda h: h.GetYaxis().SetTitleSize(26) ]
-#        histModifications += [ lambda h: h.GetXaxis().SetLabelSize(22)  ]
-#        histModifications += [ lambda h: h.GetYaxis().SetLabelSize(22)  ]
-#
-#        ratioHistModifications = []
-#        ratio                  = None
-#        legend                 = (0.6,0.75,0.9,0.88)
-#        yRange                 = "auto" #( minY, maxY )
-#        plot1DHist( plot, plot_directory, yRange=yRange, ratio=ratio, legend=legend, histModifications=histModifications )
-#
