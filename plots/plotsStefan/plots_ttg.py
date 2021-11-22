@@ -332,6 +332,7 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
             w0_inter = test_weights[j,0]
             w0_capped_inter = test_weights_capped[j,0]
             div = np.divide(w1_true_inter,w0_inter,out = np.zeros_like(w1_true_inter),where=w0_inter!=0)
+            #print div
 #            div_capped = np.divide(w1_true_capped_inter,w0_inter,out = np.zeros_like(w1_true_capped_inter),where=w0_inter!=0)
             LLR_true_event += w1_true_inter - w0_inter -w0_inter*np.log(div,out = np.zeros_like(div),where=div!=0)
             w1_true_sum += w1_true_inter
