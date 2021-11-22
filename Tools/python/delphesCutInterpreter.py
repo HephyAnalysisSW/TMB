@@ -8,11 +8,14 @@ jetSelection    = "nJetGood"
 bJetSelectionM  = "nBTag"
 
 special_cuts = {
-    "photon" : "(recoPhoton_pt[0]>20)",
-    "singlelep": "(nrecoLep>=1)&&(recoLep_pt[0]>30)",
-    "trilep":         "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
-    "onZ"   : "abs(recoZ_mass-91.2)<10",
-    "LepGBB":   "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
+    "photon" :   "(recoPhoton_pt[0]>20)",
+    "singlelep": "(nrecoLep>=1)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>25)<=1",
+    "dilep":     "(nrecoLep>=2)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>15)>=2&&Sum$(recoLep_pt>25)<=2",
+    "WHJet"  :   "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
+    "ZHJet"  :   "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
+    "trilep":    "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
+    "onZ"   :    "abs(recoZ_mass-91.2)<10",
+    "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
   }
 
 continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt")]
@@ -90,6 +93,8 @@ class cutInterpreter:
     def cutString( cut, select = [""], ignore = []):
         ''' Cutstring syntax: cut1-cut2-cut3
         '''
+        if cut is None or cut=="":
+            return "(1)"
         cuts = cut.split('-')
         # require selected
         cuts = filter( lambda c: any( sel in c for sel in select ), cuts )

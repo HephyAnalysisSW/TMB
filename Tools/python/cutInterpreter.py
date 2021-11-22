@@ -104,6 +104,8 @@ class cutInterpreter:
     def cutString( cut, select = [""], ignore = []):
         ''' Cutstring syntax: cut1-cut2-cut3
         '''
+        if cut is None or cut=="":
+            return "(1)"
         cuts = cut.split('-')
         # require selected
         cuts = filter( lambda c: any( sel in c for sel in select ), cuts )

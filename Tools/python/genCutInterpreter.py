@@ -4,6 +4,7 @@ mZ              = 91.1876
 mT              = 172.5
 
 special_cuts = {
+    'VBS':"genVBS_mjj>400&&abs(genVBS_dEta)>2.4"
   }
 
 continous_variables  = [
