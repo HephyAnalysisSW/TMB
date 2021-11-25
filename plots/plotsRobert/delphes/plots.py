@@ -53,14 +53,12 @@ signal.weightInfo = WeightInfo(signal.reweight_pkl)
 signal.weightInfo.set_order(2)
 signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
-lumi  = 137
-lumi_weight = lambda event, sample: lumi*event.lumiweight1fb
-
 eft_configs = [
     (ROOT.kBlack, {}, "SM"), 
     (ROOT.kGreen+1, {'cHW':1}, "c_{W}=1"), 
+    (ROOT.kGreen+3, {'cHWtil':1}, "c_{#tilde{W}}=1"), 
     (ROOT.kOrange-1, {'cHj3':1}, "c_{Hq3}=1"),
-    (ROOT.kOrange-2, {'cHj3':.7}, "c_{Hq3}=.7"),
+    (ROOT.kOrange-2, {'cHj3':2}, "c_{Hq3}=2"),
     ]
 
 def get_eft_reweight( eft, weightInfo_):
@@ -74,7 +72,7 @@ def get_eft_reweight( eft, weightInfo_):
 if args.signal == "WH":
     stack       = Stack( [samples.TTJets, samples.WJetsToLNu] )
 elif args.signal == "ZH":
-    stack       = Stack( [samples.DYJets, samples.WJetsToLNu] )
+    stack       = Stack( [samples.DYJets_HT, samples.WJetsToLNu] )
 
 eft_weights = [[]]
 for sample in stack.samples:
@@ -84,6 +82,10 @@ for sample in stack.samples:
 for _, eft, _ in eft_configs:
     stack.append( [signal] )
     eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
+
+
+lumi  = 59.7
+lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
 
 for sample in stack.samples:
     sample.weight = lumi_weight
@@ -101,15 +103,21 @@ read_variables = [\
 #    "nBTag/I", 
     "nBTag_loose/I",
     "recoMet_pt/F", "recoMet_phi/F",
+    "genMet_pt/F", "genMet_phi/F",
     "recoZ_pt/F", "recoZ_eta/F", "recoZ_phi/F", "recoZ_mass/F", "recoZ_cosThetaStar/F", "recoZ_lldPhi/F", "recoZ_lldR/F", "recoZ_l1_index/I", "recoZ_l2_index/I",
     "nrecoJet/I",
     "recoJet[%s]"%(",".join(jetVars)),
     "nrecoLep/I",
     "recoLep[%s]"%(",".join(lepVars)),
+    "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
     "lumiweight1fb/F",
+    "genW[pt/F,eta/F,phi/F,l1_index/I,l2_index/I]", "ngenW/I",
+    "evt/l", "run/I", "lumi/I",
 ]
 
 preselection = [ 
+    #("debug", "(evt==25857178)") 
+    #("debug", "(genW_pt[0]>0)") 
 ]
 
 selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
@@ -122,7 +130,7 @@ for sample in stack.samples:
         sample.addSelectionString( selectionString )
     if args.small:
         #sample.reduceFiles( factor = 30 )
-        sample.reduceFiles( to = 2 )
+        sample.reduceFiles( to = 15 )
 
 ### Helpers
 def addTransverseVector( p_dict ):
@@ -148,6 +156,12 @@ def makeJets( event, sample ):
 
 sequence.append( makeJets )
 
+def print_leps( name, leps ):
+    print "Leps", name
+    for i_l, l in enumerate(leps):
+        print "  %s %i/%i pdgId %3i pt: %3.2f eta: %3.2f phi: %3.2f"%( name, i_l, len(leps), l['pdgId'],  l['pt'], l['eta'], l['phi'])
+    
+
 gRandom = ROOT.TRandom3() #TRandom3(time.gmtime(0)) # for changing seed
 def makeLeptonic( event, sample ):
 
@@ -162,14 +176,24 @@ def makeLeptonic( event, sample ):
     event.leps = sorted( event.all_leps, key=lambda k: -k['pt'] )
 
     # Cross-cleaning: remove leptons that overlap with a jet within 0.4
+    #before_cleaning = len(event.leps)
     event.leps = list(filter( lambda l: min( [ deltaR(l, j) for j in event.jets ] + [999] ) > 0.4 , event.leps ))
+    #if sample.name == signal.name:
+    #    print 
+    #    print_leps ( "reco", event.leps ) 
     if args.signal == "WH":
+    #print "Jet cleaning removed %i leps" %( before_cleaning-len(event.leps))
         if len(event.leps)>0:
             event.lepton = event.leps[0]
             random_no      = gRandom.Uniform(0,1)
             event.neutrino_vecP4 = VV_angles.neutrino_mom(event.lepton['vecP4'], event.recoMet_pt, event.recoMet_phi, random_no)
             event.V_vecP4  = event.neutrino_vecP4 + event.lepton['vecP4']  
 
+            #event.neutrino_vecP4_genMet = VV_angles.neutrino_mom(event.lepton['vecP4'], event.genMet_pt, event.genMet_phi, random_no)
+            #event.V_vecP4_genMet        = event.neutrino_vecP4_genMet + event.lepton['vecP4']  
+
+            #print "rand", random_no, "lep M", event.lepton['vecP4'].M(), "Pt", event.lepton['pt'], "phi", event.lepton['phi'], "eta", event.lepton['eta']
+            #print event.recoMet_pt, event.neutrino_vecP4.Pt(), event.genMet_pt
             event.V_pt          = event.V_vecP4.Pt()
             event.has_highPt_V  = event.V_pt > 150
             event.dPhiMetLep    = abs(deltaPhi( event.recoMet_phi, event.lepton['phi'] ))
@@ -190,7 +214,7 @@ def makeLeptonic( event, sample ):
             event.V_pt          =   event.recoZ_pt
             event.V_vecP4       =   event.all_leps[event.recoZ_l1_index]['vecP4'] + event.all_leps[event.recoZ_l2_index]['vecP4'] 
             event.lepton1       =   event.all_leps[event.recoZ_l1_index]
-            event.lepton2       =   event.all_leps[event.recoZ_l1_index]
+            event.lepton2       =   event.all_leps[event.recoZ_l2_index]
             event.has_highPt_V  =   event.recoZ_pt > 75
         else:
             event.V_pt          =   float('nan')
@@ -201,16 +225,64 @@ def makeLeptonic( event, sample ):
 
 sequence.append( makeLeptonic )
 
+#def genObjects( event, sample ):
+#    #if event.ngenW>0 and sample.name==signal.name and event.genW_pt[0]>300 and event.selection:
+#    #    for i_eft, (_, eft, name) in enumerate(eft_configs):
+#    #        print i_eft, name, event.evt, event.run, event.lumi, "genW_pt[0]", event.genW_pt[0], eft_weights[1+i_eft][0](event, sample)
+#    if event.ngenW>0 and sample.name==signal.name:
+#        event.gen_leps = getCollection( event, 'genLep', ['pt', 'eta', 'phi', 'pdgId', 'mother_pdgId'], 'ngenLep' )
+#        if sample.name==signal.name:
+#            print_leps( "gen", event.gen_leps )
+#
+#        event.genLep = None
+#        for index in [event.genW_l1_index[0], event.genW_l2_index[0]]:
+#            if index>=0 and abs(event.gen_leps[index]['pdgId']) in [11, 13]:
+#                event.genLep = event.gen_leps[index]
+#        if event.genLep is not None:
+#            print deltaR( event.genLep,  event.lepton )
+#            print event.genLep
+#            print event.lepton
+#            print 
+#    
+#sequence.append(genObjects)
+
 def makeH( event, sample ):
-    event.dijet_mass = (event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']).M() 
-    event.H_vecP4 = event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']
-    event.H_pt    = event.H_vecP4.Pt()
+    if len(event.bJets)>=2:
+        event.dijet_mass = (event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']).M() 
+        event.H_vecP4 = event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']
+        event.H_pt    = event.H_vecP4.Pt()
+    else:
+        event.dijet_mass = float('nan') 
+        event.H_vecP4 = None 
+        event.H_pt    = float('nan') 
     if event.dijet_mass>90 and event.dijet_mass<150:
         event.has_H = 1
     else:
         event.has_H = 0  
 
 sequence.append( makeH )
+
+def make_VV_angles( event, sample ):
+    event.VV_angles = None
+    if args.signal == "WH":
+        if event.lepton is None: return
+        v = [event.lepton['vecP4'], event.neutrino_vecP4 ]
+        event.Theta = VV_angles.getTheta(event.lepton['vecP4'], event.neutrino_vecP4, event.H_vecP4)
+        event.theta = VV_angles.gettheta(event.lepton['vecP4'], event.neutrino_vecP4, event.H_vecP4)
+        event.phi   = VV_angles.getphi(  event.lepton['vecP4'], event.neutrino_vecP4, event.H_vecP4)
+    elif args.signal == "ZH":
+        if event.lepton1 is None or event.lepton2 is None: return
+        event.Theta = VV_angles.getTheta(event.lepton1['vecP4'], event.lepton2['vecP4'], event.H_vecP4)
+        event.theta = VV_angles.gettheta(event.lepton1['vecP4'], event.lepton2['vecP4'], event.H_vecP4)
+        event.phi   = VV_angles.getphi(  event.lepton1['vecP4'],   event.lepton2['vecP4'], event.H_vecP4)
+
+    event.pos_phi = event.neg_phi = float('nan')
+    if sin(2*event.theta)*sin(2*event.Theta)>0:
+        event.pos_phi = event.phi
+    else:
+        event.neg_phi = event.phi
+
+sequence.append( make_VV_angles )
 
 # thrust
 from TMB.Tools.Thrust import Thrust
@@ -226,12 +298,14 @@ sequence.append( makeThrust )
 if args.signal == 'WH':
     def makeSelection( event, sample):
         event.selection     = event.has_highPt_V and event.has_H and event.dPhiMetLep < 2
-        event.selection_noH = event.has_highPt_V and event.dPhiMetLep < 2 
+        event.selection_noH = event.has_highPt_V and event.dPhiMetLep < 2 and event.H_vecP4 is not None 
+        event.selection_noHighPtV = event.has_H and event.dPhiMetLep < 2 
         event.selection_noPhiMetLep = event.has_highPt_V and event.has_H
 elif args.signal == 'ZH':
     def makeSelection( event, sample):
         event.selection     = event.has_highPt_V and event.has_H 
         event.selection_noH = event.has_highPt_V 
+        event.selection_noHighPtV = event.has_H 
 
 sequence.append( makeSelection )
 
@@ -363,13 +437,85 @@ plots.append(Plot( name = "deltaPhiVH"+postfix,
   binning=[20,0,pi],
 ))
 
+#plots.append(Plot( name = "phi1"+postfix,
+#  texX = '#phi_{1}(V)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['phi1'] if event.selection and event.VV_angles is not None else -float('inf'),
+#  binning=[20,-pi,pi],
+#))
+#
+#plots.append(Plot( name = "phi2"+postfix,
+#  texX = '#phi_{2}(H)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['phi2'] if event.selection and event.VV_angles else -float('inf'),
+#  binning=[20,-pi,pi],
+#))
+#
+#plots.append(Plot( name = "theta_V1"+postfix,
+#  texX = '#theta_{1}(V)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['theta_V1'] if event.selection and event.VV_angles else -float('inf'),
+#  binning=[20,0,pi],
+#))
+#
+#plots.append(Plot( name = "theta_V2"+postfix,
+#  texX = '#theta_{2}(H)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['theta_V2'] if event.selection and event.VV_angles else -float('inf'),
+#  binning=[20,0,pi],
+#))
+
+plots.append(Plot( name = "pos_phi"+postfix,
+  texX = '#phi(V) (pos.)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.pos_phi if event.selection is not None else -float('inf'),
+  binning=[20,-pi,pi],
+))
+plots.append(Plot( name = "neg_phi"+postfix,
+  texX = '#phi(V) (neg.)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.neg_phi if event.selection is not None else -float('inf'),
+  binning=[20,-pi,pi],
+))
+subtr_phi_ind = len(plots)-2
+
+plots.append(Plot( name = "Theta"+postfix,
+  texX = '#Theta', texY = 'Number of Events',
+  attribute = lambda event, sample: event.Theta if event.selection else -float('inf'),
+  binning=[20,0,pi],
+))
+
+plots.append(Plot( name = "theta"+postfix,
+  texX = '#theta', texY = 'Number of Events',
+  attribute = lambda event, sample: event.theta if event.selection else -float('inf'),
+  binning=[20,0,pi],
+))
+
+#plots.append(Plot( name = "phi1S2theta1S2Theta"+postfix,
+#  texX = '#phi_{1}(V)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['phi1']*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1']) if event.selection and event.VV_angles is not None else -float('inf'),
+#  binning=[20,-pi,pi],
+#))
+#
+#plots.append(Plot( name = "phi2S2theta2S2Theta"+postfix,
+#  texX = '#phi_{2}(V)', texY = 'Number of Events',
+#  attribute = lambda event, sample: event.VV_angles['phi2']*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V2']) if event.selection and event.VV_angles is not None else -float('inf'),
+#  binning=[20,-pi,pi],
+#))
+
+#plots.append(Plot( name = 'V_pt_genMet'+postfix,
+#  texX = 'p_{T}(V) (GeV)', texY = 'Number of Events / 20 GeV',
+#  attribute = lambda event, sample: event.V_vecP4_genMet.Pt() if event.selection_noHighPtV else -float('inf'),
+#  binning=[600/20,0,600],
+#))
+
 plots.append(Plot( name = 'V_pt'+postfix,
   texX = 'p_{T}(V) (GeV)', texY = 'Number of Events / 20 GeV',
-  attribute = lambda event, sample: event.V_pt if event.selection else -float('inf'),
+  attribute = lambda event, sample: event.V_pt if event.selection_noHighPtV else -float('inf'),
   binning=[600/20,0,600],
 ))
 
-plots.append(Plot( name = 'V_pt'+postfix,
+plots.append(Plot( name = 'V_pt_coarse'+postfix,
+  texX = 'p_{T}(V) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.V_pt if event.selection_noHighPtV else -float('inf'),
+  binning=Binning.fromThresholds([150, 200, 250, 300, 360, 430, 510, 590, 690, 800, 900, 1100]),
+))
+
+plots.append(Plot( name = 'V_eta'+postfix,
   texX = '#eta(V) ', texY = 'Number of Events / 20 GeV',
   attribute = lambda event, sample: event.V_vecP4.Eta() if event.selection else -float('inf'),
   binning=[20,-3,3],
@@ -427,6 +573,19 @@ if args.signal == 'ZH':
     ))
 
 if args.signal == 'WH':
+
+    plots.append(Plot( name = 'genW_pt'+postfix,
+      texX = 'gen p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and event.selection else -float('inf'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = 'genW_pt_noHighPtV'+postfix,
+      texX = 'gen p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and event.selection_noHighPtV else -float('inf'),
+      binning=[600/20,0,600],
+    ))
+
     plots.append(Plot( name = "lep_pt"+postfix,
       texX = 'p_{T}(l) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.lepton['pt'] if event.selection else -float('inf'),
@@ -498,12 +657,24 @@ def drawPlots(plots, subDirectory=''):
 
 plotting.fill(plots+fisher_plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
+plot_phi_subtr = copy.deepcopy(plots[subtr_phi_ind])
+plot_phi_subtr.name = plot_phi_subtr.name.replace("pos_","subtr_")
+plot_phi_subtr.texX = plot_phi_subtr.texX.replace("(pos.)","(subtr)")
+for i_h_, h_ in enumerate(plots[subtr_phi_ind].histos):
+    for i_h, h in enumerate(h_):
+        h_sub = plots[subtr_phi_ind+1].histos[i_h_][i_h].Clone()
+        h_sub.Scale(-1)
+        plot_phi_subtr.histos[i_h_][i_h].Add(h_sub)
+
+plots.append( plot_phi_subtr )
+
 #color EFT
 for plot in plots:
     for i, (color, _, texName) in enumerate(eft_configs):
-
         plot.histos[i+1][0].legendText = texName
         plot.histos[i+1][0].style = styles.lineStyle(color,width=2)
+
+plot_phi_subtr.histos = plot_phi_subtr.histos[1:]
 
 drawPlots(plots, subDirectory = subDirectory)
 

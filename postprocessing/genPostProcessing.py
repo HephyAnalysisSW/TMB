@@ -14,12 +14,15 @@ import imp
 #RootTools
 from RootTools.core.standard             import *
 
+#Analysis
+from Analysis.Tools.WeightInfo        import WeightInfo
+from Analysis.Tools.leptonJetArbitration    import cleanJetsAndLeptons
+
 # TMB
 from TMB.Tools.user                   import skim_output_directory
 from TMB.Tools.GenSearch              import GenSearch
 from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosThetaStar, closestOSDLMassToMZ, checkRootFile
 from TMB.Tools.HyperPoly              import HyperPoly
-from Analysis.Tools.WeightInfo        import WeightInfo
 from TMB.Tools.DelphesProducer        import DelphesProducer
 from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
 from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
@@ -31,6 +34,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',              action='store_true', help='Run only on a small subset of the data?')#, default = True)
+argParser.add_argument('--miniAOD',            action='store_true', help='Run on miniAOD?')#, default = True)
 argParser.add_argument('--overwrite',          action='store',      nargs='?', choices = ['none', 'all', 'target'], default = 'none', help='Overwrite?')#, default = True)
 argParser.add_argument('--targetDir',          action='store',      default='v7')
 argParser.add_argument('--sample',             action='store',      default='fwlite_ttZ_ll_LO_scan', help="Name of the sample loaded from fwlite_benchmarks. Only if no inputFiles are specified")
@@ -57,7 +61,9 @@ if len(args.inputFiles)>0:
     logger.info( "Input files found. Ignoring 'sample' argument. Files: %r", args.inputFiles)
     sample = FWLiteSample( args.targetSampleName, args.inputFiles)
 else:
-    if args.targetDir.startswith('v4'):
+    if args.miniAOD:
+        sample_file = "$CMSSW_BASE/python/TMB/Samples/miniAOD.py"
+    elif args.targetDir.startswith('v4'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v4.py"
     elif args.targetDir.startswith('v5'):
         sample_file = "$CMSSW_BASE/python/TMB/Samples/gen_v5.py"
@@ -78,10 +84,10 @@ else:
 maxEvents = -1
 if args.small: 
     args.targetDir += "_small"
-    maxEvents       = 1000 
+    maxEvents       = 100 
     sample.files=sample.files[:1]
 
-xsec = sample.xsec
+xsec = sample.xsec if hasattr( sample, "xsec" ) else sample.xSection 
 nEvents = sample.nEvents
 lumiweight1fb = xsec * 1000. / nEvents
 
@@ -102,10 +108,10 @@ if args.addReweights:
     # Determine coefficients for storing in vector
     # Sort Ids wrt to their position in the card file
 
-    # weights for the ntuple
-    rw_vector       = TreeVariable.fromString( "rw[w/F,"+",".join(w+'/F' for w in weightInfo.variables)+"]")
-    rw_vector.nMax  = weightInfo.nid
-    extra_variables.append(rw_vector)
+    # weights from base base points 
+    weight_base      = TreeVariable.fromString( "weight[base/F]")
+    weight_base.nMax = weightInfo.nid
+    extra_variables.append(weight_base)
 
     # coefficients for the weight parametrization
     param_vector      = TreeVariable.fromString( "p[C/F]" )
@@ -130,12 +136,21 @@ if args.nJobs>1:
 
 max_jet_abseta = 5.1
 
-products = {
-    'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
-    'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
-    'genJets':{'type':'vector<reco::GenJet>', 'label':("ak4GenJets")},
-    'genMET':{'type':'vector<reco::GenMET>',  'label':("genMetTrue")},
-}
+if args.miniAOD:
+    products = {
+        'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
+        'gp':{'type':'vector<reco::GenParticle>', 'label':("prunedGenParticles")},
+        'gpPacked':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
+        'genJets':{'type':'vector<reco::GenJet>', 'label':("slimmedGenJets")},
+        'genMET':{'type':'vector<reco::GenMET>',  'label':("genMetTrue")},
+    }
+else:
+    products = {
+        'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
+        'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
+        'genJets':{'type':'vector<reco::GenJet>', 'label':("ak4GenJets")},
+        'genMET':{'type':'vector<reco::GenMET>',  'label':("genMetTrue")},
+    }
 
 def varnames( vec_vars ):
     return [v.split('/')[0] for v in vec_vars.split(',')]
@@ -243,6 +258,7 @@ if args.delphesEra is not None:
     recoPhoton_varnames = varnames( recoPhoton_vars )
 
     variables      += ["recoMet_pt/F", "recoMet_phi/F"]
+    variables      += ["delphesGenMet_pt/F", "delphesGenMet_phi/F"]
 
     # Systematics
     from TMB.Tools.bTagEff.delphesBTaggingEff import getBTagSF_1a
@@ -314,7 +330,7 @@ def filler( event ):
     if fwliteReader.position % 100==0: logger.info("At event %i/%i", fwliteReader.position, fwliteReader.nEvents)
 
     if args.addReweights:
-        event.nrw = weightInfo.nid
+        event.nweight = weightInfo.nid
         lhe_weights = fwliteReader.products['lhe'].weights()
         weights      = []
         param_points = []
@@ -323,11 +339,11 @@ def filler( event ):
             if weight.id in ['rwgt_1','dummy']: event.rw_nominal = weight.wgt
             if not weight.id in weightInfo.id: continue
             pos = weightInfo.data[weight.id]
-            event.rw_w[pos] = weight.wgt
+            event.weight_base[pos] = weight.wgt
             weights.append( weight.wgt )
             interpreted_weight = interpret_weight(weight.id) 
-            for var in weightInfo.variables:
-                getattr( event, "rw_"+var )[pos] = interpreted_weight[var]
+            #for var in weightInfo.variables:
+            #    getattr( event, "rw_"+var )[pos] = interpreted_weight[var]
             # weight data for interpolation
             if not hyperPoly.initialized: param_points.append( tuple(interpreted_weight[var] for var in weightInfo.variables) )
 
@@ -340,8 +356,9 @@ def filler( event ):
             #print "evt,run,lumi", event.run, event.lumi, event.evt
             #print "ref point", ref_point_coordinates
             #for i_p, p in enumerate(param_points):
-            #    print "weight", i_p, weights[i_p]/event.rw_nominal, p
+            #    print "weight", i_p, weights[i_p], " ".join([ "%s=%3.2f"%( weightInfo.variables[i], p[i]) for i in range(len(p)) if p[i]!=0])
             hyperPoly.initialize( param_points, ref_point_coordinates )
+
         coeff = hyperPoly.get_parametrization( weights )
         # = HyperPoly(weight_data, args.interpolationOrder)
         event.np = hyperPoly.ndof
@@ -350,7 +367,7 @@ def filler( event ):
         if event.chi2_ndof>10**-6: logger.warning( "chi2_ndof is large: %f", event.chi2_ndof )
         for n in xrange(hyperPoly.ndof):
             event.p_C[n] = coeff[n]
-            #print "p_C", n, coeff[n]/event.rw_nominal
+            #print n, "p_C", n, coeff[n]
         # lumi weight / w0
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
 
@@ -526,8 +543,21 @@ def filler( event ):
     fill_vector_collection( event, "genPhoton", gen_photon_varnames, filter( lambda g: g['relIso04']<0.3, genPhotons_dict) ) 
 
     # jets
-    fwlite_genJets = filter( genJetId, fwliteReader.products['genJets'] )
+    fwlite_genJets = fwliteReader.products['genJets']
+    #ngenJets_preFilter = len(fwlite_genJets)
+    #fwlite_genJets = filter( genJetId, fwlite_genJets )
+    #ngenJets_postFilter = len(fwlite_genJets)
+
+    # make dict
     allGenJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
+
+    #print allGenJets
+    #print genLeps_dict
+    ngenJets_preFilter = len(allGenJets)
+    allGenJets, _ = cleanJetsAndLeptons( allGenJets, genLeps_dict )
+    ngenJets_postFilter = len(allGenJets)
+    #print "filtered:", ngenJets_preFilter-ngenJets_postFilter
+
     # filter genJets
     genJets = list( filter( lambda j:isGoodGenJet( j, max_jet_abseta = max_jet_abseta), allGenJets ) )
 
@@ -764,6 +794,10 @@ def filler( event ):
         event.recoMet_pt  = recoMet['pt']
         event.recoMet_phi = recoMet['phi']
 
+        delphesGenMet = delphesReader.genMet()[0]
+        event.delphesGenMet_pt  = delphesGenMet['pt']
+        event.delphesGenMet_phi = delphesGenMet['phi']
+
         # search for reco Z in reco leptons
         (event.recoZ_mass, recoZ_l1_index, recoZ_l2_index) = closestOSDLMassToMZ(recoLeps)
         recoNonZ_indices = [ i for i in range(len(recoLeps)) if i not in [recoZ_l1_index, recoZ_l2_index] ]
@@ -823,6 +857,13 @@ for reader in readers:
 maker.start()
 
 # While loop with first reader, all others 'run' too.
+
+#if args.delphesEra is not None:
+#    readers[0].run( )
+#    logger.warning( "Skip first GEN event to align with delphes ntuple. This is a workaround for a bug (?) in Delphes that makes it skipm the first event...")
+#    if len(sample.files)!=1:
+#        raise RuntimeError ("Delphes skip first event means it will only work on a single file!!") 
+
 while readers[0].run( ):
     for reader in readers[1:]:
         reader.run()

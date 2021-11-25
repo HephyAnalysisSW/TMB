@@ -147,12 +147,12 @@ def VV_angles( v1, v2, v3, v4, debug=False):
     return res
 
 # from https://github.com/HephyAnalysisSW/VH/blob/main/Tools/python/helpers.py
-
+from ROOT import TLorentzVector, TVector3
 def getTheta(lep1, lep2, H):
 
-    beam = ROOT.TLorentzVector()
+    beam = TLorentzVector()
 
-    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+    tmp_lep1, tmp_lep2, tmp_H = TLorentzVector(), TLorentzVector(), TLorentzVector()
 
     tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
     tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
@@ -163,7 +163,7 @@ def getTheta(lep1, lep2, H):
     
     beam.SetPxPyPzE(0,0,6500,6500)
                     
-    V_mom, bVH = ROOT.TLorentzVector(), ROOT.TVector3()
+    V_mom, bVH = TLorentzVector(), TVector3()
     V_mom = tmp_lep1+tmp_lep2
     bVH = (tmp_lep1+tmp_lep2+tmp_H).BoostVector()
 
@@ -182,7 +182,7 @@ def getTheta(lep1, lep2, H):
 
 def gettheta(lep1, lep2, H):
 
-    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+    tmp_lep1, tmp_lep2, tmp_H = TLorentzVector(), TLorentzVector(), TLorentzVector()
 
     tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
     tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
@@ -191,7 +191,7 @@ def gettheta(lep1, lep2, H):
     if(lep1.Eta()<-10 or lep2.Eta()<-10 or tmp_H.Eta()<-10):
         return -100
     
-    V_mom, bVH, bV = ROOT.TLorentzVector(), ROOT.TVector3(), ROOT.TVector3()
+    V_mom, bVH, bV = TLorentzVector(), TVector3(), TVector3()
 
     bVH = (tmp_lep1 + tmp_lep2 + tmp_H).BoostVector()
     V_mom = (tmp_lep1 + tmp_lep2)
@@ -213,9 +213,9 @@ def gettheta(lep1, lep2, H):
 
 def getphi(lep1, lep2, H):
 
-    beam = ROOT.TLorentzVector()
+    beam = TLorentzVector()
 
-    tmp_lep1, tmp_lep2, tmp_H = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+    tmp_lep1, tmp_lep2, tmp_H = TLorentzVector(), TLorentzVector(), TLorentzVector()
 
     tmp_lep1.SetPtEtaPhiM(lep1.Pt(),lep1.Eta(),lep1.Phi(),lep1.M())
     tmp_lep2.SetPtEtaPhiM(lep2.Pt(),lep2.Eta(),lep2.Phi(),lep2.M())
@@ -226,7 +226,7 @@ def getphi(lep1, lep2, H):
 
     beam.SetPxPyPzE(0,0,6500,6500)
 
-    V_mom, bVH, n_scatter, n_decay = ROOT.TLorentzVector(), ROOT.TVector3(), ROOT.TVector3(), ROOT.TVector3()
+    V_mom, bVH, n_scatter, n_decay = TLorentzVector(), TVector3(), TVector3(), TVector3()
     bVH = (tmp_lep1+tmp_lep2+tmp_H).BoostVector()
     V_mom = tmp_lep1+tmp_lep2
 
@@ -247,7 +247,6 @@ def getphi(lep1, lep2, H):
 
     return phi
 
-
 def neutrino_mom(vec_lep, MET_pt, MET_phi, random):
 
     W_mass = 80.4
@@ -256,7 +255,6 @@ def neutrino_mom(vec_lep, MET_pt, MET_phi, random):
 
     if vec_lep.E()<0:
         pnu.etPtEtaPhiM(0,-100,-100,0)
-        raise RuntimeError("Negative lepton energy %3.2f. Should not happen." % vec_lep.E())
     else:
         mT2 = 2*vec_lep.Pt()*MET_pt*(1-cos(deltaPhi(vec_lep.Phi(),MET_phi)))
         Delta2 = (W_mass*W_mass - mT2)*1./(2*MET_pt*vec_lep.Pt())
@@ -268,10 +266,34 @@ def neutrino_mom(vec_lep, MET_pt, MET_phi, random):
                 nueta = -100
             pnu.SetPtEtaPhiM(MET_pt,nueta,MET_phi,0)
         else:
-            #http://cds.cern.ch/record/2757267/files/SMP-20-005-pas.pdf Sec. 6.1: If Delta<0 take eta_neu=eta_l 
-            pnu.SetPtEtaPhiM(MET_pt,vec_lep.Eta(),MET_phi,0)
+            pnu.SetPtEtaPhiM(0,-100,-100,0)
     
     return pnu
+
+#def neutrino_mom(vec_lep, MET_pt, MET_phi, random):
+#
+#    W_mass = 80.4
+#
+#    pnu = ROOT.TLorentzVector()
+#
+#    if vec_lep.E()<0:
+#        pnu.etPtEtaPhiM(0,-100,-100,0)
+#        raise RuntimeError("Negative lepton energy %3.2f. Should not happen." % vec_lep.E())
+#    else:
+#        mT2 = 2*vec_lep.Pt()*MET_pt*(1-cos(deltaPhi(vec_lep.Phi(),MET_phi)))
+#        Delta2 = (W_mass*W_mass - mT2)*1./(2*MET_pt*vec_lep.Pt())
+#        if (Delta2>=0):
+#            try:
+#                nueta = (vec_lep.Eta() + abs(acosh(1+(Delta2)))) if (random>=0.5) else (vec_lep.Eta() - abs(acosh(1+(Delta2))))
+#            except Exception:
+#                pass
+#                nueta = -100
+#            pnu.SetPtEtaPhiM(MET_pt,nueta,MET_phi,0)
+#        else:
+#            #http://cds.cern.ch/record/2757267/files/SMP-20-005-pas.pdf Sec. 6.1: If Delta<0 take eta_neu=eta_l 
+#            pnu.SetPtEtaPhiM(MET_pt,vec_lep.Eta(),MET_phi,0)
+#    
+#    return pnu
 
 if __name__=='__main__':
 

@@ -64,11 +64,13 @@ ZZjj.reweight_pkl = os.path.join(gridpack_directory, "ZZjj_VBF_reweight_card.pkl
 ZZjj.objects      = ['Z']
 
 DYJets     = Sample.fromDirectory("DYJets", texName = "DYJets", directory = [os.path.join( pp_dir, "DYJets" )], color=color.DY) 
+#DYJets_HT  = Sample.fromDirectory("DYJets_HT", texName = "DYJets", directory = [os.path.join( pp_dir, subdir ) for subdir in ["DYJets_HT_70to100", "DYJets_HT_100to200", "DYJets_HT_200to400", "DYJets_HT_400to600", "DYJets_HT_600to800", "DYJets_HT_800to1200", "DYJets_HT_1200to2500", "DYJets_HT_2500toInf"]], color=color.DY) 
 WJetsToLNu = Sample.fromDirectory("WJetsToLNu", texName = "WJetsToLNu", directory = [os.path.join( pp_dir, "WJetsToLNu" )], color=color.WJets) 
-TTJets = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path.join( pp_dir, "TTJets" )], color=color.TT) 
+TTJets = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path.join( pp_dir, "TTJets_private" )], color=color.TT) 
 
 WH = Sample.fromDirectory("WH", texName = "WH", directory = [os.path.join( pp_dir, "WH" )], color = ROOT.kGreen+3) 
 WH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+WH.objects  = ['W']
 
 ZH = Sample.fromDirectory("ZH", texName = "ZH", directory = [os.path.join( pp_dir, "ZH" )], color = ROOT.kBlue+1) 
 ZH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"

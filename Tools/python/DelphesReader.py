@@ -67,6 +67,8 @@ class DelphesReader( DelphesReaderBase ): # version RootTools reader
 
     def met( self ):
         return self.read_collection( 'MissingET', [('MET', 'pt'), ('Phi', 'phi')] )
+    def genMet( self ):
+        return self.read_collection( 'GenMissingET', [('MET', 'pt'), ('Phi', 'phi')] )
 
     def genParticles( self ):
         return self.read_collection( 'Particle', 
