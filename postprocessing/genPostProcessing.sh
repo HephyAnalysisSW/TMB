@@ -1,65 +1,63 @@
 #!/bin/sh
 
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WGToLNu #SPLIT598
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WGjj #SPLIT589
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZ #SPLIT575
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZjj #SPLIT513
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WGToLNu #SPLIT598
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WGjj #SPLIT589
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZ #SPLIT575
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample ZZjj #SPLIT513
+
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG20To130ToLNu #SPLIT581
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG130To300ToLNu #SPLIT598
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG300To500ToLNu #SPLIT597
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG500ToLNu #SPLIT595
+
+#python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 2  --sample ZH #SPLIT580
+#python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 2  --sample WH #SPLIT585
 #
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG20To130ToLNu #SPLIT581
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG130To300ToLNu #SPLIT598
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG300To500ToLNu #SPLIT597
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WG500ToLNu #SPLIT595
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
+###python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO #SPLIT249
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT253
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
+#
+#python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets #SPLIT1873
+#python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJets #SPLIT595
+#python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu #SPLIT596
+#
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_70to100 #SPLIT498
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_100to200 #SPLIT499
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_200to400 #SPLIT500
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_400to600 #SPLIT200
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_600to800 #SPLIT198
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_800to1200 #SPLIT196
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_1200to2500 #SPLIT200
+###python genPostProcessing.py --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_2500toInf #SPLIT196
+#
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_70To100 #SPLIT514
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_100To200 #SPLIT562
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_200To400 #SPLIT522
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_400To600 #SPLIT239
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_600To800 #SPLIT595
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_800To1200 #SPLIT327
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_1200To2500 #SPLIT299
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample WJetsToLNu_HT_2500ToInf #SPLIT132
+#
+#
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_DiLept                       #SPLIT841
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_DiLept_genMET80              #SPLIT1578
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_HT_1200to2500                #SPLIT123
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_HT_2500toInf                 #SPLIT63
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_HT_600to800                  #SPLIT503
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_HT_800to1200                 #SPLIT399
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_SingleLeptFromT              #SPLIT1505
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_SingleLeptFromT_genMET80     #SPLIT2230
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_SingleLeptFromTbar           #SPLIT1540
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets_SingleLeptFromTbar_genMET80  #SPLIT2055
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample TTJets                              #SPLIT309
 
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample WH #SPLIT585
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --addReweights --logLevel INFO --interpolationOrder 2  --sample ZH #SPLIT580
-
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu #SPLIT596
-
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_70to100 #SPLIT498
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_100to200 #SPLIT499
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_200to400 #SPLIT500
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_400to600 #SPLIT200
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_600to800 #SPLIT198
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_800to1200 #SPLIT196
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_1200to2500 #SPLIT200
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_2500toInf #SPLIT196
-
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_70To100 #SPLIT514
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_100To200 #SPLIT562
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_200To400 #SPLIT522
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_400To600 #SPLIT239
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_600To800 #SPLIT595
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_800To1200 #SPLIT327
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_1200To2500 #SPLIT299
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample WJetsToLNu_HT_2500ToInf #SPLIT132
-
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets #SPLIT1873
-
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_DiLept                       #SPLIT841
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_DiLept_genMET80              #SPLIT1578
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_HT_1200to2500                #SPLIT123
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_HT_2500toInf                 #SPLIT63
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_HT_600to800                  #SPLIT503
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_HT_800to1200                 #SPLIT399
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_SingleLeptFromT              #SPLIT1505
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_SingleLeptFromT_genMET80     #SPLIT2230
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_SingleLeptFromTbar           #SPLIT1540
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets_SingleLeptFromTbar_genMET80  #SPLIT2055
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample TTJets                              #SPLIT309
-
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJets #SPLIT595
-
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO #SPLIT281
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT249
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
-#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
-
-#python genPostProcessing.py --delphesEra RunII --targetDir v10 --overwrite target --logLevel INFO  --sample DYJets_HT_70to100_MINIAODSIM #SPLIT237
 
 #python genPostProcessing.py --delphesEra RunII --targetDir v9 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample WZTo3L1Nu #SPLIT599
 #python genPostProcessing.py --delphesEra RunII --targetDir v9 --overwrite --addReweights --logLevel INFO --interpolationOrder 2  --sample ttZ01j #SPLIT550

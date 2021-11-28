@@ -1,9 +1,11 @@
 #!/bin/sh
 
+python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuple-ZH --sample ZH --config_module TMB.BIT.configs --config ZH_delphes
+
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-ttG_WG --sample ttg      --config_module TMB.BIT.configs --config ttG_WG_VV
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-ttG_WG --sample wg       --config_module TMB.BIT.configs --config ttG_WG_VV
 
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-WG --sample WGToLNu_ptG_binned --config_module TMB.BIT.configs --config WG_delphes
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-WG --sample WGToLNu_ptG_binned --config_module TMB.BIT.configs --config WG_delphes
 
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-ttG_WG --sample ttg      --config_module TMB.BIT.configs --config ttG_WG
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /scratch-cbe/users/$USER/BIT/training-ntuples-ttG_WG --sample wg       --config_module TMB.BIT.configs --config ttG_WG

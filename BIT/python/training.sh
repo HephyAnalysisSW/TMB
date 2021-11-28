@@ -74,5 +74,16 @@
 #python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG_VV  --name clip1p_v10_psc --derivative  ctZ ctZ --positive_score 
 #python training.py --overwrite  --debug  --clip_score_quantile 0.01 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-ttG_WG/MVA-training/ttG_WG --config ttG_WG_VV  --name clip1p_v10 --derivative  ctZ ctZ 
 
-python training.py --overwrite  --debug  --clip_score_quantile 0.05 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-WG/MVA-training/WG_delphes --config WG_delphes  --name default --derivative  cWWW
-python training.py --overwrite  --debug  --clip_score_quantile 0.05 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-WG/MVA-training/WG_delphes --config WG_delphes  --name default --derivative  cWWW cWWW 
+#python training.py --overwrite  --debug  --clip_score_quantile 0.05 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-WG/MVA-training/WG_delphes --config WG_delphes  --name default --derivative  cWWW
+#python training.py --overwrite  --debug  --clip_score_quantile 0.05 --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuples-WG/MVA-training/WG_delphes --config WG_delphes  --name default --derivative  cWWW cWWW 
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHW 
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHWtil 
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHWtil cHWtil
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHW cHW
+
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHj3 
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHj3 cHj3 
+
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHj3 cHW 
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHj3 cHWtil
+python training.py --overwrite  --debug  --input_directory /scratch-cbe/users/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes --config ZH_delphes  --name default --derivative cHW cHWtil

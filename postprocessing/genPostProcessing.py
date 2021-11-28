@@ -8,7 +8,7 @@ import ROOT
 import os, sys
 ROOT.gROOT.SetBatch(True)
 import itertools
-from math                                import sqrt, cos, sin, pi, acos, cosh
+from math                                import sqrt, cos, sin, pi, acos, cosh, sinh
 import imp
 
 #RootTools
@@ -26,6 +26,8 @@ from TMB.Tools.HyperPoly              import HyperPoly
 from TMB.Tools.DelphesProducer        import DelphesProducer
 from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
 from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
+import  TMB.Tools.VV_angles           as VV_angles
+
 #from TMB.Tools.UpgradeJECUncertainty  import UpgradeJECUncertainty 
 #
 # Arguments
@@ -265,6 +267,13 @@ if args.delphesEra is not None:
     #variables      += ["reweight_BTag_B/F", "reweight_BTag_L/F"]
     variables      += ["reweight_id_mu/F", "reweight_id_ele/F"]
 
+    # VH variables
+    variables += [
+        "H_dijet_mass/F", "H_pt/F", "H_j1_index/I", "H_j2_index/I",
+        "WH_W_pt/F", "WH_dPhiMetLep/F", "WH_MT/F", "WH_nu_pt/F", "WH_nu_eta/F", "WH_nu_phi/F", "WH_nu_E/F", "WH_Theta/F", "WH_theta/F", "WH_phi/F",
+        "ZH_l1_index/I", "ZH_l2_index/I", "ZH_Theta/F", "ZH_theta/F", "ZH_phi/F",
+    ]
+
 if args.addReweights:
     variables.append('rw_nominal/F')
     # Lumi weight 1fb / w_0
@@ -315,13 +324,21 @@ readers.append( fwliteReader )
 # Delphes reader if we read Delphes
 if args.delphesEra is not None:
     delphes_file = os.path.join( output_directory, 'delphes', sample.name+'.root' )
-    if not os.path.exists( delphes_file ) or args.overwrite in ['all']:
+    if      ( not os.path.exists( delphes_file )) or \
+            ( os.path.exists( delphes_file ) and not checkRootFile( delphes_file, checkForObjects=["Delphes"])) or \
+            args.overwrite in ['all']:
         logger.debug( "Reproducing delphes file %s", delphes_file)
         delphesProducer = DelphesProducer( card = delphesCard )
         delphesProducer.produce( sample.files, delphes_file)
     delphesReader = DelphesReader( Sample.fromFiles( delphes_file, delphes_file, treeName = "Delphes" ) ) # RootTools version
     readers.append( delphesReader )
 
+def addTLorentzVector( p_dict ):
+    ''' add a TLorentz 4D Vector for further calculations
+    '''
+    p_dict['vecP4'] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), p_dict['pt']*cosh(p_dict['eta']) )
+
+gRandom = ROOT.TRandom3()
 def filler( event ):
 
     event.lumiweight1fb = lumiweight1fb
@@ -696,8 +713,8 @@ def filler( event ):
         #event.nBTag_JEC_down = len( filter( lambda j: j["bTag_"+default_btagWP] and isGoodRecoJet(j, pt_var = 'pt_JEC_down'), allRecoJets ) )
         
         # make reco b jets
-        recoBJets    = filter( lambda j:j['bTag_'+default_btagWP], recoJets )
-        recoNonBJets = filter( lambda j:not j['bTag_'+default_btagWP], recoJets )
+        recoBJets    = filter( lambda j:     j['bTag_'+default_btagWP] and abs(j['eta'])<2.4 , recoJets )
+        recoNonBJets = filter( lambda j:not (j['bTag_'+default_btagWP] and abs(j['eta'])<2.4), recoJets )
         recoBj0, recoBj1 = ( recoBJets + recoNonBJets + [None, None] )[:2]
         if recoBj0: fill_vector( event, "recoBj0", recoJet_varnames, recoBj0)
         if recoBj1: fill_vector( event, "recoBj1", recoJet_varnames, recoBj1) 
@@ -707,7 +724,6 @@ def filler( event ):
         #event.reweight_BTag_L = getBTagSF_1a(default_btagWP, 'L', recoBJets, recoNonBJets )
 
         # VBS jets
-    
         combs = list(itertools.combinations(range(len(recoJets)),2))
         combs.sort(key=lambda comb:-recoJets[comb[0]]['pt']-recoJets[comb[1]]['pt'])
         for i_j1, i_j2 in combs:
@@ -753,7 +769,7 @@ def filler( event ):
 
         # cross-cleaning of reco-objects
         nrecoLeps_uncleaned = len( recoLeps )
-        recoLeps = filter( lambda l: (min([999]+[deltaR2(l, j) for j in recoJets if j['pt']>30]) > 0.3**2 ), recoLeps )
+        recoLeps = filter( lambda l: (min([999]+[deltaR2(l, j) for j in recoJets if j['pt']>30]) > 0.4**2 ), recoLeps )
         #logger.info( "Before photon cleaning: %i after: %i allRecoLeps: %i, recoLeps %i", nrecoLeps_uncleaned, len(recoLeps), len( allRecoLeps ), len( recoLeps ) )
 
         # give index to leptons
@@ -829,6 +845,55 @@ def filler( event ):
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj0['index'], recoBj1['index']
                 else:
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj1['index'], recoBj0['index']
+
+        # H->bb
+        H_vecP4 = None
+        if len(recoBJets)>=2:
+            addTLorentzVector( recoBJets[0] )
+            addTLorentzVector( recoBJets[1] )
+            event.H_dijet_mass = (recoBJets[0]['vecP4'] + recoBJets[1]['vecP4']).M()
+            H_vecP4          = recoBJets[0]['vecP4'] + recoBJets[1]['vecP4']
+            event.H_pt       = H_vecP4.Pt()
+            event.H_j1_index = recoBJets[0]['index']
+            event.H_j2_index = recoBJets[1]['index']
+
+
+        # store WH information
+        if len(recoLeps)>=1:
+            WH_lepton       = recoLeps[0]
+            addTLorentzVector( WH_lepton )
+            random_no       = gRandom.Uniform(0,1)
+            neutrino_vecP4  = VV_angles.neutrino_mom(WH_lepton['vecP4'], recoMet['pt'], recoMet['phi'], random_no)
+            W_vecP4         = neutrino_vecP4 + WH_lepton['vecP4']
+            event.WH_nu_pt, event.WH_nu_eta, event.WH_nu_phi, event.WH_nu_E = neutrino_vecP4.Pt(), neutrino_vecP4.Eta(), neutrino_vecP4.Phi(), neutrino_vecP4.E()
+            event.WH_W_pt       = W_vecP4.Pt()
+            event.WH_dPhiMetLep = abs(deltaPhi( recoMet['phi'], WH_lepton['phi'] ))
+            event.WH_MT         = sqrt(2.*recoMet['pt']*WH_lepton['pt']*(1-cos(event.WH_dPhiMetLep)))
+            if H_vecP4 is not None:
+                event.WH_Theta = VV_angles.getTheta(WH_lepton['vecP4'], neutrino_vecP4, H_vecP4)
+                event.WH_theta = VV_angles.gettheta(WH_lepton['vecP4'], neutrino_vecP4, H_vecP4)
+                event.WH_phi   = VV_angles.getphi(  WH_lepton['vecP4'], neutrino_vecP4, H_vecP4)
+
+        # store ZH information
+        if event.recoZ_pt>0:
+            lepton1 = recoLeps[event.recoZ_l1_index]
+            lepton2 = recoLeps[event.recoZ_l2_index]
+            addTLorentzVector( lepton1 )
+            addTLorentzVector( lepton2 )
+
+            # first one should have negative charge 
+            if lepton1['pdgId']<0:
+                lepton1, lepton2 = lepton2, lepton1
+
+            event.ZH_l1_index, event.ZH_l2_index = lepton1['index'], lepton2['index']
+
+            if H_vecP4 is not None:
+
+                event.ZH_Theta = VV_angles.getTheta(lepton1['vecP4'], lepton2['vecP4'], H_vecP4)
+                event.ZH_theta = VV_angles.gettheta(lepton1['vecP4'], lepton2['vecP4'], H_vecP4)
+                event.ZH_phi   = VV_angles.getphi(  lepton1['vecP4'], lepton2['vecP4'], H_vecP4)
+
+
 
 tmp_dir     = ROOT.gDirectory
 #post_fix = '_%i'%args.job if args.nJobs > 1 else ''

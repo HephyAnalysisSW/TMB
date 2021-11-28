@@ -15,6 +15,7 @@ special_cuts = {
     "ZHJet"  :   "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
     "trilep":    "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
     "onZ"   :    "abs(recoZ_mass-91.2)<10",
+    "onH"   :    "(H_dijet_mass>90&&H_dijet_mass<150)",
     "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
   }
 

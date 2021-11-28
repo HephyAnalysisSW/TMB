@@ -3,23 +3,47 @@
 from    Analysis.Tools.WeightInfo   import WeightInfo
 import  Analysis.Tools.syncer       as syncer
 from    Analysis.Tools.helpers      import deltaPhi, deltaR, getObjDict
+
 from    RootTools.core.standard     import *
+
 from    TMB.Tools.helpers           import getCollection, mZ
+from    TMB.Tools.user              import plot_directory
 import  TMB.Tools.VV_angles         as VV_angles
 from    TMB.Tools.delphesCutInterpreter import cutInterpreter
+
 import  ROOT
+import  os 
 from    math                        import sqrt, sin, cos, sinh, cosh, copysign, pi
 
+# Arguments
+import argparse
+argParser = argparse.ArgumentParser(description = "Argument parser")
+argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
+argParser.add_argument('--plot_directory',     action='store',      default='delphes')
+argParser.add_argument('--selection',          action='store',      default='singlelep-WHJet')
+argParser.add_argument('--signal',             action='store',      default='WH', choices = ['WH', 'ZH'])
+argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
+args = argParser.parse_args()
+
+# Logger
+import TMB.Tools.logger as logger
+import RootTools.core.logger as logger_rt
+logger    = logger.get_logger(   args.logLevel, logFile = None)
+logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
+
+maxN = -1
+plot_directory = os.path.join(plot_directory, args.plot_directory,  args.signal )
+if args.small: 
+    plot_directory += "_small"
+    maxN = 10000
+
 import  TMB.Samples.pp_gen_v10 as samples
-sample = samples.WH
-#sample = samples.ZH
+
+sample = getattr( samples, args.signal )
 
 sample.weightInfo = WeightInfo(sample.reweight_pkl)
 sample.weightInfo.set_order(2)
-sample.setSelectionString( cutInterpreter.cutString('singlelep-WHJet' if sample.name=='WH' else 'dilep-ZHJet-onZ') )
-
-#maxN = 10000
-maxN = -1
+sample.setSelectionString( cutInterpreter.cutString(args.selection) )
 
 # read_variables
 jetVars          = ['pt/F', 'eta/F', 'phi/F', 'bTag/F', 'bTagPhys/I']
@@ -38,7 +62,7 @@ read_variables = [\
     "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
     "lumiweight1fb/F",
     "genW[pt/F,eta/F,phi/F,l1_index/I,l2_index/I]", "ngenW/I",
-    "evt/l", "run/I", "lumi/I", "np/I", "nweight/I"
+    "evt/l", "run/I", "lumi/I", "np/I", "nweight/I", 
 ]
 read_variables += [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 read_variables += [VectorTreeVariable.fromString( "weight[base/F]", nMax=200 )]
@@ -227,8 +251,6 @@ while r.run():
     #print
 
     counter+=1
-    if counter%10000==0:
-        print "At %i/%i"%(counter, r.nEvents)
     #if not r.event.selection: continue
     if r.event.phi is None: continue
 
@@ -259,7 +281,7 @@ for h in [ h_cHW_2, h_cHW_1, h_cHWtil_2, h_cHWtil_1]:
     h.Draw("hist"+same)
     same    =   "same" 
 
-c1.Print("/mnt/hephy/cms/robert.schoefbeck/www/etc/phi_shape_%s_maxN_%i.png"%(sample.name, maxN) )
+c1.Print(os.path.join( plot_directory, "phi_shape_%s_maxN_%i.png"%(sample.name, maxN)) )
 
 syncer.sync()
 

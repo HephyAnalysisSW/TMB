@@ -34,7 +34,7 @@ argParser.add_argument('--signal',             action='store',      default='WH'
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 args = argParser.parse_args()
 
-# Logger
+# Logger'singlelep-WHJet' if sample.name=='WH' else 'dilep-ZHJet-onZ'
 import TMB.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
@@ -72,7 +72,7 @@ def get_eft_reweight( eft, weightInfo_):
 if args.signal == "WH":
     stack       = Stack( [samples.TTJets, samples.WJetsToLNu] )
 elif args.signal == "ZH":
-    stack       = Stack( [samples.DYJets_HT, samples.WJetsToLNu] )
+    stack       = Stack( [samples.DYJets_HT] )#, samples.WJetsToLNu] )
 
 eft_weights = [[]]
 for sample in stack.samples:
@@ -146,7 +146,6 @@ def addTLorentzVector( p_dict ):
 #sequence functions
 sequence = []
 
-from TMB.Tools.objectSelection import isBJet
 def makeJets( event, sample ):
     event.jets     = [getObjDict(event, 'recoJet_', jetVarNames, i) for i in range(int(event.nrecoJet))]
     for p in event.jets:
@@ -251,10 +250,14 @@ def makeH( event, sample ):
         event.dijet_mass = (event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']).M() 
         event.H_vecP4 = event.bJets[0]['vecP4'] + event.bJets[1]['vecP4']
         event.H_pt    = event.H_vecP4.Pt()
+        event.H_eta   = event.H_vecP4.Eta()
+        event.H_phi   = event.H_vecP4.Phi()
     else:
         event.dijet_mass = float('nan') 
         event.H_vecP4 = None 
         event.H_pt    = float('nan') 
+        event.H_eta   = float('nan') 
+        event.H_phi   = float('nan') 
     if event.dijet_mass>90 and event.dijet_mass<150:
         event.has_H = 1
     else:
