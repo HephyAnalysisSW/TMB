@@ -22,6 +22,10 @@ if __name__ == "__main__":
 
 from Samples.Tools.config import redirector, redirector_global
 
+DYBBJetsToLL_M50_LO                 = FWLiteSample.fromDAS("DYBBJetsToLL_M50_LO",         "/DYBBJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM", dbFile=dbFile, overwrite=ov, prefix=redirector_global, skipCheck=True)
+DYBBJetsToLL_M50_LO.xsec            = 14.49*1.23
+DYBBJetsToLL_M50_LO.nEvents         = 5039926 
+
 DYJetsToLL_M50_HT70to100_LO         = FWLiteSample.fromDAS("DYJetsToLL_M50_HT70to100_LO",         "/DYJetsToLL_M-50_HT-70to100_TuneCP5_PSweights_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM", dbFile=dbFile, overwrite=ov, prefix=redirector_global, skipCheck=True)
 DYJetsToLL_M50_HT70to100_LO.xsec    = 146.5*1.23
 DYJetsToLL_M50_HT70to100_LO.nEvents = 10019684

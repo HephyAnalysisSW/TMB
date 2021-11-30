@@ -142,7 +142,8 @@ if args.miniAOD:
     products = {
         'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
         'gp':{'type':'vector<reco::GenParticle>', 'label':("prunedGenParticles")},
-        'gpPacked':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
+        #'gpPacked':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
+        #'gp':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
         'genJets':{'type':'vector<reco::GenJet>', 'label':("slimmedGenJets")},
         'genMET':{'type':'vector<reco::GenMET>',  'label':("genMetTrue")},
     }
@@ -394,7 +395,8 @@ def filler( event ):
     event.genMet_phi = genMet['phi'] 
 
     # All gen particles
-    gp      = fwliteReader.products['gp']
+    gp        = fwliteReader.products['gp']
+    #gpPacked  = fwliteReader.products['gpPacked']
 
     # for searching
     search  = GenSearch( gp )
@@ -586,7 +588,12 @@ def filler( event ):
     #    genPhoton['minJetDR'] =  min([999]+[deltaR(genPhoton, j) for j in genJets])
 
     # find b's from tops:
-    b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6,  gp) ]
+    #b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6,  gp) ]
+    b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and search.isLast(p),  gp) ]
+    
+    #for b in b_partons:
+    #    print  b.pt(), b.eta(), b.phi(), b.pdgId(), b.numberOfMothers(), b.mother(0).pdgId()
+    #print
 
     # store if gen-jet is DR matched to a B parton
     for genJet in genJets:
@@ -823,7 +830,7 @@ def filler( event ):
         event.recoNonZ_l2_index = recoLeps[recoNonZ_indices[1]]['index'] if len(recoNonZ_indices)>1 else -1
 
         # Store Z information 
-        if event.recoZ_mass>=0:
+        if event.recoZ_mass>0:
             if recoLeps[event.recoZ_l1_index]['pdgId']*recoLeps[event.recoZ_l2_index]['pdgId']>0 or abs(recoLeps[event.recoZ_l1_index]['pdgId'])!=abs(recoLeps[event.recoZ_l2_index]['pdgId']): 
                 raise RuntimeError( "not a Z! Should not happen" )
             Z_l1 = ROOT.TLorentzVector()
