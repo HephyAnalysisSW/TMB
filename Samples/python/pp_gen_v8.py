@@ -20,7 +20,8 @@ if __name__ == "__main__":
 import glob
 
 gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
-pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v8"
+#pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v8"
+pp_dir        = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v8" 
 
 ttZ01j    = Sample.fromDirectory("ttZ01j", texName = "ttZ01j", directory = [os.path.join( pp_dir, "ttZ01j" )])
 ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "ttZ01j-vec_reweight_card.pkl")

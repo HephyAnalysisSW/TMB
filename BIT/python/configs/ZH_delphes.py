@@ -3,3 +3,6 @@
 from TMB.BIT.configs.ZH_delphes_bkgs import *
 
 training_samples = [ZH]
+
+for derivative in bit_derivatives:
+    bit_cfg[derivative]['n_trees'] = 120

@@ -57,7 +57,7 @@ ttg    = Sample.fromDirectory("ttg",    [ '%s/robert.schoefbeck/tWZ/nanoTuples/t
 wg    = Sample.fromDirectory("wg",      [ '%s/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v6/2018/singlelep-photon/WGToLNu_fast'%directory ])
 ttg.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/ttG_noFullyHad_reweight_card.pkl" 
 wg.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl" 
-training_samples = [ ttg, wg ]
+training_samples = [ ttg, wg]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
@@ -108,48 +108,48 @@ def compute_weight_derivatives( event, sample ):
 
 sequence = []
 
-#import TMB.Tools.VV_angles          as VV_angles
-#import random
-#def make_VV( event, sample ):
-#    ##AN2019_059_v8 p22
-#    #mW      = 80.4
-#    #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
-#    #delta   = sqrt((mW**2-mt2)/(2.*event.l1_pt*event.met_pt)) 
-#    #if mW**2<mt2: 
-#    #    random_sign  = 2*(-.5+(random.random()>0.5))
-#    #    eta_neu = l1_eta + random_sign*log(1.+delta*sqrt(2+delta**2)+delta**2)
-#    #else:
-#    #    eta_neu = l1_eta
-#
-#    # A. Wulzer lep decay angles in 2007.10356:  The latter angles are in the rest frame of each boson and they are 
-#    # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
-#    # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
-#
-#    lep_4 = ROOT.TLorentzVector()
-#    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
-#
-#    random_number = ROOT.gRandom.Uniform()
-#    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number )
-#
-#    # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
-#    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
-#
-#    gamma_4 = ROOT.TLorentzVector()
-#    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
-#
-#    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
-#    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
-#    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
-#
-#    #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
-#    #lep_4.Print()
-#    #neu_4.Print()
-#    #gamma_4.Print()
-#
-#    #print event.thetaW, event.Theta, event.phiW
-#    #print
-#
-#sequence.append( make_VV )
+import TMB.Tools.VV_angles          as VV_angles
+import random
+def make_VV( event, sample ):
+    ##AN2019_059_v8 p22
+    #mW      = 80.4
+    #mt2     = 2*event.l1_pt*event.met_pt*(1-cos(event.met_phi-event.l1_phi))
+    #delta   = sqrt((mW**2-mt2)/(2.*event.l1_pt*event.met_pt)) 
+    #if mW**2<mt2: 
+    #    random_sign  = 2*(-.5+(random.random()>0.5))
+    #    eta_neu = l1_eta + random_sign*log(1.+delta*sqrt(2+delta**2)+delta**2)
+    #else:
+    #    eta_neu = l1_eta
+
+    # A. Wulzer lep decay angles in 2007.10356:  The latter angles are in the rest frame of each boson and they are 
+    # defined as those of the final fermion or anti-fermion with helicity +1/2 (e.g. the l+ in the case
+    # of a W+ and the nu-bar for a W-), denoted as f_+ in the Fig. 6
+
+    lep_4 = ROOT.TLorentzVector()
+    lep_4.SetPtEtaPhiM(event.l1_pt, event.l1_eta, event.l1_phi, 0)
+
+    random_number = ROOT.gRandom.Uniform()
+    neu_4         = VV_angles.neutrino_mom( lep_4, event.met_pt, event.met_phi, random_number )
+
+    # the helicity+ fermion is the l+ (from a W+), otherwise it's the neutrino
+    lep_m, lep_p  = (neu_4, lep_4) if event.l1_pdgId<0 else (lep_4, neu_4)
+
+    gamma_4 = ROOT.TLorentzVector()
+    gamma_4.SetPtEtaPhiM(event.photon_pt, event.photon_eta, event.photon_phi, 0)
+
+    event.thetaW = VV_angles.gettheta(lep_m, lep_p, gamma_4)
+    event.Theta  = VV_angles.getTheta(lep_m, lep_p, gamma_4)
+    event.phiW   = VV_angles.getphi(lep_m, lep_p, gamma_4)
+
+    #print "MT", sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))
+    #lep_4.Print()
+    #neu_4.Print()
+    #gamma_4.Print()
+
+    #print event.thetaW, event.Theta, event.phiW
+    #print
+
+sequence.append( make_VV )
 
 all_mva_variables = {
 
@@ -167,9 +167,14 @@ all_mva_variables = {
      "mva_photon_eta"            :(lambda event, sample: event.photon_eta),
      "mva_photon_phi"            :(lambda event, sample: event.photon_phi),
 #VV angles
-#     "mva_thetaW"                :(lambda event, sample: event.thetaW),
-#     "mva_Theta"                 :(lambda event, sample: event.Theta),
-#     "mva_phiW"                  :(lambda event, sample: event.phiW),
+     "mva_thetaW"                :(lambda event, sample: event.thetaW),
+     "mva_Theta"                 :(lambda event, sample: event.Theta),
+     "mva_phiW"                  :(lambda event, sample: event.phiW),
+#lep vs. gamma
+     "mva_g1l1DR"                :(lambda event, sample: max(7., deltaR({'phi':event.l1_phi,'eta':event.l1_eta}, {'phi':event.photon_phi,'eta':event.photon_eta}) )),
+     "mva_g1l1DPhi"              :(lambda event, sample: deltaPhi(event.l1_phi, event.photon_phi) ),
+     "mva_g1l1DEta"              :(lambda event, sample: abs(event.l1_eta-event.photon_eta)),
+
 # jet kinmatics
      "mva_jet0_pt"               :(lambda event, sample: min( event.JetGood_pt[0]     if event.nJetGood >=1 else 0, 1500)),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -6),

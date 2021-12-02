@@ -22,8 +22,8 @@ if __name__ == "__main__":
     logger_rt = logger_rt.get_logger('DEBUG')
 
 gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
-pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10"
-#pp_dir       = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v10"
+#pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10"
+pp_dir       = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v10"
 
 gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/v7/"
 

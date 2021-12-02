@@ -6,6 +6,7 @@
 import ROOT, os, itertools
 #ROOT.gROOT.SetBatch(True)
 import copy
+import operator
 import random
 from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh, log
 
@@ -32,6 +33,7 @@ argParser.add_argument('--plot_directory',     action='store',      default='del
 argParser.add_argument('--selection',          action='store',      default='singlelep-WHJet-onH')
 argParser.add_argument('--signal',             action='store',      default='WH', choices = ['WH', 'ZH'])
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
+argParser.add_argument('--show_derivatives',                        action='store_true',     help='Show also the derivatives?')
 args = argParser.parse_args()
 
 # Logger'singlelep-WHJet' if sample.name=='WH' else 'dilep-ZHJet-onZ'
@@ -54,35 +56,57 @@ signal.weightInfo.set_order(2)
 signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 eft_configs = [
-    (ROOT.kBlack, {}, "SM"), 
-    (ROOT.kGreen+1, {'cHW':1}, "c_{W}=1"), 
-    (ROOT.kGreen+3, {'cHWtil':1}, "c_{#tilde{W}}=1"), 
-    (ROOT.kOrange-1, {'cHj3':1}, "c_{Hq3}=1"),
-    (ROOT.kOrange-2, {'cHj3':2}, "c_{Hq3}=2"),
+    {'color':ROOT.kBlack,    'param':{},            'tex':"SM"}, 
+    {'color':ROOT.kGreen+1,  'param':{'cHW':1},     'tex':"c_{HW}=1"}, 
+    {'color':ROOT.kCyan+1,   'param':{'cHWtil':1},  'tex':"c_{H#tilde{W}}=1"}, 
+    {'color':ROOT.kOrange-1, 'param':{'cHj3':1},    'tex':"c_{Hq3}=1"},
+    {'color':ROOT.kOrange-2, 'param':{'cHj3':2},    'tex':"c_{Hq3}=2"},
     ]
+for eft in eft_configs:
+    eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
+    eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) )
 
-def get_eft_reweight( eft, weightInfo_):
-    func1 = signal.weightInfo.get_weight_func(**eft)
-    func2 = signal.weightInfo.get_weight_func()
+eft_derivatives = [
+    {'der':('cHW',),             'color':ROOT.kGreen+1,  'tex':'c_{HW}'},
+    {'der':('cHW','cHW'),        'color':ROOT.kGreen+3,  'tex':'c^{2}_{HW}'},
+    {'der':('cHWtil',),          'color':ROOT.kCyan+1,   'tex':'c_{H#tilde{W}}'},
+    {'der':('cHWtil','cHWtil'),  'color':ROOT.kCyan+2,   'tex':'c^{2}_{#tilde{W}}'},
+    {'der':('cHj3',),            'color':ROOT.kOrange-1, 'tex':'c_{Hq3}'},
+    {'der':('cHj3','cHj3'),      'color':ROOT.kOrange-2, 'tex':'c^{2}_{Hq3}'},
+    ]
+for der in eft_derivatives:
+    der['func'] = signal.weightInfo.get_diff_weight_func(der['der'])
+    der['name'] = "_".join( ["derivative"] + list(der['der']) )
+
+sequence = []
+def make_eft_weights( event, sample):
+    if sample.name!=signal.name:
+        return
+    SM_ref_weight         = eft_configs[0]['func'](event, sample)
+    event.eft_weights     = [1] + [eft['func'](event, sample)/SM_ref_weight for eft in eft_configs[1:]]
+    event.eft_derivatives = [ der['func'](event, sample)/SM_ref_weight for der in eft_derivatives]
     
-    def eft_reweight_( event, sample, func1=func1, func2=func2):
-        return func1(event, sample)/func2(event, sample)
-    return eft_reweight_
-
 if args.signal == "WH":
     stack       = Stack( [samples.TTJets, samples.WJetsToLNu_HT] )
 elif args.signal == "ZH":
     stack       = Stack( [samples.DYBBJets]) 
+
+sequence.append( make_eft_weights )
 
 eft_weights = [[]]
 for sample in stack.samples:
     sample.style = styles.fillStyle(sample.color)
     eft_weights[0].append( None )
 
-for _, eft, _ in eft_configs:
+for i_eft, eft in enumerate(eft_configs):
     stack.append( [signal] )
-    eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
+    #eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
+    eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_weights[i_eft]] )
 
+for i_eft, eft in enumerate(eft_derivatives):
+    stack.append( [signal] )
+    #eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
+    eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_derivatives[i_eft]] )
 
 lumi  = 59.7
 lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
@@ -137,28 +161,32 @@ for sample in stack.samples:
         #sample.reduceFiles( factor = 30 )
         sample.reduceFiles( to = 15 )
 
-#sequence functions
-sequence = []
-
 #BITs
 import sys, os, time
 sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 from BoostedInformationTree import BoostedInformationTree
 if signal.name == 'WH':
     import TMB.BIT.configs.WH_delphes as config
-    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/default/")
+    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/first_try/")
+    bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
 elif signal.name == 'ZH':
     import TMB.BIT.configs.ZH_delphes as config
-    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/default/")
+    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/first_try/")
+    bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
     ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
-    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [20,-5,15]), 
+    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
     ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
-    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [20,-5,15]), 
-
-#        ("BIT_cHW_cHW_coarse", bits[('cHW','cHW')],              [50,-5,5]), 
-#        ("BIT_cHWtil_cHWtil_coarse",  bits[('cHWtil','cHWtil')], [50,-5,5]),
+    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [30,-5,25]), 
+    ("BIT_cHj3",            bits[('cHj3',)],          [20,-5,5]), 
+    ("BIT_cHj3_cHj3",       bits[('cHj3','cHj3')],  [30,-5,25]), 
+    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
+    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
+    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
+    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,25]), 
+    ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
+    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,25]), 
 ]
 sequence.extend( config.sequence )
 
@@ -193,12 +221,14 @@ def addTLorentzVector( p_dict ):
 
 # Use some defaults
 Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
-  
+ 
 plots        = []
-
+plots2D      = []
 postfix = "" 
 
 for model_name, _, binning in models:
+
+    # 1D discriminator
     plots.append(Plot(
         name = model_name+postfix,
         texX = model_name, texY = 'Number of Events / 10 GeV',
@@ -208,13 +238,54 @@ for model_name, _, binning in models:
         addOverFlowBin = 'upper',
     ))
 
+    # 2D with background 
+    var = "mva_H_pt"
+    i_key = [v[0] for v in config.mva_variables].index(var)
+    plots2D.append(Plot2D(
+        name = "bkg2D_H_pt_"+model_name+postfix,
+        texX = model_name, texY = config.plot_options[var]['tex'],
+        stack = Stack(*stack[0:1]),
+        attribute = (
+            lambda event, sample, model_name=model_name: getattr(event, model_name),
+            lambda event, sample, i_key=i_key: event.features[i_key],
+            ),
+        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+        binning   = binning+config.plot_options[var]['binning'],
+    ))
+
+    # 2D with signal
+    plots2D.append(Plot2D(
+        name = "sig2D_H_pt_"+model_name+postfix,
+        texX = model_name, texY = config.plot_options[var]['tex'],
+        stack = Stack(*stack[1:2]),
+        attribute = (
+            lambda event, sample, model_name=model_name: getattr(event, model_name),
+            lambda event, sample, i_key=i_key: event.features[i_key],
+            ),
+        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+        binning   = binning+config.plot_options[var]['binning'],
+    ))
+
+#    yield_w       = [ sample.weightInfo.get_diff_weight_func(tuple()) for sample in mc ]
+#    first_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+#    second_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC,args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
+#    plots.append(Plot(
+#        stack = Stack(mc, mc, mc),
+#        weight= [ yield_w, first_der_w, second_der_w ],
+#        name = model_name+'_coeff',
+#        texX = model_name, texY = 'Coefficient',
+#        attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+#        binning=binning,
+#        addOverFlowBin='upper',
+#    ))
+
+#features
 for i_key, (key, _) in enumerate( config.mva_variables ):
     plots.append(Plot( name = key.replace("mva_", "")+postfix,
       texX = config.plot_options[key]['tex'], texY = 'Number of Events',
       attribute = lambda event, sample, i_key=i_key: event.features[i_key],
       binning   =  config.plot_options[key]['binning'],
     ))
-
 
 #plots.append(Plot( name = "j0_pt"+postfix,
 #  texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
@@ -486,20 +557,29 @@ def drawPlots(plots, subDirectory=''):
     plot_directory_ = os.path.join(plot_directory, subDirectory)
     plot_directory_ = os.path.join(plot_directory_, "log") if log else os.path.join(plot_directory_, "lin")
     for plot in plots:
-      if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
+        if  type(plot)==Plot2D:
+            plotting.draw2D( plot,
+                       plot_directory = plot_directory_,
+                       logX = False, logY = False, logZ = log,
+                       drawObjects = drawObjects(),
+                       copyIndexPHP = True,
+#                       oldColors = True,
+                       ) 
+        else:
+            if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
+            subtr = 0 if args.show_derivatives else len(eft_configs)
+            plotting.draw(plot,
+              plot_directory = plot_directory_,
+              ratio =  None,
+              logX = False, logY = log, sorting = False,
+              yRange = (0.03, "auto") if log else "auto",
+              scaling = {},
+              legend =  ( (0.17,0.9-0.05*(sum(map(len, plot.histos))-subtr)/2,1.,0.9), 2),
+              drawObjects = drawObjects( ),
+              copyIndexPHP = True,
+            )
 
-      plotting.draw(plot,
-	    plot_directory = plot_directory_,
-	    ratio =  None,
-	    logX = False, logY = log, sorting = False,
-	    yRange = (0.03, "auto") if log else "auto",
-	    scaling = {},
-	    legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2),
-	    drawObjects = drawObjects( ),
-        copyIndexPHP = True,
-      )
-
-plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
+plotting.fill(plots+plots2D, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 #plot_phi_subtr = copy.deepcopy(plots[subtr_phi_ind])
 #plot_phi_subtr.name = plot_phi_subtr.name.replace("pos_","subtr_")
@@ -514,13 +594,22 @@ plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_e
 
 #color EFT
 for plot in plots:
-    for i, (color, _, texName) in enumerate(eft_configs):
-        plot.histos[i+1][0].legendText = texName
-        plot.histos[i+1][0].style = styles.lineStyle(color,width=2)
+    for i_eft, eft in enumerate(eft_configs):
+        plot.histos[i_eft+1][0].legendText = eft['tex']
+        plot.histos[i_eft+1][0].style      = styles.lineStyle(eft['color'],width=2)
+        plot.histos[i_eft+1][0].SetName(eft['name'])
+    for i_eft, eft in enumerate(eft_derivatives):
+        if args.show_derivatives:
+            plot.histos[i_eft+1+len(eft_configs)][0].legendText = eft['tex']
+            plot.histos[i_eft+1+len(eft_configs)][0].style = styles.lineStyle(eft['color'],width=2,dashed=True)
+        else:
+            plot.histos[i_eft+1+len(eft_configs)][0].legendText = None
+            plot.histos[i_eft+1+len(eft_configs)][0].style = styles.invisibleStyle()
+        plot.histos[i_eft+1+len(eft_configs)][0].SetName(eft['name'])
 
 #plot_phi_subtr.histos = plot_phi_subtr.histos[1:]
 
-drawPlots(plots, subDirectory = subDirectory)
+drawPlots(plots+plots2D, subDirectory = subDirectory)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
 
