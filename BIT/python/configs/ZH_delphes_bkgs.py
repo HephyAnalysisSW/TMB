@@ -369,7 +369,7 @@ if True:
     sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
     from BoostedInformationTree import BoostedInformationTree
 
-    save_derivatives = [ ('cHW',), ('cHW','cHW'), ('cHWtil',), ('cHWtil','cHWtil'), ('cHW','cHWtil'), ('cHj3',), ('cHj3','cHj3'), ('cHj3', 'cHW'), ('cHj3', 'cHWtil')]
+    save_derivatives = bit_derivatives 
     bits             = {}
 
     directory = "/mnt/hephy/cms/robert.schoefbeck/BIT/models/"

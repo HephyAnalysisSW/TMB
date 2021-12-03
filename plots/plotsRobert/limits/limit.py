@@ -3,6 +3,8 @@ import os
 import argparse
 from RootTools.core.Sample import Sample
 
+from TMB.Tools.delphesCutInterpreter import cutInterpreter
+
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
 argParser.add_argument("--lumi",           action='store',      type=float,             default=137, help='Which lumi?')
@@ -13,6 +15,7 @@ argParser.add_argument('--output_directory',   action='store', type=str,   defau
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/groups/hephy/cms/$USER/BIT/training-ntuple-ZH/MVA-training"))
+argParser.add_argument('--selection',          action='store',      default='singlelep-WHJet-onH')
 
 args = argParser.parse_args()
 
@@ -59,30 +62,56 @@ mva_variables = [ mva_variable[0] for mva_variable in config.mva_variables]
 
 n_var_flat   = len(mva_variables)
 
-features = {}
+# selection
+selectionString = cutInterpreter.cutString(args.selection)
+
+features           = {}
 weight_derivatives = {}
-lumi_weights       = {}
+
+bit_flavors = ['bkgs', 'nom']
+bit          = {key:{} for key in bit_flavors}
+bit_branches = {key:[ 'BIT_%s_%s'%( key, "_".join(der) ) for der in config.bit_derivatives] for key in bit_flavors }
+n_der        = len(config.weight_derivative_combinations)
+n_bits       = len(config.bit_derivatives)
+
+n_small_samples = 10000 if args.small else None
+
 for i_training_sample, training_sample in enumerate(config.training_samples):
     upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
     logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
     upfile = uproot.open(upfile_name)
-    features[training_sample.name]            = upfile["Events"].pandas.df(branches = mva_variables )
-    weight_derivatives[training_sample.name]  = upfile["Events"].pandas.df(branches = ["weight_derivatives"] )
 
-features = pd.concat([features[training_sample.name] for training_sample in config.training_samples])
-features = features.values
+    features[training_sample.name]            = upfile["Events"].pandas.df(branches = mva_variables ).values[:n_small_samples]
+    weight_derivatives[training_sample.name]  = upfile["Events"].pandas.df(branches = ["weight_derivatives"] ).values.reshape((-1,n_der))[:n_small_samples]
+    for flavor in bit_flavors:
+        bit[flavor][training_sample.name]     = upfile["Events"].pandas.df(branches = bit_branches[flavor]).values.reshape((-1,n_bits))[:n_small_samples]
 
-weight_derivatives = pd.concat([weight_derivatives[training_sample.name] for training_sample in config.training_samples])
+flavor     = 'bkgs'
+thresholds = range(0,20,3)+[float('inf')]
+lumi       = 59.7
+
+for cHW in [1.0]: #[ 0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0 ]:
+    for i_training_sample, training_sample in enumerate(config.training_samples[:1]):
+        i_lin   = config.bit_derivatives.index(('cHW',))
+        i_quad  = config.bit_derivatives.index(('cHW', 'cHW'))
+        q_lin   = bit[flavor][training_sample.name][:,i_lin]   
+        q_quad  = bit[flavor][training_sample.name][:,i_quad]  
+        q       = bit[flavor][training_sample.name][:,i_lin] + 0.5*cHW*bit[flavor][training_sample.name][:,i_quad]  
+
+        i_der_lin   = config.weight_derivative_combinations.index(('cHW',))
+        i_der_quad  = config.weight_derivative_combinations.index(('cHW', 'cHW'))
+        w_sm    = weight_derivatives[training_sample.name][:,0]
+        w_bsm   = weight_derivatives[training_sample.name][:,0] + cHW*weight_derivatives[training_sample.name][:,i_der_lin]+0.5*cHW**2*weight_derivatives[training_sample.name][:,i_der_quad] 
+
+        h_SM    = np.histogram(q, range(0,20,3)+[float('inf')], weights = w_sm*float(lumi)/config.scale_weight)
+        h_BSM   = np.histogram(q, range(0,20,3)+[float('inf')], weights = w_bsm*float(lumi)/config.scale_weight)
+
+        # compute limit from q
+
 
 # number of samples with 'small'
-n_small_samples = 10000
 
 # small
-if args.small:
-    features = features[:n_small_samples]
-    weight_derivatives = weight_derivatives[:n_small_samples]
-
-features  = features[:,0:n_var_flat]
 
 #for filename in plotfilename: 
 #    f = ROOT.TFile.Open(filename)
