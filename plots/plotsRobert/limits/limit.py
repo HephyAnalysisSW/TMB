@@ -1,14 +1,19 @@
 import ROOT
 import os
 import argparse
+import array
 from RootTools.core.Sample import Sample
 
-from TMB.Tools.delphesCutInterpreter import cutInterpreter
+from TMB.Tools.delphesCutInterpreter    import cutInterpreter
+from Analysis.Tools                     import u_float
+import Analysis.Tools.syncer            as syncer 
+from Analysis.Tools.cardFileWriter      import cardFileWriter 
+from RootTools.core.standard            import *
+import TMB.Tools.helpers                as helpers
 
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
-argParser.add_argument("--lumi",           action='store',      type=float,             default=137, help='Which lumi?')
-argParser.add_argument("--overwrite",      action='store_true', default = False,        help="Overwrite existing output files")
+argParser.add_argument("--lumi",               action='store',      type=float,             default=137, help='Which lumi?')
 argParser.add_argument('--config',             action='store', type=str, default = "ZH_delphes_bkgs", help="config")
 argParser.add_argument('--config_module',      action='store', type=str, default = "TMB.BIT.configs", help = "config directory")
 argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
@@ -25,6 +30,10 @@ logger = logger.get_logger(args.logLevel, logFile = None )
 import RootTools.core.logger as logger_rt
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 
+# card file writer
+c                 = cardFileWriter.cardFileWriter()
+c.setPrecision(3)
+
 # MVA configuration
 import importlib
 configs = importlib.import_module(args.config_module)
@@ -32,10 +41,11 @@ config  = getattr( configs, args.config)
 
 if args.small:
     args.name+='_small'
-import Analysis.Tools.user as user
+
+import TMB.Tools.user as user
 # directories
-plot_directory   = os.path.join( user. plot_directory, 'MVA', args.config, args.name)
-#output_directory = os.path.join( args.output_directory, 'models', args.config, args.name)
+plot_directory      = os.path.join( user. plot_directory, 'MVA', args.config, args.name)
+cardfile_directory  = os.path.join( args.output_directory, 'cardfiles', args.config, args.name)
 # saving
 #if not os.path.exists(output_directory):
 #    try:
@@ -47,15 +57,9 @@ import uproot
 import awkward
 import numpy as np
 import pandas as pd
-#import h5py
 
-#########################################################################################
-# variable definitions
 if args.small:
     args.name+='_small'
-import Analysis.Tools.user as user
-# directories
-plot_directory   = os.path.join( user. plot_directory, 'limit', args.config, args.name)
 
 # get the training variable names
 mva_variables = [ mva_variable[0] for mva_variable in config.mva_variables]
@@ -90,267 +94,158 @@ flavor     = 'bkgs'
 thresholds = range(0,20,3)+[float('inf')]
 lumi       = 59.7
 
-for cHW in [1.0]: #[ 0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0 ]:
-    for i_training_sample, training_sample in enumerate(config.training_samples[:1]):
-        i_lin   = config.bit_derivatives.index(('cHW',))
-        i_quad  = config.bit_derivatives.index(('cHW', 'cHW'))
+WC         = 'cHj3'
+#WC         = 'cHW'
+
+# find position of linear and quadratic estimated coefficient 
+i_lin   = config.bit_derivatives.index((WC,))
+i_quad  = config.bit_derivatives.index((WC, WC))
+# find linear and quadratic weights
+i_der_lin   = config.weight_derivative_combinations.index((WC,))
+i_der_quad  = config.weight_derivative_combinations.index((WC, WC))
+
+colors = [ROOT.kBlack, ROOT.kBlue, ROOT.kRed ]
+def make_TH1F( h ):
+    # remove infs from thresholds
+    vals, thrs = h
+    #thrs[0]  = thrs[1] - (thrs[2]-thrs[1])
+    #thrs[-1] = thrs[-2] + (thrs[-2]-thrs[-3])
+    histo = ROOT.TH1F("h","h",len(vals),0,len(vals))
+    for i_v, v in enumerate(vals):
+        histo.SetBinContent(i_v+1, v)
+    return histo
+
+binning_quantiles = [.0001, .001, .01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99, .999, .9999]
+binning_quantiles = [.01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99,]
+
+# nll values 
+nll = {}
+# loop over EFT param point
+
+WC_vals = list(np.arange(-.1,.1,.01))
+for WC_val in WC_vals:#np.arange(-1,1,.1):
+
+    # set up card file
+    cardFileName      = os.path.join(cardfile_directory, '%s_%3.2f.txt'%(WC,WC_val) )
+    c.reset()
+
+    # Make also histos
+    histos = {}
+
+    # fill card file & limits
+    for i_training_sample, training_sample in enumerate(config.training_samples):
+
+        histos[training_sample.name] = {}
+
         q_lin   = bit[flavor][training_sample.name][:,i_lin]   
         q_quad  = bit[flavor][training_sample.name][:,i_quad]  
-        q       = bit[flavor][training_sample.name][:,i_lin] + 0.5*cHW*bit[flavor][training_sample.name][:,i_quad]  
 
-        i_der_lin   = config.weight_derivative_combinations.index(('cHW',))
-        i_der_quad  = config.weight_derivative_combinations.index(('cHW', 'cHW'))
+        # compute test statistic. Scale to (r-1)/theta
+        #q       = cHW*bit[flavor][training_sample.name][:,i_lin] + 0.5*cHW**2*bit[flavor][training_sample.name][:,i_quad]  
+        q       = bit[flavor][training_sample.name][:,i_quad]  
+
         w_sm    = weight_derivatives[training_sample.name][:,0]
-        w_bsm   = weight_derivatives[training_sample.name][:,0] + cHW*weight_derivatives[training_sample.name][:,i_der_lin]+0.5*cHW**2*weight_derivatives[training_sample.name][:,i_der_quad] 
+        w_bsm   = weight_derivatives[training_sample.name][:,0] + WC_val*weight_derivatives[training_sample.name][:,i_der_lin]+0.5*WC_val**2*weight_derivatives[training_sample.name][:,i_der_quad] 
 
-        h_SM    = np.histogram(q, range(0,20,3)+[float('inf')], weights = w_sm*float(lumi)/config.scale_weight)
-        h_BSM   = np.histogram(q, range(0,20,3)+[float('inf')], weights = w_bsm*float(lumi)/config.scale_weight)
+        # determine binning from the test statistic distribution in the signal sample
+        if i_training_sample==0:
+            binning = [-float('inf')]+list(np.quantile( q, binning_quantiles))+[float('inf')]
+            binning = helpers.remove_duplicates( binning )
+            # zeros where we add up the observation (=SM expectation)
+            observation = [0]*( len(binning)-1 )
+            # define the bins
+            for i_bin in range(len(binning)-1):
+                c.addBin("Bin%i"%i_bin, [s.name for s in config.training_samples[1:]], "Bin%i"%i_bin)
 
-        # compute limit from q
+            # add uncertainties
+            c.addUncertainty('JEC',         'lnN') # correlated
+            c.addUncertainty('JER',         'lnN') # correlated
+            c.addUncertainty('btag_heavy',  'lnN') # uncorrelated, wait for offical recommendation
+            c.addUncertainty('btag_light',  'lnN') # uncorrelated, wait for offical recommendation
+            c.addUncertainty('trigger',     'lnN') # uncorrelated, statistics dominated
+            c.addUncertainty('scale',       'lnN') # correlated.
+            c.addUncertainty('PDF',         'lnN') # correlated.
+            c.addUncertainty('Lumi',        'lnN')
 
+        h_SM    = np.histogram(q, binning, weights = w_sm*float(lumi)/config.scale_weight)
+        h_BSM   = np.histogram(q, binning, weights = w_bsm*float(lumi)/config.scale_weight)
 
-# number of samples with 'small'
+        histos[training_sample.name]['SM']  = make_TH1F(h_SM)
+        histos[training_sample.name]['BSM'] = make_TH1F(h_BSM)
 
-# small
+        # loop over bins
+        for i_b in range(len(binning)-1):
 
-#for filename in plotfilename: 
-#    f = ROOT.TFile.Open(filename)
-#    canvas = f.Get(f.GetListOfKeys().At(0).GetName())
-#    #number of bins 
-#    nbins = 18 
-#    #signal
-#    sig = canvas.GetListOfPrimitives().At(1)
-#    bkg = canvas.GetListOfPrimitives().At(2)
-#    
-#    print "sig",sig.GetName()
-#    print "bkg",bkg.GetName()
-#    
-#    #all 
-#    estimates = {}
-#    estimates['signal']= sig 
-#    estimates['DY']= bkg
-#    print estimates 
-#    #estimates.append(sig)
-#    #estimates.append(canvas.GetListOfPrimitives().At(2))
-#    
-#    overWrite   = args.overwrite
-#    
-#    from math                               import sqrt
-#    from copy                               import deepcopy
-#    
-#    from TMB.Tools.user                     import combineReleaseLocation, results_directory, plot_directory
-#    from Analysis.Tools                     import u_float
-#    from Analysis.Tools.cardFileWriter      import cardFileWriter 
-#    #from Analysis.Tools      import CardFileWriter 
-#    
-#    year = int(args.year)
-#    limitDir = '/mnt/hephy/cms/rosmarie.schoefbeck/cardfiles'
-#        
-#    uncertainties = {}
-#    
-#    def wrapper(s):
-#        
-#        logger.info("Now working on %s", s)
-#        xSecScale = 1
-#        c = cardFileWriter.cardFileWriter()
-#    #    c = CardFileWriter.CardFileWriter()
-#        c.releaseLocation = combineReleaseLocation
-#        
-#        cardFileName = os.path.join(limitDir, s+'.txt')
-#        if not os.path.exists(cardFileName) or overWrite:
-#            counter=0
-#            c.reset()
-#            c.setPrecision(3)
-#            postfix = '_%s'%args.year
-#    #        c.addUncertainty('PU',                  'lnN') # correlated
-#            c.addUncertainty('JEC',                 'lnN') # correlated
-#            c.addUncertainty('JER',                 'lnN') # correlated
-#            c.addUncertainty('btag_heavy'+postfix,  'lnN') # uncorrelated, wait for offical recommendation
-#            c.addUncertainty('btag_light'+postfix,  'lnN') # uncorrelated, wait for offical recommendation
-#            c.addUncertainty('trigger'+postfix,     'lnN') # uncorrelated, statistics dominated
-#    #        c.addUncertainty('leptonSFSyst',        'lnN') # correlated
-#    #        c.addUncertainty('leptonTracking',      'lnN') # correlated
-#    #        c.addUncertainty('eleSFStat'+postfix,   'lnN') # uncorrelated
-#    #        c.addUncertainty('muSFStat'+postfix,    'lnN') # uncorrelated
-#            c.addUncertainty('scale',               'lnN') # correlated.
-#    #        c.addUncertainty('scale_sig',           'lnN') # correlated.
-#            c.addUncertainty('PDF',                 'lnN') # correlated.
-#    #        c.addUncertainty('PartonShower',        'lnN') # correlated.
-#    #        c.addUncertainty('nonprompt',           'lnN') # correlated?!
-#    #        c.addUncertainty('WZ_xsec',             'lnN') # correlated.
-#    #        c.addUncertainty('WZ_bb',               'lnN') # correlated
-#    #        c.addUncertainty('WZ_powheg',           'lnN') # correlated
-#    #        c.addUncertainty('WZ_njet',             'lnN') # correlated
-#    #        c.addUncertainty('ZZ_xsec',             'lnN') # correlated.
-#    #        c.addUncertainty('XG_xsec',             'lnN') # correlated.
-#    #        c.addUncertainty('rare',                'lnN') # correlated.
-#    #        c.addUncertainty('ttX',                 'lnN') # correlated.
-#            c.addUncertainty('Lumi'+postfix,        'lnN')
-#    
-#            uncList = ['PU', 'JEC', 'btag_heavy', 'btag_light', 'leptonSFSyst', 'trigger']
-#            for unc in uncList:
-#                uncertainties[unc] = []
-#            
-#            signal      = sig
-#            siglist     = []
-#    
-#            for b in range(nbins):
-#                #signalevents= sig.GetBinContent(b)
-#                totalBackground =  0. # u_float(0)
-#                sigandback = 0.
-#                niceName = s  
-#                binname = 'Bin'+str(counter)
-#                logger.info("Working on %s", binname)
-#                print binname 
-#                for e in estimates: print e 
-#                counter += 1
-#                c.addBin(binname, [e for e in estimates if e != "signal"], niceName)
-#    
-#                for e in estimates:  
-#                    expected = estimates[e].GetBinContent(b+1) 
-#                    if e == 'signal':
-#                        expected = expected - estimates['DY'].GetBinContent(b+1)
-#                    if args.lumi: 
-#                        # lumi_year = {2016: 35900.0, 2017: 41500.0, 2018: 59970.0}
-#                        expected = (expected/35.9)*args.lumi 
-#    
-#                    print expected, b, estimates[e].GetBinContent(18)
-#    
-#                    name = e
-#                    logger.info("Adding expectation %s for process %s", expected, name)
-#                    print expected
-#                    c.specifyExpectation(binname, name, expected if expected > 0.01 else 0.01)
-#    
-#                    sigandback += expected
-#    
-#    #                # uncertainties
-#    #                pu          = 1 + e.PUSystematic( r, channel, setup).val            if expected.val>0.01 else 1.1
-#    #                jec         = 1 + e.JECSystematic( r, channel, setup).val           if expected.val>0.01 else 1.1
-#    #                jer         = 1 + e.JERSystematic( r, channel, setup).val           if expected.val>0.01 else 1.1
-#    #                btag_heavy  = 1 + e.btaggingSFbSystematic(r, channel, setup).val    if expected.val>0.01 else 1.1
-#    #                btag_light  = 1 + e.btaggingSFlSystematic(r, channel, setup).val    if expected.val>0.01 else 1.1
-#    #                trigger     = 1 + e.triggerSystematic(r, channel, setup).val        if expected.val>0.01 else 1.1
-#    #                leptonSFSyst= 1 + e.leptonSFSystematic(r, channel, setup).val       if expected.val>0.01 else 1.1
-#    #                leptonReco  = 1 + e.leptonTrackingSystematic(r, channel, setup).val if expected.val>0.01 else 1.1
-#    #                eleSFStat   = 1 + e.eleSFSystematic(r, channel, setup).val          if expected.val>0.01 else 1.1
-#    #                muSFStat    = 1 + e.muSFSystematic(r, channel, setup).val           if expected.val>0.01 else 1.1
-#    #
-#    #                c.specifyUncertainty('PU',          binname, name, 1 + e.PUSystematic( r, channel, setup).val)
-#    
-#                    c.specifyUncertainty('JEC',                 binname, name, 1.09)
-#                    c.specifyUncertainty('JER',                 binname, name, 1.01)
-#                    c.specifyUncertainty('btag_heavy'+postfix,  binname, name, 1.04)
-#                    c.specifyUncertainty('btag_light'+postfix,  binname, name, 1.04)
-#                    c.specifyUncertainty('trigger'+postfix,     binname, name, 1.01)
-#    #                c.specifyUncertainty('leptonSFSyst',        binname, name, leptonSFSyst)
-#    #                c.specifyUncertainty('leptonTracking',      binname, name, leptonReco)
-#    #                c.specifyUncertainty('eleSFStat'+postfix,   binname, name, eleSFStat)
-#    #                c.specifyUncertainty('muSFStat'+postfix,    binname, name, muSFStat)
-#                    c.specifyUncertainty('scale',               binname, name, 1.01) 
-#                    c.specifyUncertainty('PDF',                 binname, name, 1.01)
-#                    if year == 2016:
-#                        c.specifyUncertainty('Lumi'+postfix,        binname, name, 1.025 )
-#                    else:
-#                        c.specifyUncertainty('Lumi'+postfix,        binname, name, 1.023 )
-#    
-#                    #eg.
-#    #                if name.count('TTZ'):    c.specifyUncertainty('TTZ_xsec',     binname, name, 1.10)
-#    
-#                    #MC bkg stat (some condition to neglect the smaller ones?)
-#    #                uname = 'Stat_'+binname+'_'+name+postfix
-#    #
-#    #                c.addUncertainty(uname, 'lnN')
-#    #                if expected > 0:
-#    #                    c.specifyUncertainty(uname, binname, name, 1 + expected.sigma/expected.val )
-#    #                else:
-#    #                    c.specifyUncertainty(uname, binname, name, 1.01 )
-#                
-#    #            if setup.nLeptons == 3 and setupNP:
-#    #                nonprompt   = FakeEstimate(name="nonPromptDD_%s"%args.year, sample=setup.samples["Data"], setup=setupNP, cacheDir=setup.defaultCacheDir())
-#    #                np = nonprompt.cachedEstimate(r, channel, setupNP)
-#    #                if np.val < 0.01:
-#    #                    np = u_float(0.01,0.)
-#    #                c.specifyExpectation(binname, 'nonPromptDD', np.val ) 
-#    #                c.specifyUncertainty(uname,   binname, "nonPromptDD", 1 + nckgroundp.sigma/np.val )
-#    #                c.specifyUncertainty('nonprompt',   binname, "nonPromptDD", 1.30)
-#    #            else:
-#    #                np = u_float(0)
-#    #                c.specifyExpectation(binname, 'nonPromptDD', np.val)
-#                
-#                obs = sigandback # + sig.GetBinContent(b) 
-#                c.specifyObservation(binname, int(round(obs,0)) )
-#    
-#                signalName = 'signal'
-#                #sigval = sig.GetBinContent(b)
-#                #c.specifyExpectation(binname, 'ttZ', 0) # this is just a fake signal for combine
-#                #c.specifyExpectation(binname, signalName, sigval * xSecScale * xSecMod ) # this is the real signal 
-#    #            c.specifyExpectation(binname, signalName, sigval * xSecScale ) # this is the real signal 
-#                #logger.info('Adding signal %s'%(sigval * xSecScale * xSecMod))
-#    #            logger.info('Adding signal %s'%(sigval * xSecScale ))
-#                
-#                if False: #sigval>0:
-#                    if year == 2016:
-#                        c.specifyUncertainty('Lumi'+postfix, binname, signalName, 1.025 )
-#                    else:
-#                        c.specifyUncertainty('Lumi'+postfix, binname, signalName, 1.023 )
-#                       # signaluncertainties
-#                    #pu          = 1 + signal.PUSystematic( r, channel, setup).val
-#                    #jec         = 1 + signal.JECSystematic( r, channel, setup).val
-#                    #jer         = 1 + signal.JERSystematic( r, channel, setup).val
-#                    #btag_heavy  = 1 + signal.btaggingSFbSystematic(r, channel, setup).val
-#                    #btag_light  = 1 + signal.btaggingSFlSystematic(r, channel, setup).val
-#                    #trigger     = 1 + signal.triggerSystematic(r, channel, setup).val
-#                    #leptonSFSyst= 1 + signal.leptonSFSystematic(r, channel, setup).val
-#                    #leptonReco  = 1 + signal.leptonTrackingSystematic(r, channel, setup).val
-#                    #eleSFStat   = 1 + signal.eleSFSystematic(r, channel, setup).val
-#                    #muSFStat    = 1 + signal.muSFSystematic(r, channel, setup).val 
-#    
-#                    #if sig.sigma/sig.val < 0.05:
-#                    #    uncertainties['PU']         += [pu]
-#                    #    uncertainties['JEC']        += [jec]
-#                    #    uncertainties['btag_heavy'] += [btag_heavy]
-#                    #    uncertainties['btag_light'] += [btag_light]
-#                    #    uncertainties['trigger']    += [trigger]
-#                    #    uncertainties['leptonSFSyst']   += [leptonSFSyst]
-#    
-#                    #c.specifyUncertainty('PU',                  binname, signalName, pu)
-#                    #c.specifyUncertainty('JEC',                 binname, signalName, jec)
-#                    #c.specifyUncertainty('JER',                 binname, signalName, jer)
-#                    #c.specifyUncertainty('btag_heavy'+postfix,  binname, signalName, btag_heavy)
-#                    #c.specifyUncertainty('btag_light'+postfix,  binname, signalName, btag_light)
-#                    #c.specifyUncertainty('trigger'+postfix,     binname, signalName, trigger)
-#                    #c.specifyUncertainty('leptonSFSyst',        binname, signalName, leptonSFSyst)
-#                    #c.specifyUncertainty('leptonTracking',      binname, signalName, leptonReco)
-#                    #c.specifyUncertainty('eleSFStat'+postfix,   binname, signalName, eleSFStat)
-#    
-#                    uname = 'Stat_'+binname+'_%s'%signalName+postfix
-#                    c.addUncertainty(uname, 'lnN')
-#                    c.specifyUncertainty(uname, binname, signalName, 1  ) #+ sigdev/sigval )
-#                else:
-#                    uname = 'Stat_'+binname+'_%s'%signalName+postfix
-#                    c.addUncertainty(uname, 'lnN')
-#                    c.specifyUncertainty(uname, binname, signalName, 1 )
-#    
-#                
-#            #c.addUncertainty('Lumi'+postfix, 'lnN')
-#            #c.specifyFlatUncertainty('Lumi'+postfix, 1.026)
-#            cardFileName = c.writeToFile(cardFileName)
-#        else:
-#            logger.info("File %s found. Reusing.",cardFileName)
-#        
-#        nll = c.calcNLL()
-#        print nll
-#        print type(nll) 
-#        print nll['nll_abs']
-#        txtfilename = "ttzdy.txt"
-#        outfile = open(txtfilename, 'a')
-#        if not "LSTM" in filename : outfile.write(str(args.lumi)+' '+str(nll['nll']+nll['nll0']))
-#        else  : outfile.write(' '+str(nll['nll']+nll['nll0'])+'\n')
-#        outfile.close()
-#    
-#    sample = 'ttZ_DY'
-#    if args.lumi : sample = sample +'_lumi' + str(args.lumi).replace('.','p')
-#    if not "LSTM" in filename : sample = sample
-#    else : sample = sample + '_lstm'
-#    wrapper(sample) 
-#    
+            expected          = max([0.01, round(h_BSM[0][i_b],3)])
+            observation[i_b] += h_SM[0][i_b]
+            name = training_sample.name if i_training_sample>0 else "signal"
+            c.specifyExpectation("Bin%i"%i_b, name, expected )
+
+            c.specifyUncertainty('JEC',         "Bin%i"%i_b, name, 1.09)
+            c.specifyUncertainty('JER',         "Bin%i"%i_b, name, 1.01)
+            c.specifyUncertainty('btag_heavy',  "Bin%i"%i_b, name, 1.04)
+            c.specifyUncertainty('btag_light',  "Bin%i"%i_b, name, 1.04)
+            c.specifyUncertainty('trigger',     "Bin%i"%i_b, name, 1.01)
+            c.specifyUncertainty('scale',       "Bin%i"%i_b, name, 1.01) 
+            c.specifyUncertainty('PDF',         "Bin%i"%i_b, name, 1.01)
+            c.specifyUncertainty('Lumi',        "Bin%i"%i_b, name, 1.023)
+
+        for i_b in range(len(binning)-1):
+            c.specifyObservation("Bin%i"%i_b, int(round(observation[i_b],0)) )
+
+    c.writeToFile(cardFileName)
+    nll[WC_val] = c.calcNLL()
+    print "nll['nll']+nll['nll0']", nll[WC_val]['nll']+nll[WC_val]['nll0']
+
+    for i_training_samples, training_sample in enumerate(config.training_samples):
+        histos[training_sample.name]['SM'].style       = styles.lineStyle(colors[i_training_samples], dashed = True )
+        histos[training_sample.name]['SM'].legendText  = training_sample.name#+" (SM)" 
+        histos[training_sample.name]['BSM'].style      = styles.lineStyle(colors[i_training_samples], dashed = False )
+        histos[training_sample.name]['BSM'].legendText = training_sample.name#+" (cHW=%3.2f)"%cHW 
+
+    plot = Plot.fromHisto(name = "q_%s_%3.2f"%(WC,WC_val), 
+            histos = [[histos[s.name]['SM'] for s in  config.training_samples ], 
+                     [ histos[s.name]['BSM'] for s in config.training_samples],],
+            texX = "q_{%s=%3.2f}"%(WC,WC_val) , texY = "Number of events" )
+
+    for log in [True]:
+        plot_directory_ = os.path.join(plot_directory, ("log" if log else "lin"))
+        plotting.draw(plot, plot_directory = plot_directory_, ratio = {'histos':[(1,0)], 'texY': 'Ratio'}, logY = log, logX = False, yRange = (10**-2,"auto"), 
+            #yRange = (0, 0.5) if 'Mult' not in var else (0, 15 ),  
+            legend = ([0.20,0.75,0.9,0.88],3), copyIndexPHP=True,
+        )
+
+min_NLL = min([nll[WC_val]['nll']+nll[WC_val]['nll0'] for WC_val in WC_vals] )
+t = ROOT.TGraph( len(WC_vals), 
+             array.array('d',WC_vals), 
+             array.array('d',[ nll[WC_val]['nll']+nll[WC_val]['nll0'] - min_NLL for WC_val in WC_vals] )
+    )
+
+t.SetLineColor(ROOT.kBlue)
+t.SetLineWidth(2)
+#t.SetLineStyle(7)
+
+l = ROOT.TLegend(0.55, 0.8, 0.8, 0.9)
+l.SetFillStyle(0)
+l.SetShadowColor(ROOT.kWhite)
+l.SetBorderSize(0)
+
+l.AddEntry( t, "q" )
+c1 = ROOT.TCanvas()
+t.Draw("AL")
+t.SetTitle("")
+t.GetXaxis().SetTitle(WC)
+t.GetYaxis().SetTitle("NLL")
+
+t.Draw("L")
+l.Draw()
+
+ROOT.gStyle.SetOptStat(0)
+c1.SetTitle("")
+c1.RedrawAxis()
+c1.Print(os.path.join(plot_directory, "roc.png"))
+c1.Print(os.path.join(plot_directory, "roc.pdf"))
+c1.Print(os.path.join(plot_directory, "roc.root"))
+
+syncer.sync()
+

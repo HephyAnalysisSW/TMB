@@ -17,6 +17,12 @@ ROOT.setTDRStyle()
 #mZ=91.1876
 mZ = 91.2
 
+#https://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-whilst-preserving-order
+def remove_duplicates(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
 def singleton(class_):
   instances = {}
   def getinstance(*args, **kwargs):
