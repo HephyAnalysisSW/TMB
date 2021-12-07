@@ -57,23 +57,29 @@ signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 eft_configs = [
     {'color':ROOT.kBlack,    'param':{},            'tex':"SM"}, 
-    {'color':ROOT.kGreen+1,  'param':{'cHW':1},     'tex':"c_{HW}=1"}, 
-    {'color':ROOT.kCyan+1,   'param':{'cHWtil':1},  'tex':"c_{H#tilde{W}}=1"}, 
-    {'color':ROOT.kOrange-1, 'param':{'cHj3':1},    'tex':"c_{Hq3}=1"},
-    {'color':ROOT.kOrange-2, 'param':{'cHj3':2},    'tex':"c_{Hq3}=2"},
+    #{'color':ROOT.kGreen+1,  'param':{'cHW':1},     'tex':"c_{HW}=1"}, 
+    #{'color':ROOT.kCyan+1,   'param':{'cHWtil':1},  'tex':"c_{H#tilde{W}}=1"}, 
+    {'color':ROOT.kGreen+1, 'param':{'cHj3':.4},    'tex':"c_{Hq3}=0.4"},
+    {'color':ROOT.kCyan+1,  'param':{'cHj3':-.4},   'tex':"c_{Hq3}=-0.4"},
+    {'color':ROOT.kOrange-1, 'param':{'cHj3':.2},    'tex':"c_{Hq3}=0.2"},
+    {'color':ROOT.kOrange-2, 'param':{'cHj3':-.2},   'tex':"c_{Hq3}=-0.2"},
     ]
 for eft in eft_configs:
     eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
     eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) )
 
-eft_derivatives = [
-    {'der':('cHW',),             'color':ROOT.kGreen+1,  'tex':'c_{HW}'},
-    {'der':('cHW','cHW'),        'color':ROOT.kGreen+3,  'tex':'c^{2}_{HW}'},
-    {'der':('cHWtil',),          'color':ROOT.kCyan+1,   'tex':'c_{H#tilde{W}}'},
-    {'der':('cHWtil','cHWtil'),  'color':ROOT.kCyan+2,   'tex':'c^{2}_{#tilde{W}}'},
-    {'der':('cHj3',),            'color':ROOT.kOrange-1, 'tex':'c_{Hq3}'},
-    {'der':('cHj3','cHj3'),      'color':ROOT.kOrange-2, 'tex':'c^{2}_{Hq3}'},
-    ]
+if args.show_derivatives:
+    eft_derivatives = [
+        {'der':('cHW',),             'color':ROOT.kGreen+1,  'tex':'c_{HW}'},
+        {'der':('cHW','cHW'),        'color':ROOT.kGreen+3,  'tex':'c^{2}_{HW}'},
+        {'der':('cHWtil',),          'color':ROOT.kCyan+1,   'tex':'c_{H#tilde{W}}'},
+        {'der':('cHWtil','cHWtil'),  'color':ROOT.kCyan+2,   'tex':'c^{2}_{#tilde{W}}'},
+        {'der':('cHj3',),            'color':ROOT.kOrange-1, 'tex':'c_{Hq3}'},
+        {'der':('cHj3','cHj3'),      'color':ROOT.kOrange-2, 'tex':'c^{2}_{Hq3}'},
+        ]
+else:
+    eft_derivatives = []
+    
 for der in eft_derivatives:
     der['func'] = signal.weightInfo.get_diff_weight_func(der['der'])
     der['name'] = "_".join( ["derivative"] + list(der['der']) )
@@ -175,16 +181,16 @@ elif signal.name == 'ZH':
     bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
-    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
-    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
-    ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
-    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [30,-5,25]), 
+#    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
+#    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
+#    ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
+#    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [30,-5,25]), 
     ("BIT_cHj3",            bits[('cHj3',)],          [20,-5,5]), 
     ("BIT_cHj3_cHj3",       bits[('cHj3','cHj3')],  [30,-5,25]), 
-    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
-    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
-    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
-    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,25]), 
+#    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
+#    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
+#    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
+#    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,25]), 
     ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
     ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,25]), 
 ]
@@ -266,19 +272,6 @@ for model_name, _, binning in models:
         binning   = binning+config.plot_options[var]['binning'],
     ))
 
-#    yield_w       = [ sample.weightInfo.get_diff_weight_func(tuple()) for sample in mc ]
-#    first_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
-#    second_der_w   = [ sample.weightInfo.get_diff_weight_func(tuple([args.WC,args.WC])) if args.WC in sample.weightInfo.variables else lambda event, sample: 0. for sample in mc ]
-#    plots.append(Plot(
-#        stack = Stack(mc, mc, mc),
-#        weight= [ yield_w, first_der_w, second_der_w ],
-#        name = model_name+'_coeff',
-#        texX = model_name, texY = 'Coefficient',
-#        attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
-#        binning=binning,
-#        addOverFlowBin='upper',
-#    ))
-
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):
     plots.append(Plot( name = key.replace("mva_", "")+postfix,
@@ -286,257 +279,6 @@ for i_key, (key, _) in enumerate( config.mva_variables ):
       attribute = lambda event, sample, i_key=i_key: event.features[i_key],
       binning   =  config.plot_options[key]['binning'],
     ))
-
-#plots.append(Plot( name = "j0_pt"+postfix,
-#  texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[0]['pt'] if len(event.jets)>0 else -float('inf'),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "j1_pt"+postfix,
-#  texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[1]['pt'] if len(event.jets)>1 else -float('inf'),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "j2_pt"+postfix,
-#  texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[2]['pt'] if len(event.jets)>2 else -float('inf'),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "j0_eta"+postfix,
-#  texX = '#eta(j_{0}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[0]['eta'] if len(event.jets)>0 else -float('inf'),
-#  binning=[30,-3,3],
-#))
-#
-#plots.append(Plot( name = "j1_eta"+postfix,
-#  texX = '#eta(j_{1}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[1]['eta'] if len(event.jets)>1 else -float('inf'),
-#  binning=[30,-3,3],
-#))
-#
-#plots.append(Plot( name = "j2_eta"+postfix,
-#  texX = '#eta(j_{2}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.jets[2]['eta'] if len(event.jets)>2 else -float('inf'),
-#  binning=[30,-3,3],
-#))
-#
-#plots.append(Plot( name = "b0_pt"+postfix,
-#  texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.bJets[0]['pt'] if len(event.bJets)>0 else -float('inf'),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "b1_pt"+postfix,
-#  texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.bJets[1]['pt'] if len(event.bJets)>1 else -float('inf'),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "b01PtRatio"+postfix,
-#  texX = 'p_{T}(b_{1})/p_{T}(b_{0})', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.bJets[1]['pt']/event.bJets[0]['pt'] if len(event.bJets)>1 else -float('inf'),
-#  binning=[20,0,1],
-#))
-#
-#plots.append(Plot( name = "deltaPhib01"+postfix,
-#  texX = '#Delta#Phi(b_{0},b_{1})', texY = 'Number of Events',
-#  attribute = lambda event, sample: deltaPhi(event.bJets[0]['phi'], event.bJets[1]['phi']) if len(event.bJets)>1 else -float('inf'),
-#  binning=[20,0,pi],
-#))
-#
-#plots.append(Plot( name = "b0_eta"+postfix,
-#  texX = '#eta(b_{0}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.bJets[0]['eta'] if len(event.bJets)>0 else -float('inf'),
-#  binning=[30,-3,3],
-#))
-#
-#plots.append(Plot( name = "b1_eta"+postfix,
-#  texX = '#eta(b_{1}) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.bJets[1]['eta'] if len(event.bJets)>1 else -float('inf'),
-#  binning=[30,-3,3],
-#))
-#
-#plots.append(Plot( name = 'Met_pt'+postfix,
-#  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.recoMet_pt,
-#  binning=[400/20,0,400],
-#))
-#
-#plots.append(Plot( name = 'thrust'+postfix,
-#  texX = 'Thrust (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.thrust,
-#  binning=[20,0,1.2],
-#))
-#
-#plots.append(Plot( name = 'thrust_min'+postfix,
-#  texX = 'min(Thrust) (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.thrust_min,
-#  binning=[20,0,1.2],
-#))
-#
-#plots.append(Plot( name = 'nJet'+postfix,
-#  texX = 'jet multiplicity', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: len(event.jets),
-#  binning=[8,0,8],
-#))
-#
-#plots.append(Plot( name = 'H_pt'+postfix,
-#  texX = ' p_{T}(H) (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.H_pt,
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = 'H_mass_noCut'+postfix,
-#  texX = ' M(b_{1},b_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.H_vecP4.M(),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = 'H_mass'+postfix,
-#  texX = ' M(b_{1},b_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.H_vecP4.M(),
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = "deltaPhiVH"+postfix,
-#  texX = '#Delta#Phi(V,H)', texY = 'Number of Events',
-#  attribute = lambda event, sample: deltaPhi(event.V_vecP4.Phi(), event.H_vecP4.Phi()),
-#  binning=[20,0,pi],
-#))
-#
-#plots.append(Plot( name = "Theta"+postfix,
-#  texX = '#Theta', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.Theta,
-#  binning=[20,0,pi],
-#))
-#
-#plots.append(Plot( name = "theta"+postfix,
-#  texX = '#theta', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.theta,
-#  binning=[20,0,pi],
-#))
-#
-#plots.append(Plot( name = 'V_pt'+postfix,
-#  texX = 'p_{T}(V) (GeV)', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.V_pt,
-#  binning=[600/20,0,600],
-#))
-#
-#plots.append(Plot( name = 'V_pt_coarse'+postfix,
-#  texX = 'p_{T}(V) (GeV)', texY = 'Number of Events',
-#  attribute = lambda event, sample: event.V_pt,
-#  binning=Binning.fromThresholds([150, 200, 250, 300, 360, 430, 510, 590, 690, 800, 900, 1100]),
-#))
-#
-#plots.append(Plot( name = 'V_eta'+postfix,
-#  texX = '#eta(V) ', texY = 'Number of Events / 20 GeV',
-#  attribute = lambda event, sample: event.V_vecP4.Eta(),
-#  binning=[20,-3,3],
-#))
-#
-#
-#if args.signal == 'ZH':
-#
-#    plots.append(Plot( name = 'Z_mass'+postfix,
-#      texX = 'm(l_{1},l_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.recoZ_mass if event.selection else -float('inf'),
-#      binning=[20,70,110],
-#    ))
-#
-#    plots.append(Plot( name = "Z_cosThetaStar"+postfix,
-#      texX = 'cos(#theta^{*})', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.recoZ_cosThetaStar if event.selection else -float('inf'),
-#      binning=[20,-1,1],
-#    ))
-#
-#    plots.append(Plot( name = "Z_lldPhi"+postfix,
-#      texX = '#Delta#phi(l_{1},l_{2})', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.recoZ_lldPhi if event.selection else -float('inf'),
-#      binning=[20,0,pi],
-#    ))
-#
-#    plots.append(Plot( name = "Z_lldR"+postfix,
-#      texX = '#Delta R(l_{1},l_{2})', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.recoZ_lldR if event.selection else -float('inf'),
-#      binning=[20,0,7],
-#    ))
-#
-#    plots.append(Plot( name = "lep1_pt"+postfix,
-#      texX = 'leading p_{T}(l) (GeV)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton1['pt'] if event.selection else -float('inf'),
-#      binning=[300/20,0,300],
-#    ))
-#
-#    plots.append(Plot( name = "lep1_eta"+postfix,
-#      texX = 'leading l. #eta(l)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton1['eta'] if event.selection else -float('inf'),
-#      binning=[20,-3,3],
-#    ))
-#
-#    plots.append(Plot( name = "lep2_pt"+postfix,
-#      texX = 'leading p_{T}(l) (GeV)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton2['pt'] if event.selection else -float('inf'),
-#      binning=[300/20,0,300],
-#    ))
-#
-#    plots.append(Plot( name = "lep2_eta"+postfix,
-#      texX = 'leading l. #eta(l)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton2['eta'] if event.selection else -float('inf'),
-#      binning=[20,-3,3],
-#    ))
-#
-#if args.signal == 'WH':
-#
-#    plots.append(Plot( name = 'genW_pt'+postfix,
-#      texX = 'gen p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and event.selection else -float('inf'),
-#      binning=[600/20,0,600],
-#    ))
-#
-#    plots.append(Plot( name = 'genW_pt_noHighPtV'+postfix,
-#      texX = 'gen p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 and event.selection_noHighPtV else -float('inf'),
-#      binning=[600/20,0,600],
-#    ))
-#
-#    plots.append(Plot( name = "lep_pt"+postfix,
-#      texX = 'p_{T}(l) (GeV)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton['pt'] if event.selection else -float('inf'),
-#      binning=[300/20,0,300],
-#    ))
-#
-#    plots.append(Plot( name = "lep_eta"+postfix,
-#      texX = '#eta(l)', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.lepton['eta'] if event.selection else -float('inf'),
-#      binning=[20,-3,3],
-#    ))
-#
-#    plots.append(Plot( name = 'MT'+postfix,
-#      texX = 'M_{T} (GeV)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.MT if event.selection else -float('inf'),
-#      binning=[400/20,0,400],
-#    ))
-#
-#    plots.append(Plot( name = 'deltaPhiMetLep_noCut'+postfix,
-#      texX = '#Delta#Phi(E_{T}^{miss},l)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.dPhiMetLep if event.selection_noPhiMetLep else -float('inf'),
-#      binning=[20,0,pi],
-#    ))
-#
-#    plots.append(Plot( name = 'deltaPhiMetLep'+postfix,
-#      texX = '#Delta#Phi(E_{T}^{miss},l)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.dPhiMetLep if event.selection else -float('inf'),
-#      binning=[20,0,pi],
-#    ))
-#
-#    plots.append(Plot( name = 'W_mass'+postfix,
-#      texX = ' m(l,#nu) (GeV)', texY = 'Number of Events / 20 GeV',
-#      attribute = lambda event, sample: event.V_vecP4.M() if event.selection else -float('inf'),
-#      binning=[600/20,0,600],
-#    ))
 
 
 # Text on the plots
@@ -567,7 +309,7 @@ def drawPlots(plots, subDirectory=''):
                        ) 
         else:
             if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
-            subtr = 0 if args.show_derivatives else len(eft_configs)
+            subtr = 0 #if args.show_derivatives else len(eft_configs)
             plotting.draw(plot,
               plot_directory = plot_directory_,
               ratio =  None,

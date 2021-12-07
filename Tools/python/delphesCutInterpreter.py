@@ -10,9 +10,10 @@ bJetSelectionM  = "nBTag"
 special_cuts = {
     "photon" :   "(recoPhoton_pt[0]>20)",
     "singlelep": "(nrecoLep>=1)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>25)<=1",
-    "dilep":     "(nrecoLep>=2)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>15)>=2&&Sum$(recoLep_pt>25)<=2",
-    "WHJet"  :   "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
-    "ZHJet"  :   "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
+    "dilep" :    "(nrecoLep>=2)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>15)>=2&&Sum$(recoLep_pt>25)<=2",
+    "WHJet" :    "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
+    "realW" :    "WH_nu_E>0",
+    "ZHJet" :    "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
     "trilep":    "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
     "onZ"   :    "abs(recoZ_mass-91.2)<10",
     "onH"   :    "(H_dijet_mass>90&&H_dijet_mass<150)",
