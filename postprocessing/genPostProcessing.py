@@ -182,7 +182,7 @@ variables += ["genMet_pt/F", "genMet_phi/F"]
 # jet vector
 jet_read_vars       =  "pt/F,eta/F,phi/F,isMuon/I,isElectron/I,isPhoton/I"
 jet_read_varnames   =  varnames( jet_read_vars )
-jet_write_vars      = jet_read_vars+',matchBParton/I' 
+jet_write_vars      = jet_read_vars+',matchBParton/I,matchCParton/I' 
 jet_write_varnames  =  varnames( jet_write_vars )
 variables += ["genJet[%s]"%jet_write_vars]
 variables += ["genBj0_%s"%var for var in jet_write_vars.split(',')]
@@ -590,6 +590,7 @@ def filler( event ):
     # find b's from tops:
     #b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6,  gp) ]
     b_partons = [ b for b in filter( lambda p:abs(p.pdgId())==5 and search.isLast(p),  gp) ]
+    c_partons = [ c for c in filter( lambda p:abs(p.pdgId())==4 and search.isLast(p),  gp) ]
     
     #for b in b_partons:
     #    print  b.pt(), b.eta(), b.phi(), b.pdgId(), b.numberOfMothers(), b.mother(0).pdgId()
@@ -598,6 +599,10 @@ def filler( event ):
     # store if gen-jet is DR matched to a B parton
     for genJet in genJets:
         genJet['matchBParton'] = ( min([999]+[deltaR2(genJet, {'eta':b.eta(), 'phi':b.phi()}) for b in b_partons]) < 0.2**2 )
+        if not genJet['matchBParton']:
+            genJet['matchCParton'] = ( min([999]+[deltaR2(genJet, {'eta':c.eta(), 'phi':c.phi()}) for c in c_partons]) < 0.2**2 )
+        else:
+            genJet['matchCParton'] = False
 
     genJets = filter( lambda j: (min([999]+[deltaR2(j, l) for l in genLeps_dict if l['pt']>10 and l['status']==1 and abs(l['pdgId']) in [11,13]]) > 0.3**2 ), genJets )
     genJets.sort( key = lambda p:-p['pt'] )
