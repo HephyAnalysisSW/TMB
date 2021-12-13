@@ -330,13 +330,13 @@ for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
          unbinned_nll_lin  += rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*( -np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] ))))
 
          total_xsec_bsm    += rescale*sum(w_bsm[training_sample.name])
-         total_xsec_sm     += rescale*sum(w_bsm[training_sample.name])
+         total_xsec_sm     += rescale*sum(w_sm[training_sample.name])
 
-    Poissonian_LL_term      = total_xsec_sm*log( total_xsec_bsm/total_xsec_sm )
+    Poissonian_NLL_term      = -total_xsec_sm*log( total_xsec_bsm/total_xsec_sm )
 
-    qs['total']     ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_tot - Poissonian_LL_term )
-    qs['quadratic'] ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_quad- Poissonian_LL_term )
-    qs['linear']    ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_lin - Poissonian_LL_term )
+    qs['total']     ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_tot - Poissonian_NLL_term )
+    qs['quadratic'] ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_quad- Poissonian_NLL_term )
+    qs['linear']    ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_lin - Poissonian_NLL_term )
 
 for q_name, q in qs.iteritems():
     for key in [ 'nll_tGraph', 'unbinned_nll_tGraph']:
