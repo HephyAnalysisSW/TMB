@@ -147,17 +147,17 @@ def make_TH1F( h ):
     return histo
 
 #binning_quantiles = [ .001, .01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99, .999]
-#binning_quantiles = [.01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99,]
+binning_quantiles = [.01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99,]
 #binning_quantiles = [.05, .1, .2, .3, .5, .6, .7, .8, .9, .95, ]
 #binning_quantiles = [ ]
 #binning_quantiles = [ .5 ]
-binning_quantiles = [ i/200. for i in range(1,200) ] 
+#binning_quantiles = [ i/200. for i in range(1,200) ] 
 
 # loop over EFT param point
 
-WC_vals = [i/50. for i in range(-50,21)] 
+#WC_vals = [i/50. for i in range(-50,21)] 
 #WC_vals = [i/100. for i in range(-10,11)] 
-#WC_vals = [i/20. for i in range(-10,11)] 
+WC_vals = [i/20. for i in range(-10,11)] 
 #WC_vals = [ -0.1, -0.05, 0, 0.05, 0.1 ]
 #WC_vals = [ 0.1 ]
 
@@ -325,12 +325,12 @@ for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
     rescale           = float(lumi)/config.scale_weight
     for i_training_sample, training_sample in enumerate(config.training_samples):
 
-         unbinned_nll_tot  += rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*( -np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] + 0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
-         unbinned_nll_quad += rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*( -np.log(1+0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
-         unbinned_nll_lin  += rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*( -np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] ))))
+         unbinned_nll_tot  += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] + 0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
+         unbinned_nll_quad += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
+         unbinned_nll_lin  += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] ))))
 
          total_xsec_bsm    += rescale*sum(w_bsm[training_sample.name])
-         total_xsec_sm     += rescale*sum(w_bsm[training_sample.name])
+         total_xsec_sm     += rescale*sum(w_sm[training_sample.name])
 
     Poissonian_LL_term      = total_xsec_sm*log( total_xsec_bsm/total_xsec_sm )
 
@@ -338,12 +338,13 @@ for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
     qs['quadratic'] ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_quad- Poissonian_LL_term )
     qs['linear']    ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_lin - Poissonian_LL_term )
 
-for q_name, q in qs.iteritems():
-    for key in [ 'nll_tGraph', 'unbinned_nll_tGraph']:
-        min_y = min( [q[key].GetY()[i] for i in range(len(WC_vals))] )
-        print "Subtracting likelihood offset for",q_name, key, "of", min_y
-        for i in range(len(WC_vals)):
-            q[key].SetPoint( i, q[key].GetX()[i], -min_y + q[key].GetY()[i])
+## subtract minimum
+#for q_name, q in qs.iteritems():
+#    for key in [ 'nll_tGraph', 'unbinned_nll_tGraph']:
+#        min_y = min( [q[key].GetY()[i] for i in range(len(WC_vals))] )
+#        print "Subtracting likelihood offset for",q_name, key, "of", min_y
+#        for i in range(len(WC_vals)):
+#            q[key].SetPoint( i, q[key].GetX()[i], -min_y + q[key].GetY()[i])
 
 for key in  [ 'nll_tGraph', 'unbinned_nll_tGraph']:
     c1 = ROOT.TCanvas()
