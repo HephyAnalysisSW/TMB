@@ -34,8 +34,6 @@ def get_sampled_dataset( n_events ):
         }
     return features, weights
 
-get_dataset = get_sampled_dataset
-
 dataset_size = 10**6
 features, weights = get_sampled_dataset(dataset_size)
 
@@ -49,10 +47,6 @@ n_toys = 5000
 
 def make_test_statistic( theta, mode="total"):
     x12m = 1./(1./x1-1./x2)
-    #if lin:
-    #    return lambda weights, array, theta=theta: np.sum( weights[array]* np.log( 1 + 2*theta*np.exp(features[array]/(2*x12m)) ) )
-    #else:
-    #    return lambda weights, array, theta=theta: np.sum( weights[array]* np.log( 1 + 2*theta*np.exp(features[array]/(2*x12m)) + theta**2*np.exp(features[array]/x12m)) )
     if mode=="lin":
         return lambda weights, array, theta=theta: np.sum( weights[array]* np.log( (1 + theta*np.cos(n*features[array][:,1])*np.exp(features[array][:,0]/(2*x12m)) )**2 ))
     elif mode=="quad":
