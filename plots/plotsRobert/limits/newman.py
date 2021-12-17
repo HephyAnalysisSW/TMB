@@ -19,7 +19,7 @@ x2      = 2
 theta0  = 0 
 #xmax    = 10. 
 #texX  = "x"
-n       = 1
+n       = 2
 
 x12m = 1./(1./x1-1./x2)
 
@@ -128,175 +128,268 @@ q_event_quad = np.sin(n*features[:,1])*np.exp(features[:,0]/(2*x12m))
 #def wrapper( i_toy, toys, plot = plot, test_statistic = "total", extended = False, verbose = True):
 #for i_toy in range(5):
 
-
 def make_toys( yield_per_toy, theta, n_toys):
     weights_ =  weights[tuple()]+theta*weights[(0,)]+.5*theta**2*weights[(0,0)]
     biased_sample = np.random.choice( event_indices, size=dataset_size,  p = weights_/np.sum(weights_) )
 
     return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
 
-#for i_toy, toy in enumerate( toys_SM[:5] ):
-def wrapper( i_toy, toys, plot = True, test_statistic = "total", extended = False, verbose = True):
-    q_theta_given_theta_1mCL = {}
+#########################
+# Plot test statistics  #
+#########################
+tex = ROOT.TLatex()
+tex.SetNDC()
+tex.SetTextSize(0.04)
+colors   = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
+extended = True
+lumi     = 137
+n_toys   = 50000
+theta_SM = 0
+theta_vals = [1., .5, .1, 0.05]
 
-    import  Analysis.Tools.syncer as syncer
-    theta_current    = theta_UL_start 
+#for lumi in [ 13.70/5., 13.70/2, 13.70 , 2*13.70, 5*13.70, 10*13.70 ]: 
+for lumi in [ 13.70/2 ]: 
+    q_theta_given_theta = {}
+    q_theta_given_SM    = {}
+    for test_statistic in ["lin", "quad", "total"]: 
+        q_theta_given_theta [test_statistic]= {}
+        q_theta_given_SM    [test_statistic]= {}
 
-    #print "Toy", i_toy
-    toy = toys[i_toy]
-    i_iter    = 0
-    while True:
+        print "Test statistic", test_statistic
 
-        # This is the second toy -> again, we guess theta
-        if i_iter==1:
-            delta_q_previous = q_theta_given_theta_1mCL[theta_current] - q_theta_SM 
-            theta_previous   = theta_UL_start
-            theta_current    = theta_UL_start/2. 
+        histos = []
+        quantile_lines  = []
+        for i_theta, theta in enumerate(theta_vals):
+            print "theta", theta
+            if test_statistic == "quad":
+                q_event = np.log( (q_event_lin**2+q_event_quad**2) )
+            elif test_statistic == "lin":
+                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 )
+            elif test_statistic == "total":
+                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 + (theta*q_event_quad)**2)
+            else:
+                raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
 
-        # We are at the third iteration. Time to update.
-        elif i_iter>1:
+            log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
+            q_theta_given_theta[test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta),    theta,    n_toys ) ])
+            q_theta_given_SM   [test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys ) ])
 
-            delta_q_current = q_theta_given_theta_1mCL[theta_current] - q_theta_SM
-             
-            #print q_theta_SM,  q_theta_given_theta_1mCL[theta_current]
-            if abs(theta_current - theta_previous)<=tolerance:
-                # Converged!
-                if verbose: 
-                    print "Toy", i_toy, "done."
-                    print "theta_current",  theta_current, "delta_q_current", delta_q_current, "i_toy", i_toy, "i_iter", i_iter
-                    print
-                break
-                #return [ theta_current, delta_q_current, i_toy, i_iter]
-            elif i_iter>=max_iter:
-                if verbose: 
-                    print "Toy", i_toy, "max_iter %i reached" % max_iter
-                    print "theta_current", theta_current, "theta_previous", theta_previous, "delta_q_current", delta_q_current
-                    print
-                break
+        for i_theta, theta in enumerate(theta_vals):
 
-            # Newton step
-            k = (theta_current-theta_previous)/(delta_q_current-delta_q_previous)
-            if k>2:
-                if verbose: print "k=%3.2f too large, set it to 2." % k
-                k=2
-            if k<-2:
-                if verbose: print "k=%3.2f too small, set it to -2." % k
-                k=-2
-            theta_current, theta_previous, delta_q_previous = theta_current - delta_q_current*k, theta_current, delta_q_current 
-            # If the predicted value is negative, cool down and half the distance (to zero)
-            if theta_current<0:
-                if verbose: print "Predicted negative, cooling down."
-                theta_current = theta_previous/2.
+            if i_theta == 0:
+                all_vals = sum( [list(q_theta_given_theta[k])+list(q_theta_given_SM[k]) for k in q_theta_given_theta.keys()], [])
+                min_, max_ = min( all_vals ), max( all_vals )
+                binning = np.arange(min_, max_, (max_-min_)/100.)
 
-        # compute value of q_theta test statistic for all events 
-        #q_event = 1/theta_current * np.log( (1 + theta_current*q_event_lin)**2 )
-        if test_statistic == "quad":
-            q_event = np.log( theta_current**2*(q_event_lin**2+q_event_quad**2) )
-        elif test_statistic == "lin":
-            q_event = np.log( (1 + theta_current*q_event_lin)**2 )
-        elif test_statistic == "total":
-            q_event = np.log( (1 + theta_current*q_event_lin)**2 + (theta_current*q_event_quad)**2)
-        else:
-            raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
+            #np_histo_all   = np.histogram(q_theta_given_theta+q_theta_given_SM, 100)
+            #histo_all      = make_TH1F(np_histo_all)
+            #binning        = np_histo_all[1] 
 
-        log_sigma_tot_ratio_subtraction = 0 #np.log(sigma_tot_ratio(theta_current)) if not extended else 0
+            np_histo_SM    = np.histogram(q_theta_given_SM   [test_statistic][theta],    bins=binning)
+            np_histo_theta = np.histogram(q_theta_given_theta[test_statistic][theta], bins=binning)
+            histo_SM       = make_TH1F(np_histo_SM)
+            histo_theta    = make_TH1F(np_histo_theta)
 
-        q_theta_SM          = np.sum( q_event[toy] - log_sigma_tot_ratio_subtraction )
+            histo_SM.legendText    = "#color[%i]{p(q_{#theta}|#theta)}, #theta =%3.2f" % ( colors[i_theta], theta_SM )
+            histo_theta.legendText = "#color[%i]{p(q_{#theta}|#theta_{SM})}, #theta = %3.2f" % ( colors[i_theta], theta )
+            histo_SM.style         = styles.lineStyle( colors[i_theta], dashed = True)
+            histo_theta.style      = styles.lineStyle( colors[i_theta] ) 
 
-        # compute 1-CL quantile of the q_theta test statistic under the theta hypothesis
-        if not q_theta_given_theta_1mCL.has_key(theta_current) or plot:
-            # compute distribution of test statistic q_theta under theta 
-            q_theta_given_theta = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_current), theta_current, n_toys ) ])
-            q_theta_given_theta_1mCL[theta_current] = np.quantile( q_theta_given_theta, 1-CL)
-            if plot:
-                tex = ROOT.TLatex()
-                tex.SetNDC()
-                tex.SetTextSize(0.04)
-                tex.SetTextAlign(11) # align right
+            #histo_all = histo_all
+            #histo_all.legendText = None
+            #histo_all.style      = styles.invisibleStyle()
 
-                # Text on the plots
-                lines = [ 
-                          (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta_current]) ),
-                          (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
-                          (0.25, 0.78, "#theta_{current} = %5.4f" % theta_current ),
-                        ]
-                drawObjects = [ tex.DrawLatex(*line) for line in lines ]
+            #histos.append( histo_all )
+            histos.append( histo_SM )
+            histos.append( histo_theta )
 
-                np_histo      = np.histogram(q_theta_given_theta, 100)
-                histo         = make_TH1F(np_histo)
-                quantile_line = ROOT.TLine(q_theta_given_theta_1mCL[theta_current], 0, q_theta_given_theta_1mCL[theta_current], histo.GetMaximum())
-                quantile_line.SetLineColor(ROOT.kRed)
-                histo.style = styles.lineStyle( ROOT.kRed )
-                histo.legendText = "#color[2]{q_{BSM}}" 
+            for x in np.quantile( q_theta_given_SM[test_statistic][theta], [.05, .95 ] ):
+                quantile_lines.append( ROOT.TLine(x, 0, x, histo_SM.GetBinContent(histo_SM.FindBin(x))) )
+                quantile_lines[-1].SetLineColor( colors[i_theta] )
+                quantile_lines[-1].SetLineStyle( 7 )
+            for x in np.quantile( q_theta_given_theta[test_statistic][theta], [.05, .95 ] ):
+                quantile_lines.append( ROOT.TLine(x, 0, x, histo_theta.GetBinContent(histo_theta.FindBin(x))) )
+                quantile_lines[-1].SetLineColor( colors[i_theta] )
 
-                q_theta_SM_line = ROOT.TLine(q_theta_SM, 0, q_theta_SM, histo.GetMaximum())
-                q_theta_SM_line.SetLineColor(ROOT.kBlue)
+            # Text on the plots
+            lines = [ 
+                    #  (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta]) ),
+                    #  (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
+                    #  (0.25, 0.78, "#theta_{current} = %5.4f" % theta ),
+                    ]
+            drawObjects = [ tex.DrawLatex(*line) for line in lines ]
 
-                q_theta_given_SM = np.array([np.sum( q_event[toy_]-log_sigma_tot_ratio_subtraction ) for toy_ in toys_SM])
-                histo_SM         = make_TH1F(np.histogram(q_theta_given_SM, bins=np_histo[1]))
-                histo_SM.legendText = "#color[4]{q_{SM}}" 
-                histo_SM.style = styles.lineStyle( ROOT.kBlue )
+        plot = Plot.fromHisto( "test_stat_%s_n%i_nEvents_%3.2f"%(test_statistic, n, lumi*sigma_tot(theta_SM)), [[h] for h in histos], texX = "q", texY = "Entries" )
+        plotting.draw( plot,
+            plot_directory = os.path.join( plot_directory, "newman_new2_q" ),
+            #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+            logX = False, sorting = False,
+            legend         = ( (0.15,0.7,0.9,0.92),2),
+            drawObjects    =  quantile_lines + drawObjects,
+            copyIndexPHP   = True,
+            extensions     = ["png"], 
+          )            
 
-                plot = Plot.fromHisto( "itoy_%03i_iter_%02i"%( i_toy, i_iter ),[[histo], [histo_SM]], texX = "q", texY = "Entries" )
-                plotting.draw( plot,
-                    plot_directory = os.path.join( plot_directory, "newman_new2_%3.2f"% ( lumi*sigma_tot(theta_SM)) ),
-                    #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
-                    logX = False, sorting = False,
-                    legend         = (0.65,0.78,0.9,0.9),
-                    drawObjects    =  [quantile_line, q_theta_SM_line] + drawObjects,
-                    copyIndexPHP   = True,
-                    extensions     = ["png"], 
-                  )            
-        i_iter +=1
-    return [ theta_current, delta_q_current, i_toy, i_iter]
-
-
-UL                       = {}
-
-#UL = [ wrapper(i_toy, toys_SM, plot=True) for i_toy in range(100) ]
-
-
-from multiprocessing import Pool
-
-theta_SM    = 0
-
-CL          = 0.95
-lumi        = 13.70
-n_toys      = 50000
-theta_UL_start = 1
-tolerance      = 0.001
-max_iter       = 50
-test_statistic = "total"
-
-plot           = True
-extended       = True
-verbose        = True
-
-n_toys_UL      = 20
-UL             = {}
-
-for lumi in [ 13.70 , 2*13.70, 5*13.70, 10*13.70, 20*13.70, 50*13.70 ]: 
-
-    toys_SM = make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys )
-
-    # precompute toy selection: n_toys toys of n_observed events that are selected from a Poissonian with mean n_expected
-    toys            = np.array( [ np.random.choice( event_indices, size=n_observed ) for n_observed in np.random.poisson(n_expected, n_toys) ])
-
-    UL[lumi] = {}
-    for test_statistic in ["total", "lin", "quad"]:
-
-        #wrapper_(0)
-
-        class wrapper_(object):
-            def __init__(self, *args, **kwargs ):
-                self.args = args
-                self.kwargs = kwargs
-            def __call__(self, i_toy):
-                return wrapper( i_toy, *self.args, **self.kwargs )
-
-        p  = Pool(20)
-
-        UL_ = np.array(p.map( wrapper_(verbose=False, toys=toys, plot=False, test_statistic=test_statistic), range(n_toys_UL)))
-        UL[lumi][test_statistic] = UL_
-
-        print "lumi %3.2f test_statistic %s median expected %i%% CL UL: %5.4f coverage %3.2f%%" % ( lumi, test_statistic, 100*CL, np.quantile( UL_[:,0], 0.5 ), 100*np.count_nonzero(UL_[:,0]>tolerance)/float(len(UL_)) ) 
+##for i_toy, toy in enumerate( toys_SM[:5] ):
+#def wrapper( i_toy, toys, plot = True, test_statistic = "total", extended = True, verbose = True):
+#    q_theta_given_theta_1mCL = {}
+#
+#    import  Analysis.Tools.syncer as syncer
+#    theta_current    = theta_UL_start 
+#
+#    #print "Toy", i_toy
+#    toy = toys[i_toy]
+#    i_iter    = 0
+#    while True:
+#
+#        # This is the second toy -> again, we guess theta
+#        if i_iter==1:
+#            delta_q_previous = q_theta_given_theta_1mCL[theta_current] - q_theta_SM 
+#            theta_previous   = theta_UL_start
+#            theta_current    = theta_UL_start/2. 
+#
+#        # We are at the third iteration. Time to update.
+#        elif i_iter>1:
+#
+#            delta_q_current = q_theta_given_theta_1mCL[theta_current] - q_theta_SM
+#             
+#            #print q_theta_SM,  q_theta_given_theta_1mCL[theta_current]
+#            if abs(theta_current - theta_previous)<=tolerance:
+#                # Converged!
+#                if verbose: 
+#                    print "Toy", i_toy, "done."
+#                    print "theta_current",  theta_current, "delta_q_current", delta_q_current, "i_toy", i_toy, "i_iter", i_iter
+#                    print
+#                break
+#                #return [ theta_current, delta_q_current, i_toy, i_iter]
+#            elif i_iter>=max_iter:
+#                if verbose: 
+#                    print "Toy", i_toy, "max_iter %i reached" % max_iter
+#                    print "theta_current", theta_current, "theta_previous", theta_previous, "delta_q_current", delta_q_current
+#                    print
+#                break
+#
+#            # Newton step
+#            k = (theta_current-theta_previous)/(delta_q_current-delta_q_previous)
+#            if k>2:
+#                if verbose: print "k=%3.2f too large, set it to 2." % k
+#                k=2
+#            if k<-2:
+#                if verbose: print "k=%3.2f too small, set it to -2." % k
+#                k=-2
+#            theta_current, theta_previous, delta_q_previous = theta_current - delta_q_current*k, theta_current, delta_q_current 
+#            # If the predicted value is negative, cool down and half the distance (to zero)
+#            if theta_current<0:
+#                if verbose: print "Predicted negative, cooling down."
+#                theta_current = theta_previous/2.
+#
+#        # compute value of q_theta test statistic for all events 
+#        #q_event = 1/theta_current * np.log( (1 + theta_current*q_event_lin)**2 )
+#        if test_statistic == "quad":
+#            q_event = np.log( theta_current**2*(q_event_lin**2+q_event_quad**2) )
+#        elif test_statistic == "lin":
+#            q_event = np.log( (1 + theta_current*q_event_lin)**2 )
+#        elif test_statistic == "total":
+#            q_event = np.log( (1 + theta_current*q_event_lin)**2 + (theta_current*q_event_quad)**2)
+#        else:
+#            raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
+#
+#        log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta_current)) if not extended else 0
+#        q_theta_SM          = np.sum( q_event[toy] - log_sigma_tot_ratio_subtraction )
+#        #print i_toy, "subtracting", theta_current, log_sigma_tot_ratio_subtraction, q_theta_SM, np.sum( q_event[toy])
+#
+#        # compute 1-CL quantile of the q_theta test statistic under the theta hypothesis
+#        if not q_theta_given_theta_1mCL.has_key(theta_current) or plot:
+#            # compute distribution of test statistic q_theta under theta 
+#            q_theta_given_theta = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_current), theta_current, n_toys ) ])
+#            q_theta_given_theta_1mCL[theta_current] = np.quantile( q_theta_given_theta, 1-CL)
+#            if plot:
+#                tex = ROOT.TLatex()
+#                tex.SetNDC()
+#                tex.SetTextSize(0.04)
+#                tex.SetTextAlign(11) # align right
+#
+#                # Text on the plots
+#                lines = [ 
+#                          (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta_current]) ),
+#                          (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
+#                          (0.25, 0.78, "#theta_{current} = %5.4f" % theta_current ),
+#                        ]
+#                drawObjects = [ tex.DrawLatex(*line) for line in lines ]
+#
+#                np_histo      = np.histogram(q_theta_given_theta, 100)
+#                histo         = make_TH1F(np_histo)
+#                quantile_line = ROOT.TLine(q_theta_given_theta_1mCL[theta_current], 0, q_theta_given_theta_1mCL[theta_current], histo.GetMaximum())
+#                quantile_line.SetLineColor(ROOT.kRed)
+#                histo.style = styles.lineStyle( ROOT.kRed )
+#                histo.legendText = "#color[2]{q_{BSM}}" 
+#
+#                q_theta_SM_line = ROOT.TLine(q_theta_SM, 0, q_theta_SM, histo.GetMaximum())
+#                q_theta_SM_line.SetLineColor(ROOT.kBlue)
+#
+#                q_theta_given_SM = np.array([np.sum( q_event[toy_]-log_sigma_tot_ratio_subtraction ) for toy_ in toys_SM])
+#                histo_SM         = make_TH1F(np.histogram(q_theta_given_SM, bins=np_histo[1]))
+#                histo_SM.legendText = "#color[4]{q_{SM}}" 
+#                histo_SM.style = styles.lineStyle( ROOT.kBlue )
+#
+#                plot = Plot.fromHisto( "itoy_%03i_iter_%02i"%( i_toy, i_iter ),[[histo], [histo_SM]], texX = "q", texY = "Entries" )
+#                plotting.draw( plot,
+#                    plot_directory = os.path.join( plot_directory, "newman_new2_%3.2f"% ( lumi*sigma_tot(theta_SM)) ),
+#                    #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+#                    logX = False, sorting = False,
+#                    legend         = (0.65,0.78,0.9,0.9),
+#                    drawObjects    =  [quantile_line, q_theta_SM_line] + drawObjects,
+#                    copyIndexPHP   = True,
+#                    extensions     = ["png"], 
+#                  )            
+#        i_iter +=1
+#    return [ theta_current, delta_q_current, i_toy, i_iter]
+#
+#
+#UL                       = {}
+#
+##UL = [ wrapper(i_toy, toys_SM, plot=True) for i_toy in range(100) ]
+#
+#
+#from multiprocessing import Pool
+#
+#theta_SM    = 0
+#
+#CL          = 0.95
+#n_toys      = 50000
+#theta_UL_start = 1
+#tolerance      = 0.001
+#max_iter       = 50
+#test_statistic = "total"
+#
+#plot           = True
+#extended       = False
+#verbose        = False
+#
+#n_toys_UL      = 20
+#UL             = {}
+##assert False, ""
+#
+#for lumi in [ 13.70 , 2*13.70, 5*13.70, 10*13.70, 20*13.70, 50*13.70 ]: 
+##for lumi in [  5*13.70, 10*13.70, 20*13.70, 50*13.70 ]: 
+##for lumi in [137]:
+#    toys_SM = make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys )
+#
+#    UL[lumi] = {}
+#    for test_statistic in ["total", "lin", "quad"]:
+#
+#        #wrapper_(0)
+#
+#        class wrapper_(object):
+#            def __init__(self, *args, **kwargs ):
+#                self.args = args
+#                self.kwargs = kwargs
+#            def __call__(self, i_toy):
+#                return wrapper( i_toy, *self.args, **self.kwargs )
+#
+#        p  = Pool(20)
+#
+#        UL_ = np.array(p.map( wrapper_(verbose=verbose, toys=toys_SM, extended=extended, plot=False, test_statistic=test_statistic), range(n_toys_UL)))
+#        UL[lumi][test_statistic] = UL_
+#
+#        print "lumi %5.1f extended %i test_statistic %10s median expected %i%% CL UL: %5.4f coverage %3.2f%%" % ( lumi, extended, test_statistic, 100*CL, np.quantile( UL_[:,0], 0.5 ), 100*np.count_nonzero(UL_[:,0]>tolerance)/float(len(UL_)) ) 
