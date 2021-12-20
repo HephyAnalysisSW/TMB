@@ -134,101 +134,199 @@ def make_toys( yield_per_toy, theta, n_toys):
 
     return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
 
-#########################
-# Plot test statistics  #
-#########################
 tex = ROOT.TLatex()
 tex.SetNDC()
 tex.SetTextSize(0.04)
-colors   = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
+
+##########################
+## Plot test statistics  #
+##########################
+#colors   = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
+#extended = True
+#lumi     = 137
+#n_toys   = 50000
+#theta_SM = 0
+#theta_vals = [1., .5, .1, 0.05]
+#
+##for lumi in [ 13.70/5., 13.70/2, 13.70 , 2*13.70, 5*13.70, 10*13.70 ]: 
+#for lumi in [ 13.70/2 ]: 
+#    q_theta_given_theta = {}
+#    q_theta_given_SM    = {}
+#    for test_statistic in ["lin", "quad", "total"]: 
+#        q_theta_given_theta [test_statistic]= {}
+#        q_theta_given_SM    [test_statistic]= {}
+#
+#        print "Test statistic", test_statistic
+#
+#        histos = []
+#        quantile_lines  = []
+#        for i_theta, theta in enumerate(theta_vals):
+#            print "theta", theta
+#            if test_statistic == "quad":
+#                q_event = np.log( (q_event_lin**2+q_event_quad**2) )
+#            elif test_statistic == "lin":
+#                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 )
+#            elif test_statistic == "total":
+#                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 + (theta*q_event_quad)**2)
+#            else:
+#                raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
+#
+#            log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
+#            q_theta_given_theta[test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta),    theta,    n_toys ) ])
+#            q_theta_given_SM   [test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys ) ])
+#
+#        for i_theta, theta in enumerate(theta_vals):
+#
+#            if i_theta == 0:
+#                all_vals = sum( [list(q_theta_given_theta[k])+list(q_theta_given_SM[k]) for k in q_theta_given_theta.keys()], [])
+#                min_, max_ = min( all_vals ), max( all_vals )
+#                binning = np.arange(min_, max_, (max_-min_)/100.)
+#
+#            #np_histo_all   = np.histogram(q_theta_given_theta+q_theta_given_SM, 100)
+#            #histo_all      = make_TH1F(np_histo_all)
+#            #binning        = np_histo_all[1] 
+#
+#            np_histo_SM    = np.histogram(q_theta_given_SM   [test_statistic][theta],    bins=binning)
+#            np_histo_theta = np.histogram(q_theta_given_theta[test_statistic][theta], bins=binning)
+#            histo_SM       = make_TH1F(np_histo_SM)
+#            histo_theta    = make_TH1F(np_histo_theta)
+#
+#            histo_SM.legendText    = "#color[%i]{p(q_{#theta}|#theta)}, #theta =%3.2f" % ( colors[i_theta], theta_SM )
+#            histo_theta.legendText = "#color[%i]{p(q_{#theta}|#theta_{SM})}, #theta = %3.2f" % ( colors[i_theta], theta )
+#            histo_SM.style         = styles.lineStyle( colors[i_theta], dashed = True)
+#            histo_theta.style      = styles.lineStyle( colors[i_theta] ) 
+#
+#            #histo_all = histo_all
+#            #histo_all.legendText = None
+#            #histo_all.style      = styles.invisibleStyle()
+#
+#            #histos.append( histo_all )
+#            histos.append( histo_SM )
+#            histos.append( histo_theta )
+#
+#            for x in np.quantile( q_theta_given_SM[test_statistic][theta], [.05, .95 ] ):
+#                quantile_lines.append( ROOT.TLine(x, 0, x, histo_SM.GetBinContent(histo_SM.FindBin(x))) )
+#                quantile_lines[-1].SetLineColor( colors[i_theta] )
+#                quantile_lines[-1].SetLineStyle( 7 )
+#            for x in np.quantile( q_theta_given_theta[test_statistic][theta], [.05, .95 ] ):
+#                quantile_lines.append( ROOT.TLine(x, 0, x, histo_theta.GetBinContent(histo_theta.FindBin(x))) )
+#                quantile_lines[-1].SetLineColor( colors[i_theta] )
+#
+#            # Text on the plots
+#            lines = [ 
+#                    #  (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta]) ),
+#                    #  (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
+#                    #  (0.25, 0.78, "#theta_{current} = %5.4f" % theta ),
+#                    ]
+#            drawObjects = [ tex.DrawLatex(*line) for line in lines ]
+#
+#        plot = Plot.fromHisto( "test_stat_%s_n%i_nEvents_%3.2f"%(test_statistic, n, lumi*sigma_tot(theta_SM)), [[h] for h in histos], texX = "q", texY = "Entries" )
+#        plotting.draw( plot,
+#            plot_directory = os.path.join( plot_directory, "newman_new2_q" ),
+#            #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+#            logX = False, sorting = False,
+#            legend         = ( (0.15,0.7,0.9,0.92),2),
+#            drawObjects    =  quantile_lines + drawObjects,
+#            copyIndexPHP   = True,
+#            extensions     = ["png"], 
+#          )            
+
+##########################################
+# Plot test statistics  quantile TGraphs #
+##########################################
+colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
+levels   = [ .05,       .32,        .5,          .68,        .95      ]
 extended = True
-lumi     = 137
 n_toys   = 50000
 theta_SM = 0
-theta_vals = [1., .5, .1, 0.05]
-
-#for lumi in [ 13.70/5., 13.70/2, 13.70 , 2*13.70, 5*13.70, 10*13.70 ]: 
-for lumi in [ 13.70/2 ]: 
-    q_theta_given_theta = {}
-    q_theta_given_SM    = {}
-    for test_statistic in ["lin", "quad", "total"]: 
-        q_theta_given_theta [test_statistic]= {}
-        q_theta_given_SM    [test_statistic]= {}
+theta_max= .5
+Nbins    = 20
+UL = {}
+for lumi in 137*np.array([ 1/50., 1/20. , 1/10., 1/5., 1/2., 1., 2., 5., 10., 20., 50. ]): 
+    UL[lumi] = {level:{} for level in levels if level<0.5}
+    for test_statistic in ["total", "lin", "quad"]: 
 
         print "Test statistic", test_statistic
 
-        histos = []
-        quantile_lines  = []
-        for i_theta, theta in enumerate(theta_vals):
-            print "theta", theta
+        theta_vals      = np.arange( theta_SM, theta_max, (theta_max-theta_SM)/Nbins)
+        tgraphs_theta   = { level: ROOT.TGraph(len(theta_vals)) for level in levels }
+        tgraphs_SM      = { level: ROOT.TGraph(len(theta_vals)) for level in levels }
+
+        min_, max_ = float('inf'), -float('inf')
+
+        sm_toys = make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys ) 
+        for i_theta, theta in enumerate( theta_vals ):
+
             if test_statistic == "quad":
                 q_event = np.log( (q_event_lin**2+q_event_quad**2) )
             elif test_statistic == "lin":
-                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 )
+                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 )                           if theta>0.001 else 2*q_event_lin - theta*q_event_lin**2
             elif test_statistic == "total":
-                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 + (theta*q_event_quad)**2)
+                q_event = 1./theta * np.log( (1 + theta*q_event_lin)**2 + (theta*q_event_quad)**2)  if theta>0.001 else 2*q_event_lin + theta*(q_event_lin**2+q_event_quad**2)
             else:
                 raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
 
             log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
-            q_theta_given_theta[test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta),    theta,    n_toys ) ])
-            q_theta_given_SM   [test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys ) ])
+            q_theta_given_SM    = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in sm_toys ])
+            q_theta_given_theta = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta), theta, n_toys ) ])
 
-        for i_theta, theta in enumerate(theta_vals):
+            quantiles_theta = np.quantile( q_theta_given_theta, levels )
+            quantiles_SM    = np.quantile( q_theta_given_SM, levels )
 
-            if i_theta == 0:
-                all_vals = sum( [list(q_theta_given_theta[k])+list(q_theta_given_SM[k]) for k in q_theta_given_theta.keys()], [])
-                min_, max_ = min( all_vals ), max( all_vals )
-                binning = np.arange(min_, max_, (max_-min_)/100.)
+            for quantile, level in zip( quantiles_theta, levels ):
+                if not level<0.5: continue
+                sm_toy_fraction_below_level = np.count_nonzero( q_theta_given_SM<=quantile )/float(len(sm_toys))
+                if not UL[lumi][level].has_key(test_statistic) and sm_toy_fraction_below_level>.5:
+                    UL[lumi][level][test_statistic] = {"theta":theta, 'frac':sm_toy_fraction_below_level}
 
-            #np_histo_all   = np.histogram(q_theta_given_theta+q_theta_given_SM, 100)
-            #histo_all      = make_TH1F(np_histo_all)
-            #binning        = np_histo_all[1] 
+                #print "SM toys below level Q(%i)=%3.2f: %3.2f at theta %3.2f"% ( 100*level, quantile, sm_toy_fraction_below_level, theta)
 
-            np_histo_SM    = np.histogram(q_theta_given_SM   [test_statistic][theta],    bins=binning)
-            np_histo_theta = np.histogram(q_theta_given_theta[test_statistic][theta], bins=binning)
-            histo_SM       = make_TH1F(np_histo_SM)
-            histo_theta    = make_TH1F(np_histo_theta)
+            min__ = min(list(quantiles_theta)+list(quantiles_SM))
+            max__ = max(list(quantiles_theta)+list(quantiles_SM))
+            if min__<min_: min_=min__
+            if max__>max_: max_=max__
 
-            histo_SM.legendText    = "#color[%i]{p(q_{#theta}|#theta)}, #theta =%3.2f" % ( colors[i_theta], theta_SM )
-            histo_theta.legendText = "#color[%i]{p(q_{#theta}|#theta_{SM})}, #theta = %3.2f" % ( colors[i_theta], theta )
-            histo_SM.style         = styles.lineStyle( colors[i_theta], dashed = True)
-            histo_theta.style      = styles.lineStyle( colors[i_theta] ) 
+            [ tgraphs_theta[level].SetPoint( i_theta, quantile, theta) for level, quantile in zip( levels, quantiles_theta ) ]
+            [ tgraphs_SM   [level].SetPoint( i_theta, quantile, theta) for level, quantile in zip( levels, quantiles_SM ) ]
 
-            #histo_all = histo_all
-            #histo_all.legendText = None
-            #histo_all.style      = styles.invisibleStyle()
+        c1 = ROOT.TCanvas()
+        ROOT.gStyle.SetOptStat(0)
+        c1.SetTitle("")
+        h_empty = ROOT.TH1F("x","",1,min_ - 0.1*(max_-min_),max_+0.1*(max_-min_))
+        l1 = ROOT.TLegend(0.15, 0.7, 0.65, 0.85)
+        l1.SetFillStyle(0)
+        l1.SetShadowColor(ROOT.kWhite)
+        l1.SetBorderSize(0)
 
-            #histos.append( histo_all )
-            histos.append( histo_SM )
-            histos.append( histo_theta )
+        l2 = ROOT.TLegend(0.5, 0.70, 0.75, 0.85)
+        l2.SetFillStyle(0)
+        l2.SetShadowColor(ROOT.kWhite)
+        l2.SetBorderSize(0)
+        h_empty.Draw()
+        h_empty.GetYaxis().SetRangeUser(min(theta_vals), 1.4*max(theta_vals))
+        h_empty.Draw()
+        for i_level, level in enumerate(levels):
+            l1.AddEntry( tgraphs_SM[level], "Q(%i%%) SM"%(100*level) )
+            tgraphs_SM[level].SetTitle("")
+            tgraphs_SM[level].GetXaxis().SetTitle("q")
+            tgraphs_SM[level].GetYaxis().SetTitle("#theta")
+            tgraphs_SM[level].SetLineColor( colors[i_level] )
+            tgraphs_SM[level].SetLineStyle( 7 )
+            tgraphs_SM[level].Draw("L") 
 
-            for x in np.quantile( q_theta_given_SM[test_statistic][theta], [.05, .95 ] ):
-                quantile_lines.append( ROOT.TLine(x, 0, x, histo_SM.GetBinContent(histo_SM.FindBin(x))) )
-                quantile_lines[-1].SetLineColor( colors[i_theta] )
-                quantile_lines[-1].SetLineStyle( 7 )
-            for x in np.quantile( q_theta_given_theta[test_statistic][theta], [.05, .95 ] ):
-                quantile_lines.append( ROOT.TLine(x, 0, x, histo_theta.GetBinContent(histo_theta.FindBin(x))) )
-                quantile_lines[-1].SetLineColor( colors[i_theta] )
+            l2.AddEntry( tgraphs_theta[level], "Q(%i%%) BSM"%(100*level) )
+            tgraphs_theta[level].SetTitle("")
+            tgraphs_theta[level].GetXaxis().SetTitle("q")
+            tgraphs_theta[level].GetYaxis().SetTitle("#theta")
+            tgraphs_theta[level].SetLineColor( colors[i_level] )
+            tgraphs_theta[level].Draw("L")
 
-            # Text on the plots
-            lines = [ 
-                    #  (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta]) ),
-                    #  (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
-                    #  (0.25, 0.78, "#theta_{current} = %5.4f" % theta ),
-                    ]
-            drawObjects = [ tex.DrawLatex(*line) for line in lines ]
+        l1.Draw()
+        l2.Draw()
 
-        plot = Plot.fromHisto( "test_stat_%s_n%i_nEvents_%3.2f"%(test_statistic, n, lumi*sigma_tot(theta_SM)), [[h] for h in histos], texX = "q", texY = "Entries" )
-        plotting.draw( plot,
-            plot_directory = os.path.join( plot_directory, "newman_new2_q" ),
-            #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
-            logX = False, sorting = False,
-            legend         = ( (0.15,0.7,0.9,0.92),2),
-            drawObjects    =  quantile_lines + drawObjects,
-            copyIndexPHP   = True,
-            extensions     = ["png"], 
-          )            
+        c1.RedrawAxis()
+        c1.Update()
+        c1.Print(os.path.join( plot_directory, "newman_new2_q/contours_%s_extended_%i_%3.2f.png"% ( test_statistic, extended, lumi*sigma_tot(theta_SM) )))
 
 ##for i_toy, toy in enumerate( toys_SM[:5] ):
 #def wrapper( i_toy, toys, plot = True, test_statistic = "total", extended = True, verbose = True):
@@ -304,10 +402,6 @@ for lumi in [ 13.70/2 ]:
 #            q_theta_given_theta = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_current), theta_current, n_toys ) ])
 #            q_theta_given_theta_1mCL[theta_current] = np.quantile( q_theta_given_theta, 1-CL)
 #            if plot:
-#                tex = ROOT.TLatex()
-#                tex.SetNDC()
-#                tex.SetTextSize(0.04)
-#                tex.SetTextAlign(11) # align right
 #
 #                # Text on the plots
 #                lines = [ 
