@@ -10,6 +10,7 @@ import Analysis.Tools.syncer            as syncer
 from   Analysis.Tools.cardFileWriter    import cardFileWriter 
 from   RootTools.core.standard          import *
 import TMB.Tools.helpers                as helpers
+import TMB.Tools.stat_helpers           as stat_helpers
 
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
@@ -29,44 +30,6 @@ logger = logger.get_logger(args.logLevel, logFile = None )
 import RootTools.core.logger as logger_rt
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
 
-# https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
-def weighted_quantile(values, quantiles, sample_weight=None, 
-                      values_sorted=False, old_style=False):
-    """ Very close to numpy.percentile, but supports weights.
-    NOTE: quantiles should be in [0, 1]!
-    :param values: numpy.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
-    """
-    values = np.array(values)
-    quantiles = np.array(quantiles)
-    if sample_weight is None:
-        sample_weight = np.ones(len(values))
-    sample_weight = np.array(sample_weight)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
-
-    if not values_sorted:
-        sorter = np.argsort(values)
-        values = values[sorter]
-        sample_weight = sample_weight[sorter]
-
-    weighted_quantiles = np.cumsum(sample_weight) - 0.5 * sample_weight
-    if old_style:
-        # To be convenient with numpy.percentile
-        weighted_quantiles -= weighted_quantiles[0]
-        weighted_quantiles /= weighted_quantiles[-1]
-    else:
-        weighted_quantiles /= np.sum(sample_weight)
-    return np.interp(quantiles, weighted_quantiles, values)
-
-def PoissonLL( lam, n ):
-    return lam - n*log(lam) + sum( [log(n_) for n_ in range(1,n+1)] )
 
 # MVA configuration
 import importlib
@@ -216,7 +179,7 @@ for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
             for q_name, q in qs.iteritems():
                 #unweighted_binning = [-float('inf')]+list(np.quantile( q['val'], binning_quantiles))+[float('inf')]
                 #unweighted_binning = helpers.remove_duplicates( unweighted_binning )
-                weighted_binning = [-float('inf')]+list(weighted_quantile( q['val'][training_sample.name], binning_quantiles, w_sm[training_sample.name]))+[float('inf')]
+                weighted_binning = [-float('inf')]+list(stat_helpers.weighted_quantile( q['val'][training_sample.name], binning_quantiles, w_sm[training_sample.name]))+[float('inf')]
                 q['binning'] = helpers.remove_duplicates( weighted_binning )
                 q['observation'] = [0]*( len(q['binning'])-1 )
 
@@ -265,7 +228,7 @@ for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
             expectations = [ q['h_BSM'][training_sample.name][0][i_b] for training_sample in config.training_samples ]
             observations = [ q['h_SM'] [training_sample.name][0][i_b] for training_sample in config.training_samples ]
             #print i_b, PoissonLL( sum(expectations), int(round(sum(observations))) )
-            q['nll'][WC_val] += PoissonLL( sum(expectations), int(round(sum(observations))) )
+            q['nll'][WC_val] += stat_helpers.PoissonLL( sum(expectations), int(round(sum(observations))) )
         q['nll_tGraph'].SetPoint( i_WC_val, WC_val, q['nll'][WC_val] )
         print "nll",q_name, "WC_val",WC_val,":",q['nll'][WC_val]
         for i_training_sample, training_sample in enumerate(config.training_samples):

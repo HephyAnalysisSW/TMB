@@ -57,10 +57,10 @@ signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 eft_configs = [
     {'color':ROOT.kBlack,    'param':{},            'tex':"SM"}, 
-    #{'color':ROOT.kGreen+1,  'param':{'cHW':1},     'tex':"c_{HW}=1"}, 
-    #{'color':ROOT.kCyan+1,   'param':{'cHWtil':1},  'tex':"c_{H#tilde{W}}=1"}, 
-    {'color':ROOT.kGreen+1, 'param':{'cHj3':.4},    'tex':"c_{Hq3}=0.4"},
-    {'color':ROOT.kCyan+1,  'param':{'cHj3':-.4},   'tex':"c_{Hq3}=-0.4"},
+    {'color':ROOT.kGreen+1,  'param':{'cHW':1},     'tex':"c_{HW}=1"}, 
+    {'color':ROOT.kCyan+1,   'param':{'cHWtil':1},  'tex':"c_{H#tilde{W}}=1"}, 
+    #{'color':ROOT.kGreen+1, 'param':{'cHj3':.4},    'tex':"c_{Hq3}=0.4"},
+    #{'color':ROOT.kCyan+1,  'param':{'cHj3':-.4},   'tex':"c_{Hq3}=-0.4"},
     {'color':ROOT.kOrange-1, 'param':{'cHj3':.2},    'tex':"c_{Hq3}=0.2"},
     {'color':ROOT.kOrange-2, 'param':{'cHj3':-.2},   'tex':"c_{Hq3}=-0.2"},
     ]
@@ -181,14 +181,14 @@ elif signal.name == 'ZH':
     bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
-#    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
-#    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
+    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
+    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
 #    ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
 #    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [30,-5,25]), 
     ("BIT_cHj3",            bits[('cHj3',)],          [20,-5,5]), 
     ("BIT_cHj3_cHj3",       bits[('cHj3','cHj3')],  [30,-5,25]), 
-#    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
-#    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
+    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
+    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
 #    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
 #    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,25]), 
     ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
@@ -244,33 +244,33 @@ for model_name, _, binning in models:
         addOverFlowBin = 'upper',
     ))
 
-    # 2D with background 
-    var = "mva_H_pt"
-    i_key = [v[0] for v in config.mva_variables].index(var)
-    plots2D.append(Plot2D(
-        name = "bkg2D_H_pt_"+model_name+postfix,
-        texX = model_name, texY = config.plot_options[var]['tex'],
-        stack = Stack(*stack[0:1]),
-        attribute = (
-            lambda event, sample, model_name=model_name: getattr(event, model_name),
-            lambda event, sample, i_key=i_key: event.features[i_key],
-            ),
-        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-        binning   = binning+config.plot_options[var]['binning'],
-    ))
-
-    # 2D with signal
-    plots2D.append(Plot2D(
-        name = "sig2D_H_pt_"+model_name+postfix,
-        texX = model_name, texY = config.plot_options[var]['tex'],
-        stack = Stack(*stack[1:2]),
-        attribute = (
-            lambda event, sample, model_name=model_name: getattr(event, model_name),
-            lambda event, sample, i_key=i_key: event.features[i_key],
-            ),
-        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-        binning   = binning+config.plot_options[var]['binning'],
-    ))
+#    # 2D with background 
+#    var = "mva_H_pt"
+#    i_key = [v[0] for v in config.mva_variables].index(var)
+#    plots2D.append(Plot2D(
+#        name = "bkg2D_H_pt_"+model_name+postfix,
+#        texX = model_name, texY = config.plot_options[var]['tex'],
+#        stack = Stack(*stack[0:1]),
+#        attribute = (
+#            lambda event, sample, model_name=model_name: getattr(event, model_name),
+#            lambda event, sample, i_key=i_key: event.features[i_key],
+#            ),
+#        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+#        binning   = binning+config.plot_options[var]['binning'],
+#    ))
+#
+#    # 2D with signal
+#    plots2D.append(Plot2D(
+#        name = "sig2D_H_pt_"+model_name+postfix,
+#        texX = model_name, texY = config.plot_options[var]['tex'],
+#        stack = Stack(*stack[1:2]),
+#        attribute = (
+#            lambda event, sample, model_name=model_name: getattr(event, model_name),
+#            lambda event, sample, i_key=i_key: event.features[i_key],
+#            ),
+#        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+#        binning   = binning+config.plot_options[var]['binning'],
+#    ))
 
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):
