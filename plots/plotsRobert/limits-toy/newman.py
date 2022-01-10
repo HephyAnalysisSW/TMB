@@ -4,6 +4,7 @@
 import  Analysis.Tools.syncer as syncer
 from    RootTools.core.standard import *
 from    TMB.Tools.user import plot_directory
+import  TMB.Tools.stat_helpers as stat_helpers
 
 import  ROOT
 from    math import exp, pi
@@ -88,16 +89,6 @@ def get_sampled_dataset( n_events ):
 #                       copyIndexPHP = True,
 #                       )
 
-def make_TH1F( h ):
-    # remove infs from thresholds
-    vals, thrs = h
-    #thrs[0]  = thrs[1] - (thrs[2]-thrs[1])
-    #thrs[-1] = thrs[-2] + (thrs[-2]-thrs[-3])
-    histo = ROOT.TH1F("h","h",len(thrs)-1,array.array('d', thrs))
-    for i_v, v in enumerate(vals):
-        histo.SetBinContent(i_v+1, v)
-    return histo
-
 # we simulate a large number of events
 dataset_size      = 10**6
 features, weights = get_sampled_dataset(dataset_size)
@@ -138,9 +129,9 @@ tex = ROOT.TLatex()
 tex.SetNDC()
 tex.SetTextSize(0.04)
 
-##########################
-## Plot test statistics  #
-##########################
+################################
+## Plot test statistics  (toys)#
+################################
 #colors   = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
 #extended = True
 #lumi     = 137
@@ -183,13 +174,13 @@ tex.SetTextSize(0.04)
 #                binning = np.arange(min_, max_, (max_-min_)/100.)
 #
 #            #np_histo_all   = np.histogram(q_theta_given_theta+q_theta_given_SM, 100)
-#            #histo_all      = make_TH1F(np_histo_all)
+#            #histo_all      = stat_helpers.make_TH1F(np_histo_all)
 #            #binning        = np_histo_all[1] 
 #
 #            np_histo_SM    = np.histogram(q_theta_given_SM   [test_statistic][theta],    bins=binning)
 #            np_histo_theta = np.histogram(q_theta_given_theta[test_statistic][theta], bins=binning)
-#            histo_SM       = make_TH1F(np_histo_SM)
-#            histo_theta    = make_TH1F(np_histo_theta)
+#            histo_SM       = stat_helpers.make_TH1F(np_histo_SM)
+#            histo_theta    = stat_helpers.make_TH1F(np_histo_theta)
 #
 #            histo_SM.legendText    = "#color[%i]{p(q_{#theta}|#theta)}, #theta =%3.2f" % ( colors[i_theta], theta_SM )
 #            histo_theta.legendText = "#color[%i]{p(q_{#theta}|#theta_{SM})}, #theta = %3.2f" % ( colors[i_theta], theta )
@@ -231,9 +222,10 @@ tex.SetTextSize(0.04)
 #            extensions     = ["png"], 
 #          )            
 
-##########################################
-# Plot test statistics  quantile TGraphs #
-##########################################
+###############################################
+# Plot quantiles of test statistics (TGraphs) #
+###############################################
+
 colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
 levels   = [ .05,       .32,        .5,          .68,        .95      ]
 extended = True
@@ -412,7 +404,7 @@ for lumi in 137*np.array([ 1/50., 1/20. , 1/10., 1/5., 1/2., 1., 2., 5., 10., 20
 #                drawObjects = [ tex.DrawLatex(*line) for line in lines ]
 #
 #                np_histo      = np.histogram(q_theta_given_theta, 100)
-#                histo         = make_TH1F(np_histo)
+#                histo         = stat_helpers.make_TH1F(np_histo)
 #                quantile_line = ROOT.TLine(q_theta_given_theta_1mCL[theta_current], 0, q_theta_given_theta_1mCL[theta_current], histo.GetMaximum())
 #                quantile_line.SetLineColor(ROOT.kRed)
 #                histo.style = styles.lineStyle( ROOT.kRed )
@@ -422,7 +414,7 @@ for lumi in 137*np.array([ 1/50., 1/20. , 1/10., 1/5., 1/2., 1., 2., 5., 10., 20
 #                q_theta_SM_line.SetLineColor(ROOT.kBlue)
 #
 #                q_theta_given_SM = np.array([np.sum( q_event[toy_]-log_sigma_tot_ratio_subtraction ) for toy_ in toys_SM])
-#                histo_SM         = make_TH1F(np.histogram(q_theta_given_SM, bins=np_histo[1]))
+#                histo_SM         = stat_helpers.make_TH1F(np.histogram(q_theta_given_SM, bins=np_histo[1]))
 #                histo_SM.legendText = "#color[4]{q_{SM}}" 
 #                histo_SM.style = styles.lineStyle( ROOT.kBlue )
 #
