@@ -1,6 +1,6 @@
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots --deri cHW --binning_var mva_Z_pt
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots --deri cHj3 --binning_var mva_Z_pt
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots --deri cHWtil --binning_var mva_Z_pt
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots --deri cHW --binning_var mva_W_pt
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots --deri cHj3 --binning_var mva_W_pt
-python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots --deri cHWtil --binning_var mva_W_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHW --binning_var mva_Z_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHj3 --binning_var mva_Z_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHWtil --binning_var mva_Z_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHW --binning_var mva_W_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHj3 --binning_var mva_W_pt
+python plots_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir LLR_plots_v2 --deri cHWtil --binning_var mva_W_pt

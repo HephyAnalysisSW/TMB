@@ -314,7 +314,7 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
         LLR_true = w1_true_sum - w0_sum - w0_sum*np.log(w1_true_sum/w0_sum)
 #        LLR_true_capped = w1_true_capped_sum - w0_capped_sum - w0_capped_sum*np.log(w1_true_capped_sum/w0_capped_sum)
         LLR_pred_quad = w1_pred_quad_sum - w0_sum - w0_sum*np.log(w1_pred_quad_sum/w0_sum)
-        LLR_pred_lin = w1_pred_lin_sum - w0_sum - w0_sum*np.log(w1_pred_lin_sum/w0_sum)
+        LLR_pred_lin = w1_pred_lin_sum - w0_sum - w0_sum*np.log(w1_pred_lin_sum/w0_sum, out = np.zeros_like(w1_pred_lin_sum/w0_sum),where=w1_pred_lin_sum/w0_sum>0) #problem with log in cHj3
         print "Theta: ", plot_theta, " LLR True: ", LLR_true, " LLR Pred Quad: ", LLR_pred_quad, " LLR Pred Lin: ", LLR_pred_lin
         h_LLR_true.Fill(plot_theta+0.01,LLR_true)
         h_LLR_true_event.Fill(plot_theta+0.01,LLR_true_event)
@@ -337,6 +337,7 @@ plot   = Plot.fromHisto( "LLR",  histos, texX = deri, texY = "LLR" )
 plotting.draw(plot,
                 plot_directory = directory,
                 yRange = 'auto',
+                copyIndexPHP = True
                 #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
                 )
 
@@ -351,6 +352,7 @@ plot   = Plot.fromHisto( "LLR_eventwise",  histos, texX = deri, texY = "LLR" )
 plotting.draw(plot,
                 plot_directory = directory,
                 yRange = 'auto',
+                copyIndexPHP = True
                 #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
                 )
 
@@ -402,11 +404,11 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
 #        h_w1_true_capped_clone.Divide(h_w0_clone)
         for k in range(bin_number):
                 inter = h_w1_pred_lin_clone.GetBinContent(k+1)
-                h_w1_pred_lin_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter!=0))
+                h_w1_pred_lin_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter>0))
                 inter = h_w1_pred_quad_clone.GetBinContent(k+1)
-                h_w1_pred_quad_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter!=0))
+                h_w1_pred_quad_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter>0))
                 inter = h_w1_true_clone.GetBinContent(k+1)
-                h_w1_true_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter!=0))
+                h_w1_true_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter>0))
 #                inter = h_w1_true_capped_clone.GetBinContent(k+1)
 #                h_w1_true_capped_clone.SetBinContent(k+1,np.log(inter,out = np.zeros_like(inter),where=inter!=0))
         h_w0_clone_pred_lin.Multiply(h_w1_pred_lin_clone)
@@ -461,6 +463,7 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.0,0.05)):
         plotting.draw(plot,
                 plot_directory = directory,
                 yRange = 'auto',
+                copyIndexPHP = True
                 #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
                 )
 
@@ -476,6 +479,7 @@ plot   = Plot.fromHisto( "LLR_binned",  histos, texX = deri, texY = "LLR" )
 plotting.draw(plot,
                 plot_directory = directory,
                 yRange = 'auto',
+                copyIndexPHP = True
                 #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
                 )
 print "Finished"
