@@ -7,7 +7,6 @@ from   math import log
 from   TMB.Tools.delphesCutInterpreter  import cutInterpreter
 from   Analysis.Tools                   import u_float
 import Analysis.Tools.syncer            as syncer 
-from   Analysis.Tools.cardFileWriter    import cardFileWriter 
 from   RootTools.core.standard          import *
 import TMB.Tools.helpers                as helpers
 import TMB.Tools.stat_helpers           as stat_helpers
@@ -20,6 +19,7 @@ argParser.add_argument('--config_module',      action='store', type=str, default
 argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--name',               action='store', type=str,   default='v2', help="Name of the training")
+argParser.add_argument('--WC',                 action='store', type=str,   default='cHj3', help="WC")
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/groups/hephy/cms/$USER/BIT/training-ntuple-ZH/MVA-training"))
 
 args = argParser.parse_args()
@@ -29,7 +29,6 @@ import Analysis.Tools.logger as logger
 logger = logger.get_logger(args.logLevel, logFile = None )
 import RootTools.core.logger as logger_rt
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None )
-
 
 # MVA configuration
 import importlib
@@ -42,13 +41,6 @@ if args.small:
 import TMB.Tools.user as user
 # directories
 plot_directory      = os.path.join( user. plot_directory, 'MVA', args.config, args.name)
-cardfile_directory  = os.path.join( args.output_directory, 'cardfiles', args.config, args.name)
-# saving
-#if not os.path.exists(output_directory):
-#    try:
-#        os.makedirs(output_directory)
-#    except OSError:
-#        pass
 
 import uproot
 import awkward
@@ -66,275 +58,300 @@ n_var_flat   = len(mva_variables)
 features           = {}
 weight_derivatives = {}
 
-bit_flavors = ['bkgs', 'nom']
-bit          = {key:{} for key in bit_flavors}
-bit_branches = {key:[ 'BIT_%s_%s'%( key, "_".join(der) ) for der in config.bit_derivatives] for key in bit_flavors }
+flavor = 'nom'
+bit_branches = [ 'BIT_%s_%s'%( flavor, "_".join(der) ) for der in config.bit_derivatives]
 n_der        = len(config.weight_derivative_combinations)
 n_bits       = len(config.bit_derivatives)
 
+# only signal for now
+training_sample = config.training_samples[0]
+
 n_small_samples = 10000 if args.small else None
+bit          = {}
+#for i_training_sample, training_sample in enumerate(config.training_samples):
+upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+logger.info( "Loading upfile: %s from %s", training_sample.name, upfile_name)
+upfile = uproot.open(upfile_name)
 
-for i_training_sample, training_sample in enumerate(config.training_samples):
-    upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
-    logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
-    upfile = uproot.open(upfile_name)
-
-    features[training_sample.name]            = upfile["Events"].pandas.df(branches = mva_variables ).values[:n_small_samples]
-    weight_derivatives[training_sample.name]  = upfile["Events"].pandas.df(branches = ["weight_derivatives"] ).values.reshape((-1,n_der))[:n_small_samples]
-    for flavor in bit_flavors:
-        bit[flavor][training_sample.name]     = upfile["Events"].pandas.df(branches = bit_branches[flavor]).values.reshape((-1,n_bits))[:n_small_samples]
-
-flavor     = 'bkgs'
-thresholds = range(0,20,3)+[float('inf')]
-lumi       = 59.7
-
-WC         = 'cHj3'
-#WC         = 'cHW'
+features            = upfile["Events"].pandas.df(branches = mva_variables ).values[:n_small_samples]
+weight_derivatives  = upfile["Events"].pandas.df(branches = ["weight_derivatives"] ).values.reshape((-1,n_der))[:n_small_samples]
+bit                 = upfile["Events"].pandas.df(branches = bit_branches).values.reshape((-1,n_bits))[:n_small_samples]
 
 # find position of linear and quadratic estimated coefficient 
-i_lin   = config.bit_derivatives.index((WC,))
-i_quad  = config.bit_derivatives.index((WC, WC))
+i_lin       = config.bit_derivatives.index((args.WC,))
+i_quad      = config.bit_derivatives.index((args.WC, args.WC))
 # find linear and quadratic weights
-i_der_lin   = config.weight_derivative_combinations.index((WC,))
-i_der_quad  = config.weight_derivative_combinations.index((WC, WC))
+i_der_lin   = config.weight_derivative_combinations.index((args.WC,))
+i_der_quad  = config.weight_derivative_combinations.index((args.WC, args.WC))
+
+lumi       = 137
+sigma_sm_tot  = np.sum(weight_derivatives[:,0])/config.scale_weight
+sigma_sm_lin  = np.sum(weight_derivatives[:,i_der_lin])/config.scale_weight
+sigma_sm_quad = np.sum(weight_derivatives[:,i_der_quad])/config.scale_weight
+
+# xsec ratio
+def sigma_tot_ratio( theta, lin=False):
+    return 1 + theta*sigma_sm_lin/sigma_sm_tot + ( 0.5*theta**2*sigma_sm_quad/sigma_sm_tot if not lin else 0 )
+# total xsec
+def sigma_tot( theta, lin=False):
+    return sigma_sm_tot*sigma_tot_ratio( theta, lin=lin )
+
+event_indices     = np.arange(len(features))
+
+def make_toys( yield_per_toy, theta, n_toys):
+    weights_      =  weight_derivatives[:,0]+theta*weight_derivatives[:, i_der_lin]+.5*theta**2*weight_derivatives[:, i_der_quad]
+    selection     = weights_>0
+    biased_sample = np.random.choice( event_indices[selection], size=n_toys*int(yield_per_toy+1),  p = weights_[selection]/np.sum(weights_[selection]) )
+    return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
 
 colors = [ROOT.kBlack, ROOT.kBlue, ROOT.kRed ]
-def make_TH1F( h ):
-    # remove infs from thresholds
-    vals, thrs = h
-    #thrs[0]  = thrs[1] - (thrs[2]-thrs[1])
-    #thrs[-1] = thrs[-2] + (thrs[-2]-thrs[-3])
-    histo = ROOT.TH1F("h","h",len(vals),0,len(vals))
-    for i_v, v in enumerate(vals):
-        histo.SetBinContent(i_v+1, v)
-    return histo
-
-#binning_quantiles = [ .001, .01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99, .999]
-binning_quantiles = [.01, .025, .05, .1, .2, .3, .5, .6, .7, .8, .9, .95, .975, .99,]
-#binning_quantiles = [.05, .1, .2, .3, .5, .6, .7, .8, .9, .95, ]
-#binning_quantiles = [ ]
-#binning_quantiles = [ .5 ]
-#binning_quantiles = [ i/200. for i in range(1,200) ] 
 
 # loop over EFT param point
 
-#WC_vals = [i/50. for i in range(-50,21)] 
-#WC_vals = [i/100. for i in range(-10,11)] 
-WC_vals = [i/20. for i in range(-10,11)] 
-#WC_vals = [ -0.1, -0.05, 0, 0.05, 0.1 ]
-#WC_vals = [ 0.1 ]
-
-config.training_samples = config.training_samples
-
-# test statistic
-qs = {'linear'   :{'color':ROOT.kGreen}, 
-      'quadratic':{'color':ROOT.kRed},
-      'total'    :{'color':ROOT.kBlack},
+qs = {'linear'   :{'color':ROOT.kGreen,     'histos':[]}, 
+      'quadratic':{'color':ROOT.kRed,       'histos':[]},
+      'total'    :{'color':ROOT.kBlack,     'histos':[]},
     }
 
-for q_name, q in qs.iteritems(): 
-    # tGraphs 
-    q['nll_tGraph'] = ROOT.TGraph( len(WC_vals) )
-    q['nll_tGraph'].SetLineColor( q['color'] )
-    q['nll_tGraph'].SetMarkerColor( q['color'] )
-    q['nll_tGraph'].SetMarkerStyle( 0 )
-    q['nll_tGraph'].SetLineWidth(2)
-    q['unbinned_nll_tGraph'] = ROOT.TGraph( len(WC_vals) )
-    q['unbinned_nll_tGraph'].SetLineColor( q['color'] )
-    q['unbinned_nll_tGraph'].SetMarkerColor( q['color'] )
-    q['unbinned_nll_tGraph'].SetMarkerStyle( 0 )
-    q['unbinned_nll_tGraph'].SetLineWidth(2)
-    # cardFileWriter
-    #q['c'] = cardFileWriter.cardFileWriter()
-    #q['c'].setPrecision(5)
-
-    # test statistic dicts
-    q['val'] = {}
-    q['nll'] = {}
-    q['poissonPrefitNLL'] = {}
-
-for i_WC_val, WC_val in enumerate(WC_vals):#np.arange(-1,1,.1):
-
-    # get weights and test statistics arrays 
-    w_sm    = {}
-    w_bsm   = {}
-    
-    q_lin   = {}
-    q_tot   = {}
-    q_quad  = {}
-
-    for i_training_sample, training_sample in enumerate(config.training_samples):
-
-        # compute weights
-        w_sm  [training_sample.name] = weight_derivatives[training_sample.name][:,0]
-        w_bsm [training_sample.name] = weight_derivatives[training_sample.name][:,0] + WC_val*weight_derivatives[training_sample.name][:,i_der_lin]+0.5*WC_val**2*weight_derivatives[training_sample.name][:,i_der_quad] 
-
-        # compute test statistics. 
-        qs['total']['val']    [training_sample.name] = bit[flavor][training_sample.name][:,i_lin] + 0.5*WC_val*bit[flavor][training_sample.name][:,i_quad]  
-        qs['linear']['val']   [training_sample.name] = bit[flavor][training_sample.name][:,i_lin]  
-        qs['quadratic']['val'][training_sample.name] = bit[flavor][training_sample.name][:,i_quad] 
-
-        # make binning from signal sample
-        if i_training_sample == 0: 
-            for q_name, q in qs.iteritems():
-                #unweighted_binning = [-float('inf')]+list(np.quantile( q['val'], binning_quantiles))+[float('inf')]
-                #unweighted_binning = helpers.remove_duplicates( unweighted_binning )
-                weighted_binning = [-float('inf')]+list(stat_helpers.weighted_quantile( q['val'][training_sample.name], binning_quantiles, w_sm[training_sample.name]))+[float('inf')]
-                q['binning'] = helpers.remove_duplicates( weighted_binning )
-                q['observation'] = [0]*( len(q['binning'])-1 )
-
-                # set up cardFileWriter
-                #q['c'].reset()
-
-                #for i_bin in range(len(q["binning"])-1):
-                #    q['c'].addBin("Bin%i"%i_bin, [s.name for s in config.training_samples[1:]], "Bin%i"%i_bin)
-
-                # add uncertainties
-                #q['c'].addUncertainty('JEC',         'lnN') # correlated
-                #q['c'].addUncertainty('JER',         'lnN') # correlated
-                #q['c'].addUncertainty('btag_heavy',  'lnN') # uncorrelated, wait for offical recommendation
-                #q['c'].addUncertainty('btag_light',  'lnN') # uncorrelated, wait for offical recommendation
-                #q['c'].addUncertainty('trigger',     'lnN') # uncorrelated, statistics dominated
-                #q['c'].addUncertainty('scale',       'lnN') # correlated.
-                #q['c'].addUncertainty('PDF',         'lnN') # correlated.
-                #q['c'].addUncertainty('Lumi',        'lnN')
-
-                # place holders for histos
-                q['h_SM']      = {}
-                q['h_BSM']     = {}
-                q['histo_SM']  = {}
-                q['histo_BSM'] = {}
-
-
-        # use linear binning for total test statistic
-        qs['total']['binning'] = qs['linear']['binning']
-
-        for q_name, q in qs.iteritems():
-            #h_SM    = np.histogram(q, binning[q_name], weights = w_sm*float(lumi)/config.scale_weight)
-            #h_BSM   = np.histogram(q, binning[q_name], weights = w_bsm*float(lumi)/config.scale_weight)
-            #binning = q['binning']
-            q['h_SM'][training_sample.name]      = np.histogram(q['val'][training_sample.name], q['binning'], weights = w_sm[training_sample.name]*float(lumi)/config.scale_weight)
-            q['h_BSM'][training_sample.name]     = np.histogram(q['val'][training_sample.name], q['binning'], weights = w_bsm[training_sample.name]*float(lumi)/config.scale_weight)
-
-            q['histo_SM'] [training_sample.name] = make_TH1F(q['h_SM'][training_sample.name])
-            q['histo_BSM'][training_sample.name] = make_TH1F(q['h_BSM'][training_sample.name])
-
-            #the MC estimate of the extended negativelog  likelihood (NOT ratio, i.e., SM LL is not subtracted)
-    
-    for q_name, q in qs.iteritems():
-   
-        q['nll'][WC_val] = 0.
-        for i_b in range(len(q['binning'])-1):
-            expectations = [ q['h_BSM'][training_sample.name][0][i_b] for training_sample in config.training_samples ]
-            observations = [ q['h_SM'] [training_sample.name][0][i_b] for training_sample in config.training_samples ]
-            #print i_b, PoissonLL( sum(expectations), int(round(sum(observations))) )
-            q['nll'][WC_val] += stat_helpers.PoissonLL( sum(expectations), int(round(sum(observations))) )
-        q['nll_tGraph'].SetPoint( i_WC_val, WC_val, q['nll'][WC_val] )
-        print "nll",q_name, "WC_val",WC_val,":",q['nll'][WC_val]
-        for i_training_sample, training_sample in enumerate(config.training_samples):
-            q['histo_SM'] [training_sample.name].style      = styles.lineStyle(colors[i_training_sample], dashed = True )
-            q['histo_SM'] [training_sample.name].legendText = training_sample.name#+" (SM)" 
-            q['histo_BSM'][training_sample.name].style      = styles.lineStyle(colors[i_training_sample], dashed = False )
-            q['histo_BSM'][training_sample.name].legendText = training_sample.name#+" (cHW=%4.3f)"%cHW 
-
-            #if q_name=="total":
-            #    print 
-            #    print q_name, training_sample.name, q['h_SM'][training_sample.name] 
-            #    print 
-
-            # loop over bins, filling the card
-            #for i_b in range(len(binning[q_name])-1):
-            #for i_b in range(len(q['binning'])-1):
-                #expected               = max([0.01, round(q['h_BSM'][training_sample.name][0][i_b],4)])
-                #q['observation'][i_b] += q['h_SM'][training_sample.name][0][i_b] 
-                #name                   = training_sample.name if i_training_sample>0 else "signal"
-                #q['c'].specifyExpectation("Bin%i"%i_b, name, expected )
-                #q['c'].specifyUncertainty('JEC',         "Bin%i"%i_b, name, 1.09)
-                #q['c'].specifyUncertainty('JER',         "Bin%i"%i_b, name, 1.01)
-                #q['c'].specifyUncertainty('btag_heavy',  "Bin%i"%i_b, name, 1.04)
-                #q['c'].specifyUncertainty('btag_light',  "Bin%i"%i_b, name, 1.04)
-                #q['c'].specifyUncertainty('trigger',     "Bin%i"%i_b, name, 1.01)
-                #q['c'].specifyUncertainty('scale',       "Bin%i"%i_b, name, 1.01) 
-                #q['c'].specifyUncertainty('PDF',         "Bin%i"%i_b, name, 1.01)
-                #q['c'].specifyUncertainty('Lumi',        "Bin%i"%i_b, name, 1.00001)
-
-        plot = Plot.fromHisto(name = "q_%s_%s_%4.3f"%(q_name,WC,WC_val), 
-                histos = [[q['histo_SM'] [s.name] for s in config.training_samples], 
-                         [ q['histo_BSM'][s.name] for s in config.training_samples],],
-                texX = "q_{%s=%4.3f}"%(WC,WC_val) , texY = "Number of events" )
-
-        for log_ in [True]:
-            plot_directory_ = os.path.join(plot_directory, ("log" if log_ else "lin"))
-            plotting.draw(plot, plot_directory = plot_directory_, ratio = {'histos':[(1,0)], 'texY': 'Ratio'}, logY = log_, logX = False, yRange = (10**-2,"auto"), 
-                #yRange = (0, 0.5) if 'Mult' not in var else (0, 15 ),  
-                legend = ([0.20,0.75,0.9,0.88],3), copyIndexPHP=True, )
-
-        #for i_b in range(len(q['binning'])-1):
-        #    q['c'].specifyObservation("Bin%i"%i_b, int(round(q['observation'][i_b],0)) )
-
-        #q['c'].writeToFile( os.path.join(cardfile_directory, '%s_%s_%4.3f.txt'%(q_name,WC,WC_val) ))
-        #q['nll'][WC_val] = q['c'].poissonPrefitNLL() 
-        #nll = q['c'].calcNLL()
-        #print q['nll'][WC_val], nll 
-        #q['nll_tGraph'].SetPoint( i_WC_val, WC_val, q['nll'][WC_val] )
-
-    # compute unbinned LL
-    unbinned_nll_tot  = 0
-    unbinned_nll_quad = 0
-    unbinned_nll_lin  = 0
-    total_xsec_bsm    = 0
-    total_xsec_sm     = 0
-    # scale to lumi and compensate for the scaling in the config that we applied to all the training weights
-    rescale           = float(lumi)/config.scale_weight
-    for i_training_sample, training_sample in enumerate(config.training_samples):
-
-         unbinned_nll_tot  += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] + 0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
-         unbinned_nll_quad += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+0.5*WC_val**2*bit[flavor][training_sample.name][:,i_quad] ))))
-         unbinned_nll_lin  += -rescale*np.sum(np.nan_to_num(w_sm[training_sample.name]*(np.log(1+WC_val*bit[flavor][training_sample.name][:,i_lin] ))))
-
-         total_xsec_bsm    += rescale*sum(w_bsm[training_sample.name])
-         total_xsec_sm     += rescale*sum(w_sm[training_sample.name])
-
-    Poissonian_NLL_term      = -total_xsec_sm*log( total_xsec_bsm/total_xsec_sm )
-
-    qs['total']     ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_tot - Poissonian_NLL_term )
-    qs['quadratic'] ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_quad- Poissonian_NLL_term )
-    qs['linear']    ['unbinned_nll_tGraph'].SetPoint( i_WC_val, WC_val, unbinned_nll_lin - Poissonian_NLL_term )
-
-## subtract minimum
+###############################################
+## Histogram of test statistic (total sample) #
+###############################################
+#
+#w_sm   = weight_derivatives[:,0]
+#for i_WC_val, (color, WC_val) in enumerate(
+#            [ (ROOT.kGreen-1, -0.4), (ROOT.kOrange-1, -0.2), (ROOT.kOrange+1, 0.2), (ROOT.kGreen+1, 0.4) ]
+#        ):
+#
+#    # compute BSM weights
+#    w_bsm  = weight_derivatives[:,0] + WC_val*weight_derivatives[:,i_der_lin]+0.5*WC_val**2*weight_derivatives[:,i_der_quad] 
+#
+#    # compute test statistics. 
+#    qs['total']['val']     = bit[:,i_lin] + 0.5*WC_val*bit[:,i_quad]  
+#    qs['linear']['val']    = bit[:,i_lin]  
+#    qs['quadratic']['val'] = bit[:,i_quad] 
+#
+#    for q_name, q in qs.iteritems():
+#        # place holders for histos
+#
+#        h_np     = np.histogram(q['val'], bins=np.arange(-150,150,5), weights = w_bsm*float(lumi)/config.scale_weight)
+#        h        = stat_helpers.make_TH1F(h_np)
+#        h.style      = styles.lineStyle(color, dashed = False )
+#        h.legendText = training_sample.name+" %s=%4.3f"%(args.WC, WC_val ) 
+#
+#        q['histos'].append( h )
+#
+#
 #for q_name, q in qs.iteritems():
-#    for key in [ 'nll_tGraph', 'unbinned_nll_tGraph']:
-#        min_y = min( [q[key].GetY()[i] for i in range(len(WC_vals))] )
-#        print "Subtracting likelihood offset for",q_name, key, "of", min_y
-#        for i in range(len(WC_vals)):
-#            q[key].SetPoint( i, q[key].GetX()[i], -min_y + q[key].GetY()[i])
+#    plot = Plot.fromHisto(name = "q_%s_%s"%(q_name,args.WC), 
+#            histos =  [ [h] for h in q['histos'] ],
+#            texX = "q_{%s} %s"%(args.WC, q_name) , texY = "Number of Events" )
+#
+#    for log_ in [True, False]:
+#        plot_directory_ = os.path.join(plot_directory, ("log" if log_ else "lin"))
+#        plotting.draw(plot, plot_directory = plot_directory_, ratio = {'histos':[(1,0)], 'texY': 'Ratio'}, logY = log_, logX = False, yRange = (10**-2,"auto"), 
+#            #yRange = (0, 0.5) if 'Mult' not in var else (0, 15 ),  
+#            legend = ([0.20,0.75,0.9,0.88],3), copyIndexPHP=True, )
 
-for key in  [ 'nll_tGraph', 'unbinned_nll_tGraph']:
-    c1 = ROOT.TCanvas()
-    ROOT.gStyle.SetOptStat(0)
-    c1.SetTitle("")
+#######################################
+## Histogram of test statistic (toys) #
+#######################################
+#
+#colors   = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
+#extended = True
+#lumi     = 137
+#n_toys   = 5000
+#theta_SM = 0
+#theta_vals = [0.05, 0.04, 0.03, 0.02, 0.01]
+#
+##for lumi in [ 13.70/5., 13.70/2, 13.70 , 2*13.70, 5*13.70, 10*13.70 ]: 
+#for lumi in [ 1370 ]: 
+#    q_theta_given_theta = {}
+#    q_theta_given_SM    = {}
+#    for test_statistic in ["lin", "quad", "total"]: 
+#        q_theta_given_theta [test_statistic]= {}
+#        q_theta_given_SM    [test_statistic]= {}
+#
+#        print "Test statistic", test_statistic
+#
+#        histos = []
+#        quantile_lines  = []
+#        for i_theta, theta in enumerate(theta_vals):
+#            print "theta", theta
+#            if test_statistic == "quad":
+#                q_event = np.nan_to_num( np.log( 1 +  0.5*bit[:,i_quad] ) )
+#            elif test_statistic == "lin":
+#                q_event = 1./theta * np.nan_to_num( np.log( (1 + theta*bit[:,i_lin])**2 ))  if theta>0.001 else 2*bit[:,i_lin]
+#            elif test_statistic == "total":
+#                q_event = 1./theta * np.nan_to_num(np.log( 1 + theta*bit[:,i_lin] + 0.5*theta**2*bit[:,i_quad]))  if theta>0.001 else bit[:,i_lin] + 0.5*theta*(bit[:,i_quad]-bit[:,i_lin]**2) 
+#            else:
+#                raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
+#
+#            log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
+#            q_theta_given_theta[test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta),    theta,    n_toys ) ])
+#            q_theta_given_SM   [test_statistic][theta] = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys ) ])
+#
+#        for i_theta, theta in enumerate(theta_vals):
+#
+#            if i_theta == 0:
+#                all_vals = sum( [list(q_theta_given_theta[test_statistic][k])+list(q_theta_given_SM[test_statistic][k]) for k in q_theta_given_theta[test_statistic].keys()], [])
+#                min_, max_ = min( all_vals ), max( all_vals )
+#                binning = np.arange(min_, max_, (max_-min_)/100.)
+#
+#            #np_histo_all   = np.histogram(q_theta_given_theta+q_theta_given_SM, 100)
+#            #histo_all      = stat_helpers.make_TH1F(np_histo_all)
+#            #binning        = np_histo_all[1] 
+#
+#            np_histo_SM    = np.histogram(q_theta_given_SM   [test_statistic][theta],    bins=binning)
+#            np_histo_theta = np.histogram(q_theta_given_theta[test_statistic][theta], bins=binning)
+#            histo_SM       = stat_helpers.make_TH1F(np_histo_SM)
+#            histo_theta    = stat_helpers.make_TH1F(np_histo_theta)
+#
+#            histo_SM.legendText    = "#color[%i]{p(q_{#theta}|#theta)}, #theta =%3.2f" % ( colors[i_theta], theta_SM )
+#            histo_theta.legendText = "#color[%i]{p(q_{#theta}|#theta_{SM})}, #theta = %3.2f" % ( colors[i_theta], theta )
+#            histo_SM.style         = styles.lineStyle( colors[i_theta], dashed = True)
+#            histo_theta.style      = styles.lineStyle( colors[i_theta] ) 
+#            #histo_all = histo_all
+#            #histo_all.legendText = None
+#            #histo_all.style      = styles.invisibleStyle()
+#
+#            #histos.append( histo_all )
+#            histos.append( histo_SM )
+#            histos.append( histo_theta )
+#
+#            for x in np.quantile( q_theta_given_SM[test_statistic][theta], [.05, .95 ] ):
+#                quantile_lines.append( ROOT.TLine(x, 0, x, histo_SM.GetBinContent(histo_SM.FindBin(x))) )
+#                quantile_lines[-1].SetLineColor( colors[i_theta] )
+#                quantile_lines[-1].SetLineStyle( 7 )
+#            for x in np.quantile( q_theta_given_theta[test_statistic][theta], [.05, .95 ] ):
+#                quantile_lines.append( ROOT.TLine(x, 0, x, histo_theta.GetBinContent(histo_theta.FindBin(x))) )
+#                quantile_lines[-1].SetLineColor( colors[i_theta] )
+#
+#            # Text on the plots
+#            lines = [ 
+#                    #  (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta]) ),
+#                    #  (0.25, 0.83, "#color[2]{q_{SM} = %3.2f}" % ( q_theta_SM ) ),
+#                    #  (0.25, 0.78, "#theta_{current} = %5.4f" % theta ),
+#                    ]
+#            drawObjects = [ tex.DrawLatex(*line) for line in lines ]
+#
+#        plot = Plot.fromHisto( "test_stat_%s_nEvents_%3.2f"%(test_statistic, lumi*sigma_tot(theta_SM)), [[h] for h in histos], texX = "q", texY = "Entries" )
+#        plotting.draw( plot,
+#            plot_directory = os.path.join( plot_directory, ),
+#            #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+#            logX = False, sorting = False,
+#            legend         = ( (0.15,0.7,0.9,0.92),2),
+#            drawObjects    =  quantile_lines + drawObjects,
+#            copyIndexPHP   = True,
+#            extensions     = ["png"], 
+#          )            
 
-    l = ROOT.TLegend(0.55, 0.8, 0.8, 0.9)
-    l.SetFillStyle(0)
-    l.SetShadowColor(ROOT.kWhite)
-    l.SetBorderSize(0)
 
-    first = True
-    for q_name, q in qs.iteritems(): 
-        l.AddEntry( q[key], q_name )
-        q[key].Draw("AL" if first else "L")
-        q[key].SetTitle("")
-        q[key].GetXaxis().SetTitle(WC)
-        q[key].GetYaxis().SetTitle("NLL")
+###############################################
+# Plot quantiles of test statistics (TGraphs) #
+###############################################
 
-        first = False
+colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
+levels   = [ .05,       .32,        .5,          .68,        .95      ]
+extended = True
+n_toys   = 50000
 
-    l.Draw()
+theta_SM = 0
 
-    c1.RedrawAxis()
-    c1.Print(os.path.join(plot_directory, key+".png"))
-    c1.Print(os.path.join(plot_directory, key+".pdf"))
-    c1.Print(os.path.join(plot_directory, key+".root"))
+theta_min= -.7
+theta_max= .5
+Nbins    = 50
+UL = {}
+for lumi in 137*np.array([ 1/50., 1/20. , 1/10., 1/5., 1/2., 1., 2., 5. ]):
+#for lumi in 137*np.array([ 1/10. ]):
+    UL[lumi] = {level:{} for level in levels if level<0.5}
+    for test_statistic in ["total", "lin", "quad"]:
+        print "Test statistic", test_statistic
+
+        theta_vals      = np.arange( theta_min, theta_max, (theta_max-theta_min)/Nbins)
+        tgraphs_theta   = { level: ROOT.TGraph(len(theta_vals)) for level in levels }
+        tgraphs_SM      = { level: ROOT.TGraph(len(theta_vals)) for level in levels }
+
+        min_, max_ = float('inf'), -float('inf')
+
+        sm_toys = make_toys( lumi*sigma_tot(theta_SM), theta_SM, n_toys )
+
+        for i_theta, theta in enumerate(theta_vals):
+            print "theta", theta
+            if test_statistic == "quad":
+                q_event = np.nan_to_num( np.log( 1 +  0.5*bit[:,i_quad] ) )
+            elif test_statistic == "lin":
+                q_event = 1./theta * np.nan_to_num( np.log( (1 + theta*bit[:,i_lin])**2 ))  if abs(theta)>0.001 else 2*bit[:,i_lin]
+            elif test_statistic == "total":
+                q_event = 1./theta * np.nan_to_num(np.log( 1 + theta*bit[:,i_lin] + 0.5*theta**2*bit[:,i_quad]))  if theta>0.001 else bit[:,i_lin] + 0.5*theta*(bit[:,i_quad]-bit[:,i_lin]**2) 
+            else:
+                raise RuntimeError( "Unknwon test statistc %s" % test_statistic )
+
+            log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
+            q_theta_given_SM    = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in sm_toys ])
+            q_theta_given_theta = np.array([np.sum( q_event[toy_] - log_sigma_tot_ratio_subtraction ) for toy_ in make_toys( lumi*sigma_tot(theta), theta, n_toys ) ])
+
+            quantiles_theta = np.quantile( q_theta_given_theta, levels )
+            quantiles_SM    = np.quantile( q_theta_given_SM, levels )
+
+            for quantile, level in zip( quantiles_theta, levels ):
+                if not level<0.5: continue
+                sm_toy_fraction_below_level = np.count_nonzero( q_theta_given_SM<=quantile )/float(len(sm_toys))
+                if not UL[lumi][level].has_key(test_statistic) and sm_toy_fraction_below_level>.5:
+                    UL[lumi][level][test_statistic] = {"theta":theta, 'frac':sm_toy_fraction_below_level}
+
+                #print "SM toys below level Q(%i)=%3.2f: %3.2f at theta %3.2f"% ( 100*level, quantile, sm_toy_fraction_below_level, theta)
+
+            min__ = min(list(quantiles_theta)+list(quantiles_SM))
+            max__ = max(list(quantiles_theta)+list(quantiles_SM))
+            if min__<min_: min_=min__
+            if max__>max_: max_=max__
+
+            [ tgraphs_theta[level].SetPoint( i_theta, quantile, theta) for level, quantile in zip( levels, quantiles_theta ) ]
+            [ tgraphs_SM   [level].SetPoint( i_theta, quantile, theta) for level, quantile in zip( levels, quantiles_SM ) ]
+
+        c1 = ROOT.TCanvas()
+        ROOT.gStyle.SetOptStat(0)
+        c1.SetTitle("")
+        h_empty = ROOT.TH1F("x","",1,min_ - 0.1*(max_-min_),max_+0.1*(max_-min_))
+        l1 = ROOT.TLegend(0.2, 0.8, 0.7, 0.93)
+        l1.SetFillStyle(0)
+        l1.SetShadowColor(ROOT.kWhite)
+        l1.SetBorderSize(0)
+
+        l2 = ROOT.TLegend(0.55, 0.8, 0.8, 0.93)
+        l2.SetFillStyle(0)
+        l2.SetShadowColor(ROOT.kWhite)
+        l2.SetBorderSize(0)
+        h_empty.Draw()
+        h_empty.GetYaxis().SetRangeUser(min(theta_vals), 1.4*max(theta_vals))
+        h_empty.Draw()
+        for i_level, level in enumerate(levels):
+            l1.AddEntry( tgraphs_SM[level], "Q(%i%%) SM"%(100*level) )
+            tgraphs_SM[level].SetTitle("")
+            tgraphs_SM[level].GetXaxis().SetTitle("q")
+            tgraphs_SM[level].GetYaxis().SetTitle("#theta")
+            tgraphs_SM[level].SetLineColor( colors[i_level] )
+            tgraphs_SM[level].SetLineStyle( 7 )
+            tgraphs_SM[level].SetMarkerStyle(0)
+            tgraphs_SM[level].SetMarkerColor(colors[i_level])
+            tgraphs_SM[level].Draw("L")
+
+            l2.AddEntry( tgraphs_theta[level], "Q(%i%%) BSM"%(100*level) )
+            tgraphs_theta[level].SetTitle("")
+            tgraphs_theta[level].GetXaxis().SetTitle("q")
+            tgraphs_theta[level].GetYaxis().SetTitle("#theta")
+            tgraphs_theta[level].SetLineColor( colors[i_level] )
+            tgraphs_theta[level].SetMarkerStyle(0)
+            tgraphs_theta[level].SetMarkerColor(colors[i_level])
+            tgraphs_theta[level].Draw("L")
+
+        l1.Draw()
+        l2.Draw()
+
+        c1.RedrawAxis()
+        c1.Update()
+        c1.Print(os.path.join( plot_directory, "test_stat_quantiles_%s_extended_%i_nEvents_%3.2f.png"% ( test_statistic, extended, lumi*sigma_tot(theta_SM) )))
+
 
 syncer.sync()
 
