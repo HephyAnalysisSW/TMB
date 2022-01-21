@@ -90,7 +90,7 @@ def make_eft_weights( event, sample):
         return
     SM_ref_weight         = eft_configs[0]['func'](event, sample)
     event.eft_weights     = [1] + [eft['func'](event, sample)/SM_ref_weight for eft in eft_configs[1:]]
-    event.eft_derivatives = [ der['func'](event, sample)/SM_ref_weight for der in eft_derivatives]
+    event.eft_derivatives = [der['func'](event, sample)/SM_ref_weight for der in eft_derivatives]
     
 if args.signal == "WH":
     stack       = Stack( [samples.TTJets, samples.WJetsToLNu_HT] )
@@ -149,7 +149,6 @@ read_variables = [\
     "ZH_Theta/F", "ZH_theta/F", "ZH_phi/F",
 ]
 
-
 preselection = [ 
     #("debug", "(evt==25857178)") 
     #("debug", "(genW_pt[0]>0)") 
@@ -173,12 +172,12 @@ sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 from BoostedInformationTree import BoostedInformationTree
 if signal.name == 'WH':
     import TMB.BIT.configs.WH_delphes as config
-    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/first_try/")
-    bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
+    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/first_try/")
+    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
 elif signal.name == 'ZH':
     import TMB.BIT.configs.ZH_delphes as config
-    bits        = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/first_try/")
-    bits_bkgs   = config.load("/mnt/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
+    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/first_try/")
+    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
     ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
@@ -279,7 +278,6 @@ for i_key, (key, _) in enumerate( config.mva_variables ):
       attribute = lambda event, sample, i_key=i_key: event.features[i_key],
       binning   =  config.plot_options[key]['binning'],
     ))
-
 
 # Text on the plots
 def drawObjects( hasData = False ):

@@ -20,7 +20,7 @@ special_cuts = {
     "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
   }
 
-continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt")]
+continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt"), ("ptZ", "recoZ_pt"), ("ptW", "WH_W_pt")]
 discrete_variables  = [ ("njet", "nrecoJet"), ("btag", "nBTag") ]
 
 class cutInterpreter:
