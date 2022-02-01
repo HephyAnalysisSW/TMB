@@ -1,0 +1,6 @@
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir Test_Statistic --deri cHW --binning_var mva_Z_pt
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir Test_Statistic --deri cHj3 --binning_var mva_Z_pt
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs --config ZH_delphes  --name v1 --name_dir Test_Statistic --deri cHWtil --binning_var mva_Z_pt
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir Test_Statistic --deri cHW --binning_var mva_W_pt
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir Test_Statistic --deri cHj3 --binning_var mva_W_pt
+python limit_vh.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v1 --name_dir Test_Statistic --deri cHWtil --binning_var mva_W_pt
