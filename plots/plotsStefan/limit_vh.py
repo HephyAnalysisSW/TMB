@@ -262,6 +262,11 @@ c1 = ROOT.TCanvas()
 
 deri = args.deri
 h_cdf_sm = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic SM",20,0.0,1.0)
+h_cdf_bsm_05_neg = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic BSM -0.5",20,0.0,1.0)
+h_cdf_bsm_02_neg = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic BSM -0.2",20,0.0,1.0)
+h_cdf_bsm_01 = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic BSM 0.1",20,0.0,1.0)
+h_cdf_bsm_05 = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic BSM 0.5",20,0.0,1.0)
+h_cdf_bsm_10 = ROOT.TH1D("h_cdf","Integral Transform of Distribution of Test Statistic BSM 1.0",20,0.0,1.0)
 sum_sm = np.sum(test_weights[:,0]) #need later for normalization of BSM
 weights = test_weights[:,0]
 for i in range(20):
@@ -276,11 +281,21 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.01,0.05)):
         arr_length = len(q_bsm_sorted[weights_cumsum < bin_val])
         q_val = q_bsm_sorted[weights_cumsum < bin_val][arr_length -1] #get last value of values where weights_cumsum < bin_val
         h_cdf_bsm.Fill(bin_val-0.015,q_val)
+        if plot_theta < -0.49 and plot_theta > -0.51:
+            h_cdf_bsm_05_neg.Fill(bin_val-0.015,q_val)
+        elif plot_theta <-0.19 and plot_theta > -0.21:
+            h_cdf_bsm_02_neg.Fill(bin_val-0.015,q_val)
+        elif plot_theta <0.11 and plot_theta > 0.09:
+            h_cdf_bsm_01.Fill(bin_val-0.015,q_val)
+        elif plot_theta < 0.51 and plot_theta > 0.49:
+            h_cdf_bsm_05.Fill(bin_val-0.015,q_val)
+        elif plot_theta > 0.99:
+            h_cdf_bsm_10.Fill(bin_val-0.015,q_val)
     filename = "Test_Statistic_%s"% ('_'.join([str(round(plot_theta,2))])) 
     h_cdf_sm.style = styles.lineStyle(ROOT.kRed)
     h_cdf_bsm.style = styles.lineStyle(ROOT.kBlue)
     h_cdf_sm.legendText = "SM"
-    h_cdf_bsm.legendText = "BSM"
+    h_cdf_bsm.legendText = "BSM_%s"% ('_'.join([deri]))
     histos = [[h_cdf_sm], [h_cdf_bsm]]
     plot   = Plot.fromHisto( filename,  histos, texX = "F(q) (cdf)", texY = "q" )
     plotting.draw(plot,
@@ -289,6 +304,29 @@ for i_plot_theta, plot_theta in enumerate(np.arange(-1.0,1.01,0.05)):
             copyIndexPHP = True
             #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
             )
+
+filename = "Test_Statistic" 
+h_cdf_sm.style = styles.lineStyle(ROOT.kRed)
+h_cdf_bsm_05_neg.style = styles.lineStyle(ROOT.kBlue)
+h_cdf_bsm_02_neg.style = styles.lineStyle(ROOT.kGreen)
+h_cdf_bsm_01.style = styles.lineStyle(ROOT.kYellow)
+h_cdf_bsm_05.style = styles.lineStyle(ROOT.kCyan)
+h_cdf_bsm_10.style = styles.lineStyle(ROOT.kViolet)
+h_cdf_sm.legendText = "SM"
+h_cdf_bsm_05_neg.legendText = "BSM -0.5_%s"% ('_'.join([deri]))
+h_cdf_bsm_02_neg.legendText = "BSM -0.2_%s"% ('_'.join([deri]))
+h_cdf_bsm_01.legendText = "BSM 0.1_%s"% ('_'.join([deri]))
+h_cdf_bsm_05.legendText = "BSM 0.5_%s"% ('_'.join([deri]))
+h_cdf_bsm_10.legendText = "BSM 1.0_%s"% ('_'.join([deri]))
+histos = [[h_cdf_sm], [h_cdf_bsm_05_neg], [h_cdf_bsm_02_neg], [h_cdf_bsm_01], [h_cdf_bsm_05], [h_cdf_bsm_10]]
+plot   = Plot.fromHisto( filename,  histos, texX = "F(q) (cdf)", texY = "q" )
+plotting.draw(plot,
+        plot_directory = directory,
+        yRange = 'auto',
+        copyIndexPHP = True
+        #ratio = {'yRange':(0.5,1.5)}, logY = False, logX = False,
+        )
+
 
 
 print "Finished"
