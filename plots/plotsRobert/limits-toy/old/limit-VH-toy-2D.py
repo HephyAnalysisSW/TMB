@@ -136,12 +136,11 @@ def make_q( order, truth=False, **kwargs ):
             for coeff2 in model.wilson_coefficients:
                 if eft[coeff2] == model.default_eft_parameters[coeff2]: continue
                 result += .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))])
-
     result += 1
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
-    return 0.5*np.log( (1. + result)**2 )
+    return 0.5*np.log( result**2 )
 
     #if order == "lin":
     #    return np.log( (1. + result)**2 )
@@ -199,8 +198,8 @@ theta2_vals = np.arange(theta2_min, theta2_max+step2, (theta2_max-theta2_min)/ar
 test_statistics = ["total", "lin", "quad"]
 
 power = {}
-#for test_statistic in test_statistics: 
-for test_statistic in ["total"]: 
+for test_statistic in test_statistics: 
+#for test_statistic in ["total"]: 
 
     truth_txt = "truth" if args.truth else "predicted"
     print "Test statistic", test_statistic, "truth?", args.truth
@@ -224,7 +223,6 @@ for test_statistic in ["total"]:
             q_theta_given_SM    = np.array([np.sum( q_event[toy_] ) for toy_ in sm_toys ])
             q_theta_given_theta = np.array([np.sum( q_event[toy_] ) for toy_ in make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft) ])
 
-            assert False, ""
             # calibration according to SM
             if True:
                 n = float(len(q_theta_given_SM))

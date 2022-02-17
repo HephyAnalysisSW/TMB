@@ -135,7 +135,7 @@ def make_q( order, truth=False, **kwargs ):
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
-    return 0.5*np.log( (1. + result)**2 )
+    return 0.5*np.log( result**2 )
 
     #if order == "lin":
     #    return np.log( (1. + result)**2 )

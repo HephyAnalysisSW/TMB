@@ -10,7 +10,7 @@ argParser.add_argument('--config_module',      action='store', type=str, default
 argParser.add_argument('--config',             action='store', type=str, default = "ttZ_3l_flavor", help="config")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
-argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
+argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/groups/hephy/cms/$USER/BIT/'))
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/scratch-cbe/users/$USER/BIT/training-ntuples-TTZ-flavor/MVA-training"))
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--debug',              action='store_true', help="Make debug plots?")

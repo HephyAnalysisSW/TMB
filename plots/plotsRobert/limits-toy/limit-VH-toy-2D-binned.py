@@ -36,6 +36,7 @@ argParser.add_argument("--plot_directory",     action="store",      default="BIT
 argParser.add_argument("--model",              action="store",      default="WH_Spannowsky",                 help="plot sub-directory")
 argParser.add_argument("--WCs",                action="store",      nargs='*', default=["cHQ3", -.08, .08, "cHW", 0,.5],                 help="Wilson coefficients")
 argParser.add_argument("--nBins",              action="store",      type=int, default=30,                 help="Number of bins in each dimension")
+argParser.add_argument("--nBinsTestStat",      action="store",      type=int, default=20,                 help="Number of bins for the test statistic")
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,             help="Number of events")
 argParser.add_argument('--truth',              action='store_true', help="Truth?" )
 argParser.add_argument('--lumi_factor',        action='store',      type=float, default=1.0, help="Lumi factor" )
@@ -132,12 +133,18 @@ def make_q( order, truth=False, **kwargs ):
         for coeff1 in eft.keys():
             for coeff2 in eft.keys():
                 result += .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))])
-
-    result += 1
+    result+=1
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
-    return 0.5*np.log( (1. + result)**2 )
+    return 0.5*np.log( result**2 )
+
+#event_indices = np.arange(nEvents)
+#def make_toys( yield_per_toy, n_toys, lin=False, **kwargs):
+#    weights_      = make_weights(lin=lin, **kwargs)
+#    biased_sample = np.random.choice( event_indices, size=10*nEvents,  p = weights_/np.sum(weights_) )
+#
+#    return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
 
 tex = ROOT.TLatex()
 tex.SetNDC()
@@ -163,7 +170,8 @@ colors     = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, R
 for WC, theta_vals in [
             ("cHW",    [-.5, -.2, -.1, .1, .2, .5]), 
             ("cHWtil", [-.5, -.2, -.1, .1, .2, .5]),
-            ("cHQ3",   [-.05, -.02, -.01, .01, .02, .05]),
+            #("cHQ3",   [-.05, -.02, -.01, .01, .02, .05]),
+            ("cHQ3",   [-1.2, -.08, -.02, .01, .02, .05]),
         ]: 
 
     q_theta_given_theta = {}
@@ -188,7 +196,7 @@ for WC, theta_vals in [
             q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
 
             #min_, max_ = 0, 1 
-            binning = np.linspace(0, 1, 21)
+            binning = np.linspace(0, 1, args.nBinsTestStat+1)
 
             np_histo_SM    = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*weights[()])
             np_histo_theta = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*make_weights(lin=False, **{WC:theta})  )
@@ -205,7 +213,6 @@ for WC, theta_vals in [
             histos.append( histo_SM )
             histos.append( histo_theta )
 
-
         ## Text on the plots
         #lines = [ 
         #        #  (0.25, 0.88, "#color[4]{%i%% qu. q_{BSM} = %3.2f}" % ( 100*(1-CL), q_theta_given_theta_1mCL[theta]) ),
@@ -215,7 +222,7 @@ for WC, theta_vals in [
         #drawObjects = [ tex.DrawLatex(*line) for line in lines ]
         drawObjects = [ ]
 
-        plot = Plot.fromHisto( "test_stat_%s_%s_%s_lumi_factor_%3.2f"%(test_statistic, truth_txt, WC, args.lumi_factor), [[h] for h in histos], texX = "q (%s)"%truth_txt, texY = "Entries" )
+        plot = Plot.fromHisto( "test_stat_%s_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, truth_txt, WC, args.lumi_factor, args.nBinsTestStat), [[h] for h in histos], texX = "q (%s)"%truth_txt, texY = "Entries" )
         plotting.draw( plot,
             plot_directory = os.path.join( plot_directory, "binned" ),
             #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
@@ -230,7 +237,7 @@ n_toys = 50000
 
 # do not make the following inconsistent
 levels          = [ 0.95, 0.68]
-quantile_levels = [0.025, 0.16, .5, 1-0.16, 1-0.025]
+quantile_levels = [ 0.025, 0.16, .5, 1-0.16, 1-0.025 ]
 
 exp_nll_ratio = {}
 
@@ -271,11 +278,11 @@ for test_statistic in test_statistics:
             q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
 
             #min_, max_ = min( q_event_cdf ), max( q_event_cdf )
-            binning    = np.linspace(0, 1, 21) 
+            binning    = np.linspace(0, 1, args.nBinsTestStat+1) 
 
             np_histo_SM    = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*weights[()])[0]
             np_histo_theta = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*make_weights(lin=False, **eft)  )[0]
-            
+
             # Expectation_BSM( -Log( Prod_i( Pois_i( n_i, lambda_i(theta))/Pois_i( n_i, lambda_i(0)) ) ))
             exp_nll_ratio_ = 2*np.sum(np_histo_SM - np_histo_theta - np_histo_theta*np.log(np_histo_SM/np_histo_theta))
             exp_nll_ratio[test_statistic].SetBinContent( exp_nll_ratio[test_statistic].FindBin( theta1, theta2 ), exp_nll_ratio_)
@@ -285,7 +292,9 @@ for test_statistic in test_statistics:
 
             q_theta_given_SM    = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_SM - np_histo_theta  - binned_toys_SM*np.log(np_histo_SM/np_histo_theta))]
             q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_SM - np_histo_theta  - binned_toys_theta*np.log(np_histo_SM/np_histo_theta))]
-            assert False, ""
+
+            #toys_theta = make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft)
+            #toys_sm    = make_toys( args.lumi_factor*lambda_tot(), n_toys )
 
             if True:
                 n = float(len(q_theta_given_SM))
@@ -307,7 +316,7 @@ for test_statistic in test_statistics:
                 power_ = 1. - power_toy_count/float(n_toys)
                 power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), power_ )
             #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_SM)[0])/float(n_toys)
-                print "theta", round(theta1,3), round(theta2,3), "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2,  "truth", args.truth
+                print "theta", round(theta1,3), round(theta2,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2,  "truth", args.truth
 
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
@@ -327,7 +336,7 @@ for test_statistic in contours.keys():
             contour_objects.append( tgr )
 
 for test_statistic in test_statistics:    
-    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
+    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
     plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
 
 
@@ -349,7 +358,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:
     for level in levels:
-        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
+        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
         plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
 
 syncer.sync()

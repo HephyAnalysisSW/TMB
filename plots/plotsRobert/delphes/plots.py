@@ -183,11 +183,11 @@ sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 from BoostedInformationTree import BoostedInformationTree
 if signal.name == 'WH':
     import TMB.BIT.configs.WH_delphes as config
-    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/first_try/")
+    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
 elif signal.name == 'ZH':
     import TMB.BIT.configs.ZH_delphes as config
-    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/first_try/")
+    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
