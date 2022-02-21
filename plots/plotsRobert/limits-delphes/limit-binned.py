@@ -17,7 +17,6 @@ argParser.add_argument('--logLevel',       action='store',      default='INFO', 
 argParser.add_argument("--lumi",               action='store',      type=float,             default=137, help='Which lumi?')
 argParser.add_argument('--config',             action='store', type=str, default = "ZH_delphes_bkgs", help="config")
 argParser.add_argument('--config_module',      action='store', type=str, default = "TMB.BIT.configs", help = "config directory")
-argParser.add_argument('--output_directory',   action='store', type=str,   default=os.path.expandvars('/mnt/hephy/cms/$USER/BIT/'))
 argParser.add_argument('--plot_directory',     action='store', type=str,   default="BIT_VH_9")
 argParser.add_argument('--flavor',             action='store', type=str,   choices = ["nom", "bkgs"], default="bkgs")
 argParser.add_argument('--small',              action='store_true', help="small?")

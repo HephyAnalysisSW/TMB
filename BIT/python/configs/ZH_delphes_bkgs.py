@@ -374,7 +374,7 @@ if True:
 
     directory = "/mnt/hephy/cms/robert.schoefbeck/BIT/models/"
     save_cfgs = [
-        ( "nom",  "ZH_delphes/first_try"),
+        ( "nom",  "ZH_delphes/v2"),
         ( "bkgs", "ZH_delphes_bkgs/first_try"),
         ]
 

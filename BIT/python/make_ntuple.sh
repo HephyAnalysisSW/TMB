@@ -3,13 +3,13 @@
 #output="/groups/hephy/cms/"
 #output="/scratch-cbe/users/"
 
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample ZH --config_module TMB.BIT.configs --config ZH_delphes_bkgs
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYBBJets --config_module TMB.BIT.configs --config ZH_delphes_bkgs
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYJets_HT --config_module TMB.BIT.configs --config ZH_delphes_bkgs
-
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs --config WH_delphes_bkgs
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample ZH --config_module TMB.BIT.configs --config ZH_delphes_bkgs
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYBBJets --config_module TMB.BIT.configs --config ZH_delphes_bkgs
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYJets_HT --config_module TMB.BIT.configs --config ZH_delphes_bkgs
+#
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs --config WH_delphes_bkgs
 python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample TTJets --config_module TMB.BIT.configs --config WH_delphes_bkgs
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WJetsToLNu_HT --config_module TMB.BIT.configs --config WH_delphes_bkgs
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WJetsToLNu_HT --config_module TMB.BIT.configs --config WH_delphes_bkgs
 
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output ${output}/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs --config WH_delphes
 
