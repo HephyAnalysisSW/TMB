@@ -98,29 +98,7 @@ def make_weights( lin=False, **kwargs):
 # precompute BITS
 bits = model.load()
 predictions = { der:bits[der].vectorized_predict(features) for der in bits.keys() } 
-#def make_q( order, eft_norm=None, truth=False, **kwargs ):
-#    if eft_norm is not None:
-#        # we interpret kwargs as the direction in parameter space, i.e., q = n_theta.t + eft_norm*n_theta^T.s.n_theta
-#        eft     = copy.deepcopy(kwargs)
-#        norm    = sqrt(sum( np.array(kwargs.values())**2 ) )
-#        eft     = { k:eft[k]/norm for k in eft.keys() }
-#    else:
-#        # we interpret kwargs as the eft parameter point, i.e., q = theta.t + theta^T.s.theta
-#        eft_norm = 1
-#        eft      = kwargs
-#    
-#    if order not in ["lin", "quad", "total"]:
-#        raise RuntimeError("Order %s not known" % order )
-#    result = np.zeros(nEvents)    
-#    if order in ["lin", "total"]:
-#        for coeff in eft.keys():
-#            result += (eft[coeff] - model.default_eft_parameters[coeff])*( weights[(coeff,)]/weights[tuple()] if truth else predictions[(coeff,)]) 
-#    if order in ["quad", "total"]:
-#        for coeff1 in eft.keys():
-#            for coeff2 in eft.keys():
-#                prefac = eft_norm if order=="total" else 1
-#                result += prefac* .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))]) 
-#    return result
+
 def make_q( order, truth=False, **kwargs ):
     eft      = kwargs
     if order not in ["lin", "quad", "total"]:

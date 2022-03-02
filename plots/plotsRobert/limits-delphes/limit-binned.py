@@ -145,70 +145,74 @@ def getContours( h, level):
     contours = ROOT.gROOT.GetListOfSpecials().FindObject("contours")
     return contours.At(0).Clone()
 
-################################################
-## Histogram of test statistic (signal sample) #
-################################################
-#colors     = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
-#for WC, WC_vals in [
-#            ("cHj3",   [-0.08, -.05, -.02, .01, .02, .05]),
-#            ("cHW",    [-.5, -.2, -.1, .1, .2, .5]),
-#            ("cHWtil", [-.5, -.2, -.1, .1, .2, .5]),
-#            #("cHQ3",   [-.05, -.02, -.01, .01, .02, .05]),
-#        ]:
-#
-#    for test_statistic in [ "total", "lin", "quad"] :
-#        for key in ["sig", "bkg"]:
-#            histos = []
-#            for i_WC_val, WC_val in enumerate(WC_vals):
-#
-#                eft = {WC:WC_val}
-#                q_event = make_q( test_statistic, bit[key], **eft )
-#
-#                # compute BSM weights
-#                w_sm   = args.lumi/float(config.scale_weight)*make_weights( weight_derivatives[key] )
-#                w_bsm  = args.lumi/float(config.scale_weight)*make_weights( weight_derivatives[key], **eft)
-#
-#                q_event_argsort     = np.argsort(q_event)
-#                q_event_argsort_inv = np.argsort(q_event_argsort)
-#                cdf_sm = np.cumsum(w_sm[q_event_argsort])
-#                cdf_sm/=cdf_sm[-1]
-#
-#                # map to the SM CDF of q
-#                if key=="sig":
-#                    cdf_map = make_cdf_map( q_event[q_event_argsort], cdf_sm )
-#
-#                #q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
-#                q_event_cdf = cdf_map( q_event )
-#
-#                #min_, max_ = 0, 1 
-#                binning = np.linspace(0, 1, args.nBinsTestStat+1)
-#
-#                np_histo_sm  = np.histogram(q_event_cdf, bins=binning, weights = w_sm ) 
-#                np_histo_bsm = np.histogram(q_event_cdf, bins=binning, weights = w_bsm )
-#
-#                histo_sm     = stat_helpers.make_TH1F(np_histo_sm)
-#                histo_bsm    = stat_helpers.make_TH1F(np_histo_bsm)
-#
-#                histo_sm.legendText  = "#color[%i]{p(q_{%s=%3.2f}|SM)}" % ( colors[i_WC_val], WC, WC_val)
-#                histo_bsm.legendText = "#color[%i]{p(q_{%s=%3.2f}|%s=%3.2f)}" % ( colors[i_WC_val], WC, WC_val, WC, WC_val )
-#                histo_sm.style       = styles.lineStyle( colors[i_WC_val], dashed = True)
-#                histo_bsm.style      = styles.lineStyle( colors[i_WC_val] )
-#
-#                histos.append( histo_sm )
-#                histos.append( histo_bsm )
-#
-#            drawObjects = [ ]
-#
-#            plot = Plot.fromHisto( "test_stat_%s_%s_%s_lumi_%i_nBinsTestStat_%i"%(test_statistic, WC, key, args.lumi, args.nBinsTestStat), [[h] for h in histos], texX = "q", texY = "Entries" )
-#            plotting.draw( plot,
-#                plot_directory = os.path.join( plot_directory, "binned" ),
-#                #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
-#                logX = False, sorting = False,
-#                legend         = ( (0.15,0.7,0.9,0.92),2),
-#                drawObjects    = drawObjects,
-#                copyIndexPHP   = True,
-#                extensions     = ["png"],
-#              )
+###############################################
+# Histogram of test statistic (signal sample) #
+###############################################
+colors     = [ROOT.kBlack, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kCyan, ROOT.kRed]
+for WC, WC_vals in [
+            ("cHj3",   [-0.08, -.05, -.02, .01, .02, .05]),
+            ("cHW",    [-.5, -.2, -.1, .1, .2, .5]),
+            ("cHWtil", [-.5, -.2, -.1, .1, .2, .5]),
+            #("cHQ3",   [-.05, -.02, -.01, .01, .02, .05]),
+        ]:
+
+    for test_statistic in [ "total", "lin", "quad"] :
+        for key in ["sig", "bkg"]:
+            histos = []
+            for i_WC_val, WC_val in enumerate(WC_vals):
+
+                eft = {WC:WC_val}
+                q_event = make_q( test_statistic, bit[key], **eft )
+
+                # compute BSM weights
+                w_sm   = args.lumi/float(config.scale_weight)*make_weights( weight_derivatives[key] )
+                w_bsm  = args.lumi/float(config.scale_weight)*make_weights( weight_derivatives[key], **eft)
+
+                q_event_argsort     = np.argsort(q_event)
+                q_event_argsort_inv = np.argsort(q_event_argsort)
+                cdf_sm = np.cumsum(w_sm[q_event_argsort])
+                cdf_sm/=cdf_sm[-1]
+
+                # map to the SM CDF of q
+                if key=="sig":
+                    cdf_map = make_cdf_map( q_event[q_event_argsort], cdf_sm )
+
+                #q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
+                q_event_cdf = cdf_map( q_event )
+
+                #min_, max_ = 0, 1 
+                binning = np.linspace(0, 1, args.nBinsTestStat+1)
+
+                np_histo_sm  = np.histogram(q_event_cdf, bins=binning, weights = w_sm ) 
+                np_histo_bsm = np.histogram(q_event_cdf, bins=binning, weights = w_bsm )
+
+                print test_statistic, key, WC, WC_val
+                print "SM", np_histo_sm
+                print "BSM", np_histo_bsm
+
+                histo_sm     = stat_helpers.make_TH1F(np_histo_sm)
+                histo_bsm    = stat_helpers.make_TH1F(np_histo_bsm)
+
+                histo_sm.legendText  = "#color[%i]{p(q_{%s=%3.2f}|SM)}" % ( colors[i_WC_val], WC, WC_val)
+                histo_bsm.legendText = "#color[%i]{p(q_{%s=%3.2f}|%s=%3.2f)}" % ( colors[i_WC_val], WC, WC_val, WC, WC_val )
+                histo_sm.style       = styles.lineStyle( colors[i_WC_val], dashed = True)
+                histo_bsm.style      = styles.lineStyle( colors[i_WC_val] )
+
+                histos.append( histo_sm )
+                histos.append( histo_bsm )
+
+            drawObjects = [ ]
+
+            plot = Plot.fromHisto( "test_stat_%s_%s_%s_lumi_%i_nBinsTestStat_%i"%(test_statistic, WC, key, args.lumi, args.nBinsTestStat), [[h] for h in histos], texX = "q", texY = "Entries" )
+            plotting.draw( plot,
+                plot_directory = os.path.join( plot_directory, "binned_"+args.flavor ),
+                #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+                logX = False, sorting = False,
+                legend         = ( (0.15,0.7,0.9,0.92),2),
+                drawObjects    = drawObjects,
+                copyIndexPHP   = True,
+                extensions     = ["png"],
+              )
 
 n_toys = 50000
 
@@ -316,7 +320,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:
     plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_lumi_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, args.lumi, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
+    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"+args.flavor), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
 
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
@@ -338,7 +342,7 @@ for test_statistic in contours.keys():
 for test_statistic in test_statistics:
     for level in levels:
         plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_lumi_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, args.lumi, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
-        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
+        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"+args.flavor), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
 
 
 syncer.sync()
