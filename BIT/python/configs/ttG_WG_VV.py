@@ -55,8 +55,8 @@ directory = "/groups/hephy/cms/"
 
 ttg    = Sample.fromDirectory("ttg",    [ '%s/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v6/2018/singlelep-photon/ttG_noFullyHad_fast'%directory])
 wg    = Sample.fromDirectory("wg",      [ '%s/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v6/2018/singlelep-photon/WGToLNu_fast'%directory ])
-ttg.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/ttG_noFullyHad_reweight_card.pkl" 
-wg.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl" 
+ttg.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v6/ttG_noFullyHad_reweight_card.pkl" 
+wg.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v6/WGToLNu_reweight_card.pkl" 
 training_samples = [ ttg, wg]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"

@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 import glob
 
-gridpack_dir = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/order_2"
+gridpack_dir = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/order_2"
 pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v7"
 
 ttG_noFullyHad    = Sample.fromDirectory("ttG_noFullyHad", texName = "ttG_noFullyHad", directory = [os.path.join( pp_dir, "ttG_noFullyHad" )])

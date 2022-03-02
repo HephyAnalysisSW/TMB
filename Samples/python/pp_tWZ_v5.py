@@ -21,23 +21,23 @@ else:
 data_path           = "/scratch-cbe/users/robert.schoefbeck/tWZ/nanoTuples/tWZ_nAODv6_private_v4/2018/" 
 
 ttG_noFullyHad_fast = Sample.fromDirectory("ttG_noFullyHad_fast", directory = os.path.join( data_path, "singlelep-photon", "ttG_noFullyHad_fast"), color = color.TTG, texName = "tt#gamma (#geq 1l)")
-ttG_noFullyHad_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
+ttG_noFullyHad_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
 #ttZ01j_fast         = Sample.fromDirectory("ttZ01j_fast", directory = os.path.join( data_path,"ttZ01j_fast") )
-#ttZ01j_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
+#ttZ01j_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
 #ttW01j_fast         = Sample.fromDirectory("ttW01j_fast", directory = os.path.join( data_path,"ttW01j_fast") )
-#ttW01j_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
+#ttW01j_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/top_boson_reweight_card.pkl"
 #WZTo3L1Nu_fast      = Sample.fromDirectory("WZTo3L1Nu_fast", directory = os.path.join( data_path,"WZTo3L1Nu_fast") )
-#WZTo3L1Nu_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+#WZTo3L1Nu_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 #WZTojj2L_fast       = Sample.fromDirectory("WZTojj2L_fast", directory = os.path.join( data_path,"WZTojj2L_fast") )
-#WZTojj2L_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+#WZTojj2L_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 #WZToLNujj_fast      = Sample.fromDirectory("WZToLNujj_fast", directory = os.path.join( data_path,"WZToLNujj_fast") )
-#WZToLNujj_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+#WZToLNujj_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 WGToLNu_fast        = Sample.fromDirectory("WGToLNu_fast", directory = os.path.join( data_path, "singlelep-photon", "WGToLNu_fast"), color = color.WGamma, texName = "W#gamma")
-WGToLNu_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+WGToLNu_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 ZGTo2L_fast         = Sample.fromDirectory("ZGTo2L_fast", directory = os.path.join( data_path, "dilep-photon", "ZGTo2L_fast"), color = color.ZGamma, texName = "Z#gamma")
-ZGTo2L_fast.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+ZGTo2L_fast.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 #WW_fast             = Sample.fromDirectory("WW_fast", directory = os.path.join( data_path,"WW_fast") )
-#WW_fast.reweight_pkl     = "/eos/vbc/user/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
+#WW_fast.reweight_pkl     = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v5/boson_reweight_card.pkl"
 
 allSamples = [
     ttG_noFullyHad_fast,

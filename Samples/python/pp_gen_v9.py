@@ -17,7 +17,7 @@ if __name__ == "__main__":
     import RootTools.core.logger as logger_rt
     logger_rt = logger_rt.get_logger('DEBUG')
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/vec/"
 pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v9"
 
 ttZ01j    = Sample.fromDirectory("ttZ01j", texName = "ttZ01j", directory = [os.path.join( pp_dir, "ttZ01j" )])

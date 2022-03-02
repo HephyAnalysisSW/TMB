@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
 # for flavor analysis 
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/vec/"
 
 ttZ01j = FWLiteSample.fromDAS("ttZ01j", "/flavor_vec_gen_ttZ01j/schoef-flavor_vec_gen_ttZ01j-72dd436ff602e070e806a1a87ef88c24/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 ttZ01j.reweight_pkl = os.path.join(gridpack_directory, "ttZ01j-vec_reweight_card.pkl")

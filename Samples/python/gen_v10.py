@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
 # for flavor analysis 
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/v7/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v7/"
 WGjj = FWLiteSample.fromDAS("WGjj", "/WGjj_VBF/schoef-WGjj_VBF-ded83965d0d897daece5550e2bd76aff/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 WGjj.xsec         = 5.245e-01 
 WGjj.reweight_pkl = os.path.join(gridpack_directory, "WGjj_VBF_reweight_card.pkl")
@@ -167,9 +167,9 @@ TTJets.nEvents = 2324192
 WH = FWLiteSample.fromDAS("WH", "/WH/schoef-WH-bf335b0285fb1dbca5c66b3278d630c1/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 WH.xsec     = 3.779e-01
 WH.nEvents  = 15066155
-WH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+WH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
 
 ZH = FWLiteSample.fromDAS("ZH", "/ZH/schoef-ZH-fa0e05e99c7eb8089d963cc72f0f9faf/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 ZH.xsec    = 5.846e-02
 ZH.nEvents = 14769665
-ZH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"

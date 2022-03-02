@@ -8,7 +8,7 @@ if os.environ['USER'] in ['robert.schoefbeck']:
     #skim_output_directory               = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/"
     skim_output_directory               = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/"
     #mva_directory                       = "/mnt/hephy/cms/robert.schoefbeck/TMB/mva/"
-    plot_directory                      = "/mnt/hephy/cms/robert.schoefbeck/www/TMB/"
+    plot_directory                      = "/groups/hephy/cms/robert.schoefbeck/www/TMB/"
 
     #postprocessing_output_directory     = "/scratch/robert.schoefbeck/TMB/nanoTuples/postprocessed/"
     gridpack_directory                  = "/eos/vbc/user/robert.schoefbeck/gridpacks/"

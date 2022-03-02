@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 import glob
 
-gridpack_dir = "/eos/vbc/user/robert.schoefbeck/gridpacks/v6/"
+gridpack_dir = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v6/"
 #pp_dir      = "cratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v6_small/ttG_noFullyHad_test/"
 
 # no reference point samples 8/3

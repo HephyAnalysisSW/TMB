@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 import glob
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/vec/"
 #pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v8"
 pp_dir        = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v8" 
 

@@ -21,11 +21,11 @@ if __name__ == "__main__":
     import RootTools.core.logger as logger_rt
     logger_rt = logger_rt.get_logger('DEBUG')
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/flavor/vec/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/vec/"
 #pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10"
 pp_dir       = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v10"
 
-gridpack_directory = "/eos/vbc/user/robert.schoefbeck/gridpacks/v7/"
+gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v7/"
 
 WGjj = Sample.fromDirectory("WGjj", texName = "WGjj", directory = [os.path.join( pp_dir, "WGjj" )]) 
 WGjj.reweight_pkl = os.path.join(gridpack_directory, "WGjj_VBF_reweight_card.pkl")
@@ -75,8 +75,8 @@ TTJets = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path
 #TTJets_HT = Sample.fromDirectory("TTJets", texName = "TTJets", directory = [os.path.join( pp_dir, subdir ) for subdir in ["TTJets_DiLept", "TTJets_SingleLeptFromT", "TTJets_SingleLeptFromTbar"]], color=color.TT) 
 
 WH = Sample.fromDirectory("WH", texName = "WH", directory = [os.path.join( pp_dir, "WH" )], color = ROOT.kGreen+3) 
-WH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+WH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
 WH.objects  = ['W']
 
 ZH = Sample.fromDirectory("ZH", texName = "ZH", directory = [os.path.join( pp_dir, "ZH" )], color = ROOT.kBlue+1) 
-ZH.reweight_pkl = "/eos/vbc/user/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
