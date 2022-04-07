@@ -1,9 +1,6 @@
 ''' compute Delphes b-tagging efficiency
 '''
 
-# TMB
-import TMB.Samples.pp_gen_v10 as samples
-
 # Standard imports
 import ROOT
 import array
@@ -14,7 +11,7 @@ import operator
 
 # binning 
 ptBorders = [30, 50, 70, 100, 140, 200, 300, 600, 10**6]
-absEtaBorders = [0, .5, 1., 2., 2.5]
+absEtaBorders = [0, .5, 1., 2., 2.4, 5.2]
 ptBins    = [ (ptBorders[i], ptBorders[i+1]) for i in range(len(ptBorders)-1) ]
 absEtaBins    = [ (absEtaBorders[i], absEtaBorders[i+1]) for i in range(len(absEtaBorders)-1) ]
 
@@ -26,6 +23,7 @@ if __name__=="__main__":
     if os.path.exists( filename ):
         print ( "File exists: %s. Not overwriting." % filename )
     else:
+        import TMB.Samples.pp_gen_v10 as samples
 
         # jet selection
         jet_selection = "recoJet_pt>30&&abs(recoJet_eta)<2.5&&(recoJet_nNeutrals>0&&recoJet_nCharged>=1||abs(recoJet_eta)>2.4)"
@@ -36,7 +34,7 @@ if __name__=="__main__":
         h_trueBEff = ROOT.TH2F("h_trueBEff", "h_trueBEff", len(absEtaBorders)-1, array.array('d', absEtaBorders), len(ptBorders)-1, array.array('d', ptBorders))
         h_trueBDen = ROOT.TH2F("h_trueBDen", "h_trueBDen", len(absEtaBorders)-1, array.array('d', absEtaBorders), len(ptBorders)-1, array.array('d', ptBorders))
         trueBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueBDen", jet_selection+"&&recoJet_matchGenBJet")
-        trueBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueBEff", jet_selection+"&&recoJet_matchGenBJet&&recoJet_bTag")
+        trueBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueBEff", jet_selection+"&&recoJet_matchGenBJet&&(recoJet_bTag&&abs(recoJet_eta)<2.4)")
 
         h_trueBEff.Divide(h_trueBDen)
 
@@ -45,7 +43,7 @@ if __name__=="__main__":
         h_trueNonBEff = ROOT.TH2F("h_trueNonBEff", "h_trueNonBEff", len(absEtaBorders)-1, array.array('d', absEtaBorders), len(ptBorders)-1, array.array('d', ptBorders))
         h_trueNonBDen = ROOT.TH2F("h_trueNonBDen", "h_trueNonBDen", len(absEtaBorders)-1, array.array('d', absEtaBorders), len(ptBorders)-1, array.array('d', ptBorders))
         trueNonBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueNonBDen", jet_selection+"&&(!recoJet_matchGenBJet)")
-        trueNonBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueNonBEff", jet_selection+"&&(!recoJet_matchGenBJet)&&recoJet_bTag")
+        trueNonBsample.chain.Draw("recoJet_pt:abs(recoJet_eta)>>h_trueNonBEff", jet_selection+"&&(!recoJet_matchGenBJet)&&(recoJet_bTag&&abs(recoJet_eta)<2.4)")
 
         h_trueNonBEff.Divide(h_trueNonBDen)
 
@@ -99,7 +97,7 @@ def getBJetProbabilities( trueBJets, trueNonBJets, nbtag_min = 2):
     total = 0
     njet = len(tagging_efficiences)
 
-    cumulative_leadingjet_predictions = {comb:0 for comb in itertools.combinations(range(njet), nbtag)}
+    cumulative_leadingjet_predictions = {comb:0 for comb in itertools.combinations(range(njet), nbtag_min)}
 
     # compute the probability to select each combination of length "nbtag_" as the b-tagged jets 
     for nbtag_ in range(0, njet+1):

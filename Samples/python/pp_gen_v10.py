@@ -22,8 +22,10 @@ if __name__ == "__main__":
     logger_rt = logger_rt.get_logger('DEBUG')
 
 gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/flavor/vec/"
-#pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10"
 pp_dir       = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v10"
+pp_dir_comb  = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/gen/v10_combinatoricalBTagWeights/"
+#pp_dir       = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10"
+#pp_dir_comb  = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/gen/v10_combinatoricalBTagWeights/"
 
 gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v7/"
 
@@ -67,6 +69,10 @@ DYJets     = Sample.fromDirectory("DYJets", texName = "DYJets", directory = [os.
 DYBBJets   = Sample.fromDirectory("DYBBJets", texName = "DYJets", directory = [os.path.join( pp_dir, "DYBBJetsToLL_M50_LO" )], color=color.DY) 
 DYJets_HT  = Sample.fromDirectory("DYJets_HT", texName = "DYJets", directory = [os.path.join( pp_dir, subdir ) for subdir in ["DYJetsToLL_M50_HT70to100_LO", "DYJetsToLL_M50_HT100to200_LO",  "DYJetsToLL_M50_HT200to400_LO", "DYJetsToLL_M50_HT400to600_LO_ext2", "DYJetsToLL_M50_HT600to800_LO", "DYJetsToLL_M50_HT800to1200_LO", "DYJetsToLL_M50_HT1200to2500_LO", "DYJetsToLL_M50_HT2500toInf_LO",]], color=color.DY) 
 
+DYJets_comb     = Sample.fromDirectory("DYJets_comb", texName = "DYJets", directory = [os.path.join( pp_dir_comb, "DYJets" )], color=color.DY) 
+DYBBJets_comb   = Sample.fromDirectory("DYBBJets_comb", texName = "DYJets", directory = [os.path.join( pp_dir_comb, "DYBBJetsToLL_M50_LO" )], color=color.DY) 
+DYJets_HT_comb  = Sample.fromDirectory("DYJets_HT_comb", texName = "DYJets", directory = [os.path.join( pp_dir_comb, subdir ) for subdir in ["DYJetsToLL_M50_HT70to100_LO", "DYJetsToLL_M50_HT100to200_LO",  "DYJetsToLL_M50_HT200to400_LO", "DYJetsToLL_M50_HT400to600_LO_ext2", "DYJetsToLL_M50_HT600to800_LO", "DYJetsToLL_M50_HT800to1200_LO", "DYJetsToLL_M50_HT1200to2500_LO", "DYJetsToLL_M50_HT2500toInf_LO",]], color=color.DY) 
+
 WJetsToLNu_HT = Sample.fromDirectory("WJetsToLNu_HT", texName = "WJetsToLNu", directory = [os.path.join( pp_dir, subdir ) for subdir in ["WJetsToLNu_HT_70To100", "WJetsToLNu_HT_70To100", "WJetsToLNu_HT_100To200", "WJetsToLNu_HT_200To400", "WJetsToLNu_HT_400To600", "WJetsToLNu_HT_600To800", "WJetsToLNu_HT_800To1200", "WJetsToLNu_HT_1200To2500", "WJetsToLNu_HT_2500ToInf", ]], color=color.WJets)
 
 WJetsToLNu = Sample.fromDirectory("WJetsToLNu", texName = "WJetsToLNu", directory = [os.path.join( pp_dir, "WJetsToLNu" )], color=color.WJets) 
@@ -80,3 +86,12 @@ WH.objects  = ['W']
 
 ZH = Sample.fromDirectory("ZH", texName = "ZH", directory = [os.path.join( pp_dir, "ZH" )], color = ROOT.kBlue+1) 
 ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+ZH.objects  = ['Z']
+
+WH_nlo = Sample.fromDirectory("WH_nlo", texName = "WH (NLO)", directory = [os.path.join( pp_dir, "WH_nlo" )], color = ROOT.kGreen+3) 
+WH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/WH_LeptonicW_NLO/WH_LeptonicW_NLO_reweight_card.pkl"
+WH_nlo.objects  = ['W']
+
+ZH_nlo = Sample.fromDirectory("ZH_nlo", texName = "ZH_nlo", directory = [os.path.join( pp_dir, "ZH_nlo" )], color = ROOT.kBlue+1) 
+ZH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/ZH_LeptonicZ_NLO/ZH_LeptonicZ_NLO_reweight_card.pkl"
+ZH_nlo.objects  = ['Z']

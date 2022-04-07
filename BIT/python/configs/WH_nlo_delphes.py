@@ -123,12 +123,11 @@ def makeThrust( event, sample ):
 
 sequence.append( makeThrust )
 
-
-weight_variables = ['cHj3', 'cHW', 'cHWtil']
+weight_variables = ['cpq3i', 'cpqMi', 'cpW']
 max_order        = 2
 
 from TMB.Samples.pp_gen_v10 import *
-training_samples = [ WH, TTJets, WJetsToLNu_HT]
+training_samples = [ WH_nlo ]#, TTJets, WJetsToLNu_HT]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
@@ -144,7 +143,7 @@ for sample in training_samples:
 
 # make all combinations
 weight_derivative_combinations = []
-for i_comb, comb in enumerate(WH.weightInfo.make_combinations(weight_variables, max_order)):
+for i_comb, comb in enumerate(WH_nlo.weightInfo.make_combinations(weight_variables, max_order)):
     weight_derivative_combinations.append(comb)
 
 scale_weight = 10**5

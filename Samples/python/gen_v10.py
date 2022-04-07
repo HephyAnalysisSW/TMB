@@ -20,6 +20,12 @@ if __name__ == "__main__":
     import RootTools.core.logger as logger_rt
     logger_rt = logger_rt.get_logger('DEBUG')
 
+# for debug
+test = FWLiteSample.fromDirectory( "test", ["/groups/hephy/cms/robert.schoefbeck/TMB/nlo_for_debug/"] )
+test.xsec         = 1 
+test.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/WH_LeptonicW_NLO/WH_LeptonicW_NLO_reweight_card.pkl" 
+test.nEvents      = 50000 
+
 # for flavor analysis 
 
 gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v7/"
@@ -173,3 +179,13 @@ ZH = FWLiteSample.fromDAS("ZH", "/ZH/schoef-ZH-fa0e05e99c7eb8089d963cc72f0f9faf/
 ZH.xsec    = 5.846e-02
 ZH.nEvents = 14769665
 ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+
+WH_nlo = FWLiteSample.fromDAS("WH_nlo", "/WH_LeptonicW_NLO/schoef-WH_LeptonicW_NLO-e8f00ac48edff02e5195d18b5cd83462/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+WH_nlo.xsec     = 4.798e-01  
+WH_nlo.nEvents  = 29949998
+WH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/WH_LeptonicW_NLO/WH_LeptonicW_NLO_reweight_card.pkl"
+
+ZH_nlo = FWLiteSample.fromDAS("ZH_nlo", "/ZH_LeptonicZ_NLO/schoef-ZH_LeptonicZ_NLO-12219ae00036ae09ec17c334f42fb8b6/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+ZH_nlo.xsec    = 8.162e-02 
+ZH_nlo.nEvents = 29949997 
+ZH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/ZH_LeptonicZ_NLO/ZH_LeptonicZ_NLO_reweight_card.pkl"

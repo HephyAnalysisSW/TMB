@@ -33,6 +33,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_8",                 help="plot sub-directory")
 argParser.add_argument("--model",              action="store",      default="WH_Spannowsky",                 help="plot sub-directory")
+argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,                 help="nEvents")
 #argParser.add_argument('--debug',              action='store_true', help="Make debug plots?")
 #argParser.add_argument('--feature_plots',      action='store_true', help="Feature plots?")
 args = argParser.parse_args()
@@ -55,9 +56,7 @@ if not os.path.isdir(plot_directory):
 # initiate plot
 Plot.setDefaults()
 
-nEvents = 200000
-
-features = model.getEvents(nEvents)
+features = model.getEvents(args.nEvents)
 nEvents  = len(features)
 weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
@@ -153,116 +152,123 @@ tex = ROOT.TLatex()
 tex.SetNDC()
 tex.SetTextSize(0.04)
 
-################
-### Plot Model #
-################
-#
-##            ("cHQ3",   [-0.15, -0.1, -0.08, -.06, -.01]),
-#
-#eft_plot_points = [ 
-#    {'color':ROOT.kBlack,       'eft':model.make_eft(), 'tex':"SM"},
-#    {'color':ROOT.kBlue+2,      'eft':model.make_eft(cHQ3=-0.15),  'tex':"c_{HQ}^{(3)}=-0.15"},
-#    {'color':ROOT.kBlue-4,      'eft':model.make_eft(cHQ3=-0.1),   'tex':"c_{HQ}^{(3)}=-0.1"},
-#    {'color':ROOT.kGreen+2,     'eft':model.make_eft(cHQ3=-0.08),  'tex':"c_{HQ}^{(3)}=-0.08"},
-#    {'color':ROOT.kGreen-4,     'eft':model.make_eft(cHQ3=-0.06),  'tex':"c_{HQ}^{(3)}=-0.6"},
-#    {'color':ROOT.kMagenta+2,   'eft':model.make_eft(cHQ3=-0.01),  'tex':"c_{HQ}^{(3)}=-0.01"},
-#    {'color':ROOT.kMagenta-4,   'eft':model.make_eft(cHQ3=+0.05),  'tex':"c_{HQ}^{(3)}=+0.05"},
-#]
-#
-#h    = {}
-#h_lin= {}
-#h_rw = {}
-#h_rw_lin = {}
-#for i_eft, eft_plot_point in enumerate(eft_plot_points):
-#    eft = eft_plot_point['eft']
-#    weights_eft = model.getWeights(features, eft)
-#
-#    if i_eft == 0:
-#        weights_sm = copy.deepcopy(weights_eft)
-#        eft_sm     = eft
-#    name = ''
-#    name= '_'.join( [ (wc+'_%3.2f'%eft[wc]).replace('.','p').replace('-','m') for wc in model.wilson_coefficients if eft.has_key(wc) ])
-#    tex_name = eft_plot_point['tex'] 
-#
-#    if name=='': name='SM'
-#    h[name] = {}
-#    h_rw[name] = {}
-#    h_lin[name] = {}
-#    h_rw_lin[name] = {}
-#    eft_plot_point['name']=name
-#    for i_feature, feature in enumerate(feature_names):
-#        h[name][feature]        = ROOT.TH1F(name+'_'+feature,       name+'_'+feature, *model.plot_options[feature]['binning'] )
-#        h_rw[name][feature]     = ROOT.TH1F(name+'_'+feature+'_rw', name+'_'+feature, *model.plot_options[feature]['binning'] )
-#        h_lin[name][feature]    = ROOT.TH1F(name+'_'+feature+'_lin', name+'_'+feature, *model.plot_options[feature]['binning'] )
-#        h_rw_lin[name][feature] = ROOT.TH1F(name+'_'+feature+'_rw_lin', name+'_'+feature, *model.plot_options[feature]['binning'] )
-#
-#    # make reweights for x-check
-#    reweight = copy.deepcopy(weights_sm[()])
-#    # linear term
-#    for param1 in model.wilson_coefficients:
-#        reweight += (eft[param1]-eft_sm[param1])*weights_sm[(param1,)] 
-#    reweight_lin = copy.deepcopy(reweight)
-#    # quadratic term
-#    for param1 in model.wilson_coefficients:
-#        if eft[param1]-eft_sm[param1] ==0: continue
-#        for param2 in model.wilson_coefficients:
-#            if eft[param2]-eft_sm[param2] ==0: continue
-#            reweight += .5*(eft[param1]-eft_sm[param1])*(eft[param2]-eft_sm[param2])*weights_sm[tuple(sorted((param1,param2)))] 
-#
-#    # weight all _rw plots with sign(sin(2theta)*sin(2theta_hat))
-#    sign_postfix = ""
-#    if True:
-#        reweight_sign = np.sign(np.sin(2*np.arccos(features[:,feature_names.index('cos_theta')]))*np.sin(2*np.arccos(features[:,feature_names.index('cos_theta_hat')])))
-#        reweight     *= reweight_sign
-#        reweight_lin_sign = reweight_sign*reweight_lin
-#        sign_postfix    = " weighted with sgn(sin(2#theta)sin(2#hat{#theta}))"
-#
-#    for i_event, event in enumerate(features):
-#        for i_feature, feature in enumerate(feature_names):
-#
-#            h[name][feature].Fill(event[i_feature], weights_eft[()][i_event])
-#            h[name][feature].style      = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
-#            h[name][feature].legendText = tex_name
-#
-#            h_rw[name][feature].Fill(event[i_feature], reweight[i_event])
-#            h_rw[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
-#            h_rw[name][feature].legendText = tex_name
-#
-#            h_lin[name][feature].Fill(event[i_feature], reweight_lin[i_event])
-#            h_lin[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
-#            h_lin[name][feature].legendText = tex_name
-#
-#            h_rw_lin[name][feature].Fill(event[i_feature], reweight_lin_sign[i_event])
-#            h_rw_lin[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
-#            h_rw_lin[name][feature].legendText = tex_name
-#
-#for i_feature, feature in enumerate(feature_names):
-#    histos = [[h[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
-#    plot   = Plot.fromHisto( feature,  histos, texX=model.plot_options[feature]['tex'], texY="a.u." )
-#    histos_rw = [[h_rw[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
-#    plot_rw   = Plot.fromHisto( feature+'_rw',  histos_rw, texX=model.plot_options[feature]['tex']+sign_postfix, texY="a.u." )
-#    histos_lin = [[h_lin[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
-#    plot_lin   = Plot.fromHisto( feature+'_lin',  histos_lin, texX=model.plot_options[feature]['tex'], texY="a.u." )
-#    histos_rw_lin = [[h_rw_lin[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
-#    plot_rw_lin   = Plot.fromHisto( feature+'_rw_lin',  histos_rw_lin, texX=model.plot_options[feature]['tex']+sign_postfix, texY="a.u." )
-#
-#    for log in [True, False]:
-#
-#        # Add subdirectory for lin/log plots
-#        plot_directory_ = os.path.join( plot_directory, "feature_plots", "log" if log else "lin" )
-#        for p in [plot, plot_rw, plot_lin, plot_rw_lin]:
-#            plotting.draw( p,
-#                           plot_directory = plot_directory_,
-#                           logX = False, logY = log, sorting = False,
-#                           #yRange = "auto",
-#                           ratio = None,
-#    #                       drawObjects = drawObjects( lumi, offset=titleOffset ),
-#                            legend=[(0.2,0.7,0.9,0.9),2],
-#                           #histModifications = histModifications,
-#                           copyIndexPHP = True,
-#                           )
-#print ("Done with plots")
+###############
+## Plot Model #
+###############
 
+#            ("cHQ3",   [-0.15, -0.1, -0.08, -.06, -.01]),
+
+eft_plot_points = [ 
+    {'color':ROOT.kBlack,       'eft':model.make_eft(), 'tex':"SM"},
+    {'color':ROOT.kBlue-4,      'eft':model.make_eft(cHWtil= 0.5),   'tex':"c_{H#tilde{W}}=0.5"},
+    {'color':ROOT.kBlue+2,      'eft':model.make_eft(cHWtil=-0.5),  'tex':"c_{H#tilde{W}}=-0.5"},
+    {'color':ROOT.kGreen+2,     'eft':model.make_eft(cHW=+0.5),  'tex':"c_{HW}=0.5"},
+    {'color':ROOT.kGreen-4,     'eft':model.make_eft(cHW=-0.5),  'tex':"c_{HW}=-0.5"},
+    {'color':ROOT.kMagenta+2,   'eft':model.make_eft(cHQ3=-0.05),  'tex':"c_{HQ3}=-0.05"},
+    {'color':ROOT.kMagenta-4,   'eft':model.make_eft(cHQ3=+0.05),  'tex':"c_{HQ3}=+0.05"},
+    #{'color':ROOT.kBlue+2,      'eft':model.make_eft(cHQ3=-0.15),  'tex':"c_{HQ}^{(3)}=-0.15"},
+    #{'color':ROOT.kBlue-4,      'eft':model.make_eft(cHQ3=-0.1),   'tex':"c_{HQ}^{(3)}=-0.1"},
+    #{'color':ROOT.kGreen+2,     'eft':model.make_eft(cHQ3=-0.08),  'tex':"c_{HQ}^{(3)}=-0.08"},
+    #{'color':ROOT.kGreen-4,     'eft':model.make_eft(cHQ3=-0.06),  'tex':"c_{HQ}^{(3)}=-0.6"},
+    #{'color':ROOT.kMagenta+2,   'eft':model.make_eft(cHQ3=-0.01),  'tex':"c_{HQ}^{(3)}=-0.01"},
+    #{'color':ROOT.kMagenta-4,   'eft':model.make_eft(cHQ3=+0.05),  'tex':"c_{HQ}^{(3)}=+0.05"},
+]
+
+h    = {}
+h_lin= {}
+h_rw = {}
+#h_rw_lin = {}
+for i_eft, eft_plot_point in enumerate(eft_plot_points):
+    eft = eft_plot_point['eft']
+    weights_eft = model.getWeights(features, eft)
+
+    if i_eft == 0:
+        weights_sm = copy.deepcopy(weights_eft)
+        eft_sm     = eft
+    name = ''
+    name= '_'.join( [ (wc+'_%3.2f'%eft[wc]).replace('.','p').replace('-','m') for wc in model.wilson_coefficients if eft.has_key(wc) ])
+    tex_name = eft_plot_point['tex'] 
+
+    if name=='': name='SM'
+    h[name] = {}
+    h_rw[name] = {}
+    h_lin[name] = {}
+    #h_rw_lin[name] = {}
+    eft_plot_point['name']=name
+    for i_feature, feature in enumerate(feature_names):
+        h[name][feature]        = ROOT.TH1F(name+'_'+feature,       name+'_'+feature, *model.plot_options[feature]['binning'] )
+        h_rw[name][feature]     = ROOT.TH1F(name+'_'+feature+'_rw', name+'_'+feature, *model.plot_options[feature]['binning'] )
+        h_lin[name][feature]    = ROOT.TH1F(name+'_'+feature+'_lin', name+'_'+feature, *model.plot_options[feature]['binning'] )
+        #h_rw_lin[name][feature] = ROOT.TH1F(name+'_'+feature+'_rw_lin', name+'_'+feature, *model.plot_options[feature]['binning'] )
+
+    # make reweights for x-check
+    reweight = copy.deepcopy(weights_sm[()])
+    # linear term
+    for param1 in model.wilson_coefficients:
+        reweight += (eft[param1]-eft_sm[param1])*weights_sm[(param1,)] 
+    reweight_lin = copy.deepcopy(reweight)
+    # quadratic term
+    for param1 in model.wilson_coefficients:
+        if eft[param1]-eft_sm[param1] ==0: continue
+        for param2 in model.wilson_coefficients:
+            if eft[param2]-eft_sm[param2] ==0: continue
+            reweight += .5*(eft[param1]-eft_sm[param1])*(eft[param2]-eft_sm[param2])*weights_sm[tuple(sorted((param1,param2)))] 
+
+    # weight all _rw plots with sign(sin(2theta)*sin(2theta_hat))
+    sign_postfix = ""
+    if False:
+        reweight_sign = np.sign(np.sin(2*np.arccos(features[:,feature_names.index('cos_theta')]))*np.sin(2*np.arccos(features[:,feature_names.index('cos_theta_hat')])))
+        reweight     *= reweight_sign
+        #reweight_lin_sign = reweight_sign*reweight_lin
+        sign_postfix    = " weighted with sgn(sin(2#theta)sin(2#hat{#theta}))"
+
+    for i_event, event in enumerate(features):
+        for i_feature, feature in enumerate(feature_names):
+
+            h[name][feature].Fill(event[i_feature], weights_eft[()][i_event])
+            h[name][feature].style      = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
+            h[name][feature].legendText = tex_name
+
+            h_rw[name][feature].Fill(event[i_feature], reweight[i_event])
+            h_rw[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
+            h_rw[name][feature].legendText = tex_name
+
+            h_lin[name][feature].Fill(event[i_feature], reweight_lin[i_event])
+            h_lin[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
+            h_lin[name][feature].legendText = tex_name
+
+            #h_rw_lin[name][feature].Fill(event[i_feature], reweight_lin_sign[i_event])
+            #h_rw_lin[name][feature].style = styles.lineStyle( eft_plot_point['color'], width=2, dashed=False )
+            #h_rw_lin[name][feature].legendText = tex_name
+
+for i_feature, feature in enumerate(feature_names):
+    histos = [[h[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
+    plot   = Plot.fromHisto( feature,  histos, texX=model.plot_options[feature]['tex'], texY="a.u." )
+    histos_rw = [[h_rw[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
+    plot_rw   = Plot.fromHisto( feature+'_rw',  histos_rw, texX=model.plot_options[feature]['tex']+sign_postfix, texY="a.u." )
+    histos_lin = [[h_lin[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
+    plot_lin   = Plot.fromHisto( feature+'_lin',  histos_lin, texX=model.plot_options[feature]['tex'], texY="a.u." )
+    #histos_rw_lin = [[h_rw_lin[eft_plot_point['name']][feature]] for eft_plot_point in reversed(eft_plot_points)]
+    #plot_rw_lin   = Plot.fromHisto( feature+'_rw_lin',  histos_rw_lin, texX=model.plot_options[feature]['tex']+sign_postfix, texY="a.u." )
+
+    for log in [True, False]:
+
+        # Add subdirectory for lin/log plots
+        plot_directory_ = os.path.join( plot_directory, "feature_plots", "log" if log else "lin" )
+        for p in [plot, plot_rw, plot_lin]:#, plot_rw_lin]:
+            plotting.draw( p,
+                           plot_directory = plot_directory_,
+                           logX = False, logY = log, sorting = False,
+                           #yRange = "auto",
+                           ratio = None,
+    #                       drawObjects = drawObjects( lumi, offset=titleOffset ),
+                            legend=[(0.2,0.7,0.9,0.9),2],
+                           #histModifications = histModifications,
+                           copyIndexPHP = True,
+                           )
+print ("Done with plots")
+
+sys.exit(0)
 
 # Debug
 test_statistic = "total"

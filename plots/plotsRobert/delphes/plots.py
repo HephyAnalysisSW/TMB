@@ -5,6 +5,11 @@
 # Standard imports and batch mode
 import ROOT, os, itertools
 #ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.SetBatch(True)
+c1 = ROOT.TCanvas() # do this to avoid version conflict in png.h with keras import ...
+c1.Draw()
+c1.Print('/tmp/delete.png')
+
 import copy
 import operator
 import random
@@ -31,11 +36,14 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--plot_directory',     action='store',      default='delphes')
 argParser.add_argument('--selection',          action='store',      default='singlelep-WHJet-onH')
-argParser.add_argument('--signal',             action='store',      default='WH', choices = ['WH', 'ZH'])
+argParser.add_argument('--DYsample',           action='store',      default='DYBBJets')
+argParser.add_argument('--signal',             action='store',      default='WH', choices = ['WH', 'ZH', 'WH_nlo', 'ZH_nlo'])
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 argParser.add_argument('--no_bkgs',                                 action='store_true',     help='Do not show bkg plots?')
 argParser.add_argument('--show_derivatives',                        action='store_true',     help='Show also the derivatives?')
 argParser.add_argument('--sign_reweight',                           action='store_true',     help='Apply sign(sin(2theta)sin(2Theta)) as weight ')
+argParser.add_argument('--combinatoricalBTags', action='store_true',   help="BTags combinatorical?")
+
 args = argParser.parse_args()
 
 # Logger'singlelep-WHJet' if sample.name=='WH' else 'dilep-ZHJet-onZ'
@@ -46,6 +54,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 plot_directory = os.path.join(plot_directory, args.plot_directory,  args.signal )
 if args.small: plot_directory += "_small"
+if args.combinatoricalBTags: plot_directory += "_combWeights"
 
 # Import samples
 import TMB.Samples.pp_gen_v10 as samples
@@ -57,15 +66,24 @@ signal.weightInfo = WeightInfo(signal.reweight_pkl)
 signal.weightInfo.set_order(2)
 signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
-eft_configs = [
-    {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
-    {'color':ROOT.kMagenta-4,   'param':{'cHWtil':-1},  'tex':"c_{H#tilde{W}}=-1"},
-    {'color':ROOT.kMagenta+2,   'param':{'cHWtil':1},   'tex':"c_{H#tilde{W}}=1"},
-    {'color':ROOT.kGreen-4,     'param':{'cHW':-1},  'tex':"c_{HW}=-1"},
-    {'color':ROOT.kGreen+2,     'param':{'cHW':1},  'tex':"c_{HW}=1"},
-    {'color':ROOT.kBlue-4,      'param':{'cHj3':-.1}, 'tex':"c_{HQ}^{(3)}=-0.1"},
-    {'color':ROOT.kBlue+2,      'param':{'cHj3':.1},  'tex':"c_{HQ}^{(3)}=0.1"},
-    ]
+if signal.name.endswith("_nlo"):
+    eft_configs = [
+        {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
+        {'color':ROOT.kGreen-4,     'param':{'cpW':-1},  'tex':"c_{HW}=-1"},
+        {'color':ROOT.kGreen+2,     'param':{'cpW':1},  'tex':"c_{HW}=1"},
+        {'color':ROOT.kBlue-4,      'param':{'cpq3i':-.1}, 'tex':"c_{HQ}^{(3)}=-0.1"},
+        {'color':ROOT.kBlue+2,      'param':{'cpq3i':.1},  'tex':"c_{HQ}^{(3)}=0.1"},
+        ]
+else:
+    eft_configs = [
+        {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
+        {'color':ROOT.kMagenta-4,   'param':{'cHWtil':-1},  'tex':"c_{H#tilde{W}}=-1"},
+        {'color':ROOT.kMagenta+2,   'param':{'cHWtil':1},   'tex':"c_{H#tilde{W}}=1"},
+        {'color':ROOT.kGreen-4,     'param':{'cHW':-1},  'tex':"c_{HW}=-1"},
+        {'color':ROOT.kGreen+2,     'param':{'cHW':1},  'tex':"c_{HW}=1"},
+        {'color':ROOT.kBlue-4,      'param':{'cHj3':-.1}, 'tex':"c_{HQ}^{(3)}=-0.1"},
+        {'color':ROOT.kBlue+2,      'param':{'cHj3':.1},  'tex':"c_{HQ}^{(3)}=0.1"},
+        ]
 
 for eft in eft_configs:
     eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
@@ -98,10 +116,25 @@ def make_eft_weights( event, sample):
 if args.no_bkgs:
     stack = Stack( )
 else: 
-    if args.signal == "WH":
+    if args.signal.startswith("WH"):
         stack       = Stack( [samples.TTJets, samples.WJetsToLNu_HT] )
-    elif args.signal == "ZH":
-        stack       = Stack( [samples.DYBBJets]) 
+    elif args.signal.startswith("ZH"):
+        if args.DYsample == 'all':
+            samples.DYJets_HT.addSelectionString("Sum$(genJet_matchBParton)==0")
+            stack       = Stack( [samples.DYBBJets, samples.DYJets_HT] )
+        else:
+            stack       = Stack( [getattr( samples, args.DYsample )])
+        plot_directory += "_"+args.DYsample
+        if args.combinatoricalBTags: 
+            if args.DYsample == 'all':
+                samples.DYJets_HT_comb.addSelectionString("Sum$(genJet_matchBParton)==0")
+                stack       = Stack( [samples.DYBBJets_comb, samples.DYJets_HT_comb] )
+            else:
+                stack       = Stack( [getattr( samples, stack[0][0].name+'_comb')] )
+            stack[0][0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
+
+        #stack       = Stack( [samples.DYBBJets]) 
+        #samples.DYBBJets.read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
 
 sequence.append( make_eft_weights )
 
@@ -122,14 +155,25 @@ for i_eft, eft in enumerate(eft_derivatives):
     #eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
     eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_derivatives[i_eft]] )
 
-lumi  = 59.7
 if args.sign_reweight:
-    lumi_weight = lambda event, sample: lumi*event.lumiweight1fb*event.sign_reweight#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
+    #lumi_weight = lambda event, sample: lumi*event.lumiweight1fb*event.sign_reweight#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
+    weight_branches = ["lumiweight1fb", "sign_reweight"]
 else:
-    lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
+    #lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
+    weight_branches = ["lumiweight1fb"]
+
+lumi  = 59.7
+def weight_getter( branches ):
+    getters = [ operator.attrgetter(branch) for branch in branches ]
+    def getter( event, sample ):
+#        for b, g in zip( branches, getters ):
+#            print b, g(event)
+#        print
+        return reduce( operator.mul , [ g(event) for g in getters ], lumi ) 
+    return getter
 
 for sample in stack.samples:
-    sample.weight = lumi_weight
+    sample.weight = weight_getter( weight_branches + ( ["combinatoricalBTagWeight2b"] if "DY" in sample.name and args.combinatoricalBTags else [] ) )
 
 # Read variables and sequences
 jetVars          = ['pt/F', 'eta/F', 'phi/F', 'bTag/F', 'bTagPhys/I']
@@ -141,7 +185,7 @@ lepVarNames      = [x.split('/')[0] for x in lepVars]
 
 # Training variables
 read_variables = [\
-#    "nBTag/I", 
+    "nBTag/I", 
     "nBTag_loose/I",
     "recoMet_pt/F", "recoMet_phi/F",
     "genMet_pt/F", "genMet_phi/F",
@@ -181,16 +225,16 @@ for sample in stack.samples:
 import sys, os, time
 sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 from BoostedInformationTree import BoostedInformationTree
-if signal.name == 'WH':
-    import TMB.BIT.configs.WH_delphes as config
+if signal.name.startswith('WH'):
+    import TMB.BIT.configs.WH_delphes_bkgs as config
     bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
-elif signal.name == 'ZH':
-    import TMB.BIT.configs.ZH_delphes as config
+elif signal.name.startswith('ZH'):
+    import TMB.BIT.configs.ZH_delphes_bkgs as config
     bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
-models = [
+bits = [
     ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
     ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
 #    ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
@@ -212,8 +256,8 @@ def bit_predict( event, sample ):
         setattr( event, var, func(event, sample) )
     
     # get model inputs assuming lstm
-    event.features = config.predict_inputs( event, sample)
-    for name, model, _ in models:
+    event.features = config.predict_inputs( event, sample )
+    for name, model, _ in bits:
         #print has_lstm, flat_variables, lstm_jets
         prediction = model.predict( event.features )
         setattr( event, name, prediction )
@@ -223,6 +267,31 @@ def bit_predict( event, sample ):
 #            raise RuntimeError("Found NAN prediction?")
 
 sequence.append( bit_predict )
+
+# load keras models
+from keras.models import load_model
+
+if signal.name.startswith('ZH'):
+    keras_models = [
+        ("ZH_TT_WJets", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/ZH_TT_WJets/ZH_delphes_bkgs/multiclass_model.h5")),
+    ]
+else:
+    keras_models = [
+        ("WH_TT_WJets", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/WH_TT_WJets/WH_delphes_bkgs/multiclass_model.h5")),
+    ]
+
+def keras_predict( event, sample ):
+
+    # get model inputs assuming lstm
+    for name, model in keras_models:
+        prediction = model.predict( event.features.reshape(1,-1) )
+
+        #print prediction
+        for i_val, val in enumerate( prediction[0] ):
+            setattr( event, name+'_'+config.training_samples[i_val].name, val)
+
+sequence.append( keras_predict )
+
 
 def make_sign_reweight( event, sample):
     event.sign_reweight = copysign( 1, sin(2*event.WH_Theta)*sin(2*event.WH_theta))
@@ -248,7 +317,7 @@ plots2D      = []
 postfix     = "_rw" if args.sign_reweight else "" 
 postfix_tex = " weight sgn(sin(2#theta)sin(2#Theta))" if args.sign_reweight else "" 
 
-for model_name, _, binning in models:
+for model_name, _, binning in bits:
 
     # 1D discriminator
     plots.append(Plot(
@@ -260,33 +329,15 @@ for model_name, _, binning in models:
         addOverFlowBin = 'upper',
     ))
 
-#    # 2D with background 
-#    var = "mva_H_pt"
-#    i_key = [v[0] for v in config.mva_variables].index(var)
-#    plots2D.append(Plot2D(
-#        name = "bkg2D_H_pt_"+model_name+postfix,
-#        texX = model_name, texY = config.plot_options[var]['tex'],
-#        stack = Stack(*stack[0:1]),
-#        attribute = (
-#            lambda event, sample, model_name=model_name: getattr(event, model_name),
-#            lambda event, sample, i_key=i_key: event.features[i_key],
-#            ),
-#        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-#        binning   = binning+config.plot_options[var]['binning'],
-#    ))
-#
-#    # 2D with signal
-#    plots2D.append(Plot2D(
-#        name = "sig2D_H_pt_"+model_name+postfix,
-#        texX = model_name, texY = config.plot_options[var]['tex'],
-#        stack = Stack(*stack[1:2]),
-#        attribute = (
-#            lambda event, sample, model_name=model_name: getattr(event, model_name),
-#            lambda event, sample, i_key=i_key: event.features[i_key],
-#            ),
-#        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-#        binning   = binning+config.plot_options[var]['binning'],
-#    ))
+for model_name, model in keras_models:
+    for i_tr_s, tr_s in enumerate( config.training_samples ):
+        disc_name = model_name+'_'+config.training_samples[i_tr_s].name
+        plots.append(Plot(
+            texX = disc_name, texY = 'Number of Events',
+            name = "keras_"+disc_name, 
+            attribute = lambda event, sample, disc_name=disc_name: getattr( event, disc_name ),
+            binning=[50, 0, 1],
+        ))
 
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):

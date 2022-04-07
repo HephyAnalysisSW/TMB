@@ -23,7 +23,7 @@ jetVarNames      = [x.split('/')[0] for x in jetVars]
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolationVarRhoCorr/F']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
 read_variables = [\
-    "nBTag_loose/I",
+    "nBTag/I",
     "recoMet_pt/F", "recoMet_phi/F",
     "genMet_pt/F", "genMet_phi/F",
     "recoZ_pt/F", "recoZ_eta/F", "recoZ_phi/F", "recoZ_mass/F", "recoZ_cosThetaStar/F", "recoZ_lldPhi/F", "recoZ_lldR/F", "recoZ_l1_index/I", "recoZ_l2_index/I",
@@ -55,6 +55,9 @@ def makeJets( event, sample ):
         #addTransverseVector( p )
         addTLorentzVector( p )
     event.bJets      = filter(lambda j:j['bTag']>=1 and abs(j['eta'])<=2.4, event.jets)
+    print "jets",event.jets
+    print "bJets",event.bJets
+    print 
     event.extraJets  = [ j for i_j, j in enumerate( event.jets ) if i_j not in [event.H_j1_index, event.H_j2_index] ] 
     event.nextraJet = len(event.extraJets)
 
@@ -109,7 +112,7 @@ weight_variables = ['cHj3', 'cHW', 'cHWtil']
 max_order        = 2
 
 from TMB.Samples.pp_gen_v10 import *
-DYJets_HT.setSelectionString("Sum$(genJet_matchBParton)==0")
+#DYJets_HT.setSelectionString("Sum$(genJet_matchBParton)==0")  #FIXME Commented this selection because it interferes with plot script!
 training_samples = [ ZH, DYJets_HT, DYBBJets]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
@@ -176,7 +179,7 @@ all_mva_variables = {
      "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
      "mva_met_pt"                :(lambda event, sample: event.recoMet_pt),
      "mva_nextraJet"            :(lambda event, sample: event.nextraJet),
-     "mva_nBTag"                 :(lambda event, sample: event.nBTag_loose),
+     "mva_nBTag"                 :(lambda event, sample: event.nBTag),
 
 # jet kinmatics
      "mva_jet0_pt"               :(lambda event, sample: event.recoJet_pt[0]          if event.nrecoJet >=1 else 0),
@@ -293,7 +296,7 @@ plot_options = {
      "mva_H_dijet_mass"    :{'tex':'M(H) (GeV)',            'binning':[30,90,150]},
      "mva_H_eta"           :{'tex':'#eta(H)',               'binning':[40,-4,4]},
      "mva_H_DeltaPhib1b2"  :{'tex':'#Delta#Phi(b_{1},b_{2}) from H',            'binning':[30,0,pi]},
-     "mva_H_RatioPtb1b2"   :{'tex':'p_{T}(b_{2})/p_{T}(b_{2}) from H',          'binning':[30,0,1]},
+     "mva_H_RatioPtb1b2"   :{'tex':'p_{T}(b_{2})/p_{T}(b_{1}) from H',          'binning':[30,0,1]},
      "mva_H_maxPtb1b2"     :{'tex':'max(p_{T}(b_{1}), p_{T}(b_{2})) from H',    'binning':[800/20,0,800]},
      "mva_H_minPtb1b2"     :{'tex':'min(p_{T}(b_{1}), p_{T}(b_{2})) from H',    'binning':[800/20,0,800]},
      "mva_H_DeltaRb1b2"    :{'tex':'#DeltaR(b_{1}, b_{2}) from H',              'binning':[30,0,6]},
@@ -345,7 +348,7 @@ bit_cfg = { derivative : {
             'clip_score_quantile': None,
             'calibrated'    : False,} for derivative in bit_derivatives }
 
-def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/%s/'%__name__, bit_derivatives=bit_derivatives):
+def load(directory = '/groups/hephy/cms/$USER/BIT/models/default/%s/'%__name__, bit_derivatives=bit_derivatives):
     import sys, os
     sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
     from BoostedInformationTree import BoostedInformationTree
@@ -372,7 +375,7 @@ if True:
     save_derivatives = bit_derivatives 
     bits             = {}
 
-    directory = "/mnt/hephy/cms/robert.schoefbeck/BIT/models/"
+    directory = "/groups/hephy/cms/robert.schoefbeck/BIT/models/"
     save_cfgs = [
         ( "nom",  "ZH_delphes/v2"),
         ( "bkgs", "ZH_delphes_bkgs/first_try"),

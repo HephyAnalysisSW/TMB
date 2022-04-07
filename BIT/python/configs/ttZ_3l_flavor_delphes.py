@@ -221,7 +221,7 @@ bit_derivatives += [ ('cHuRe11',), ('cHuRe22',), ('cHuRe33',), ('cHuRe11','cHuRe
 bit_derivatives += [ ('cHdRe11',), ('cHdRe22',), ('cHdRe33',), ('cHdRe11','cHdRe11'), ('cHdRe22','cHdRe22'), ('cHdRe33','cHdRe33')]
 bit_derivatives += [ ('cHudRe11',), ('cHudRe22',), ('cHudRe33',), ('cHudRe11','cHudRe11'), ('cHudRe22','cHudRe22'), ('cHudRe33','cHudRe33')]
 
-def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/ttZ_3l_flavor_delphes/', bit_derivatives=bit_derivatives):
+def load(directory = '/groups/hephy/cms/$USER/BIT/models/default/ttZ_3l_flavor_delphes/', bit_derivatives=bit_derivatives):
     import sys, os
     sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
     from BoostedInformationTree import BoostedInformationTree

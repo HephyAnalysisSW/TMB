@@ -123,12 +123,11 @@ def makeThrust( event, sample ):
 
 sequence.append( makeThrust )
 
-
-weight_variables = ['cHj3', 'cHW', 'cHWtil']
+weight_variables = ['cpq3i', 'cpqMi', 'cpW']
 max_order        = 2
 
 from TMB.Samples.pp_gen_v10 import *
-training_samples = [ WH, TTJets, WJetsToLNu_HT]
+training_samples = [ WH_nlo ]#, TTJets, WJetsToLNu_HT]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
@@ -144,7 +143,7 @@ for sample in training_samples:
 
 # make all combinations
 weight_derivative_combinations = []
-for i_comb, comb in enumerate(WH.weightInfo.make_combinations(weight_variables, max_order)):
+for i_comb, comb in enumerate(WH_nlo.weightInfo.make_combinations(weight_variables, max_order)):
     weight_derivative_combinations.append(comb)
 
 scale_weight = 10**5
@@ -190,77 +189,77 @@ def compute_weight_derivatives( event, sample ):
 
 all_mva_variables = {
 
-# global event properties
-     "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
-     "mva_met_pt"                :(lambda event, sample: event.recoMet_pt),
-     "mva_nextraJet"            :(lambda event, sample: event.nextraJet),
-     "mva_nBTag"                 :(lambda event, sample: event.nBTag_loose),
-
-# jet kinmatics
-     "mva_jet0_pt"               :(lambda event, sample: event.recoJet_pt[0]          if event.nrecoJet >=1 else 0),
-     "mva_jet0_eta"              :(lambda event, sample: event.recoJet_eta[0]         if event.nrecoJet >=1 else -10),
-     "mva_jet0_btag"             :(lambda event, sample: event.recoJet_bTag[0]        if event.nrecoJet >=1 else -1),
-     "mva_jet1_pt"               :(lambda event, sample: event.recoJet_pt[1]          if event.nrecoJet >=2 else 0),
-     "mva_jet1_eta"              :(lambda event, sample: event.recoJet_eta[1]         if event.nrecoJet >=2 else -10),
-     "mva_jet1_btag"             :(lambda event, sample: event.recoJet_bTag[1]        if event.nrecoJet >=2 else -1),
-     "mva_jet2_pt"               :(lambda event, sample: event.recoJet_pt[2]          if event.nrecoJet >=3 else 0),
-     "mva_jet2_eta"              :(lambda event, sample: event.recoJet_eta[2]         if event.nrecoJet >=3 else -10),
-     "mva_jet2_btag"             :(lambda event, sample: event.recoJet_bTag[2]        if event.nrecoJet >=3 else -1),
-
-# W kinematics
-     "mva_W_pt"                  :(lambda event, sample: event.WH_W_pt),
-     "mva_W_eta"                 :(lambda event, sample: event.W_vecP4.Eta()),
-     #"mva_W_cosThetaStar"       :(lambda event, sample: event.recoZ_cosThetaStar),
-     "mva_WH_dPhiMetLep"         :(lambda event, sample: event.WH_dPhiMetLep), 
-     "mva_WH_MT"                 :(lambda event, sample: event.WH_MT),
-     "mva_W_RatioPtlPtnu"        :(lambda event, sample: event.WH_nu_pt/event.lepton['pt']) ,
-     "mva_W_lepton_pt"           :(lambda event, sample: event.lepton['pt']) ,
-     "mva_W_lepton_eta"          :(lambda event, sample: event.lepton['eta']) ,
-     "mva_WH_nu_pt"              :(lambda event, sample: event.WH_nu_pt) ,
-     "mva_WH_nu_eta"             :(lambda event, sample: event.WH_nu_eta) ,
-
-# W decay angles & signed
-    "mva_WH_Theta"               :(lambda event, sample: event.WH_Theta),
-    "mva_WH_theta"               :(lambda event, sample: event.WH_theta),
-    "mva_WH_phi"                 :(lambda event, sample: event.WH_phi),
-    "mva_WH_fLL"                 :(lambda event, sample: event.fLL),
-    "mva_WH_f1TT"                :(lambda event, sample: event.f1TT),
-    "mva_WH_f2TT"                :(lambda event, sample: event.f2TT),
-    "mva_WH_f1LT"                :(lambda event, sample: event.f1LT),
-    "mva_WH_f2LT"                :(lambda event, sample: event.f2LT),
-    "mva_WH_f1tildeLT"           :(lambda event, sample: event.f1tildeLT),
-    "mva_WH_f2tildeLT"           :(lambda event, sample: event.f2tildeLT),
-    "mva_WH_fTTprime"            :(lambda event, sample: event.fTTprime),
-    "mva_WH_ftildeTTprime"       :(lambda event, sample: event.ftildeTTprime),
-
-# H kinematics
-     "mva_H_pt"                  :(lambda event, sample: event.H_pt),
-     "mva_H_dijet_mass"          :(lambda event, sample: event.H_dijet_mass),
-     "mva_H_eta"                 :(lambda event, sample: event.H_eta ),
-     "mva_H_DeltaPhib1b2"        :(lambda event, sample: deltaPhi(event.H_j1['phi'], event.H_j2['phi'])) ,
-     "mva_H_RatioPtb1b2"         :(lambda event, sample: event.H_j2['pt']/event.H_j1['pt']) ,
+## global event properties
+#     "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
+#     "mva_met_pt"                :(lambda event, sample: event.recoMet_pt),
+#     "mva_nextraJet"            :(lambda event, sample: event.nextraJet),
+#     "mva_nBTag"                 :(lambda event, sample: event.nBTag_loose),
+#
+## jet kinmatics
+#     "mva_jet0_pt"               :(lambda event, sample: event.recoJet_pt[0]          if event.nrecoJet >=1 else 0),
+#     "mva_jet0_eta"              :(lambda event, sample: event.recoJet_eta[0]         if event.nrecoJet >=1 else -10),
+#     "mva_jet0_btag"             :(lambda event, sample: event.recoJet_bTag[0]        if event.nrecoJet >=1 else -1),
+#     "mva_jet1_pt"               :(lambda event, sample: event.recoJet_pt[1]          if event.nrecoJet >=2 else 0),
+#     "mva_jet1_eta"              :(lambda event, sample: event.recoJet_eta[1]         if event.nrecoJet >=2 else -10),
+#     "mva_jet1_btag"             :(lambda event, sample: event.recoJet_bTag[1]        if event.nrecoJet >=2 else -1),
+#     "mva_jet2_pt"               :(lambda event, sample: event.recoJet_pt[2]          if event.nrecoJet >=3 else 0),
+#     "mva_jet2_eta"              :(lambda event, sample: event.recoJet_eta[2]         if event.nrecoJet >=3 else -10),
+#     "mva_jet2_btag"             :(lambda event, sample: event.recoJet_bTag[2]        if event.nrecoJet >=3 else -1),
+#
+## W kinematics
+#     "mva_W_pt"                  :(lambda event, sample: event.WH_W_pt),
+#     "mva_W_eta"                 :(lambda event, sample: event.W_vecP4.Eta()),
+#     #"mva_W_cosThetaStar"       :(lambda event, sample: event.recoZ_cosThetaStar),
+#     "mva_WH_dPhiMetLep"         :(lambda event, sample: event.WH_dPhiMetLep), 
+#     "mva_WH_MT"                 :(lambda event, sample: event.WH_MT),
+#     "mva_W_RatioPtlPtnu"        :(lambda event, sample: event.WH_nu_pt/event.lepton['pt']) ,
+#     "mva_W_lepton_pt"           :(lambda event, sample: event.lepton['pt']) ,
+#     "mva_W_lepton_eta"          :(lambda event, sample: event.lepton['eta']) ,
+#     "mva_WH_nu_pt"              :(lambda event, sample: event.WH_nu_pt) ,
+#     "mva_WH_nu_eta"             :(lambda event, sample: event.WH_nu_eta) ,
+#
+## W decay angles & signed
+#    "mva_WH_Theta"               :(lambda event, sample: event.WH_Theta),
+#    "mva_WH_theta"               :(lambda event, sample: event.WH_theta),
+#    "mva_WH_phi"                 :(lambda event, sample: event.WH_phi),
+#    "mva_WH_fLL"                 :(lambda event, sample: event.fLL),
+#    "mva_WH_f1TT"                :(lambda event, sample: event.f1TT),
+#    "mva_WH_f2TT"                :(lambda event, sample: event.f2TT),
+#    "mva_WH_f1LT"                :(lambda event, sample: event.f1LT),
+#    "mva_WH_f2LT"                :(lambda event, sample: event.f2LT),
+#    "mva_WH_f1tildeLT"           :(lambda event, sample: event.f1tildeLT),
+#    "mva_WH_f2tildeLT"           :(lambda event, sample: event.f2tildeLT),
+#    "mva_WH_fTTprime"            :(lambda event, sample: event.fTTprime),
+#    "mva_WH_ftildeTTprime"       :(lambda event, sample: event.ftildeTTprime),
+#
+## H kinematics
+#     "mva_H_pt"                  :(lambda event, sample: event.H_pt),
+#     "mva_H_dijet_mass"          :(lambda event, sample: event.H_dijet_mass),
+#     "mva_H_eta"                 :(lambda event, sample: event.H_eta ),
+#     "mva_H_DeltaPhib1b2"        :(lambda event, sample: deltaPhi(event.H_j1['phi'], event.H_j2['phi'])) ,
+#     "mva_H_RatioPtb1b2"         :(lambda event, sample: event.H_j2['pt']/event.H_j1['pt']) ,
      "mva_H_maxPtb1b2"           :(lambda event, sample: max([event.H_j1['pt'], event.H_j2['pt']])) ,
-     "mva_H_minPtb1b2"           :(lambda event, sample: min([event.H_j1['pt'], event.H_j2['pt']])) ,
-     "mva_H_DeltaRb1b2"          :(lambda event, sample: deltaR(event.H_j1, event.H_j2)) ,
-
-# W vs. H
-     "mva_WH_deltaPhi"           :(lambda event, sample: deltaPhi(event.H_phi, event.W_vecP4.Phi())),
-     "mva_WH_deltaR"             :(lambda event, sample: deltaR({'phi':event.H_phi, 'eta':event.H_eta},{'phi': event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()})),
-     "mva_mWH"                   :(lambda event, sample: (event.W_vecP4+event.H_vecP4).M()),
-
-# thrust
-    "mva_thrust"                 :(lambda event, sample: event.thrust),
-    "mva_thrust_min"             :(lambda event, sample: event.thrust_min),
-
-# W vs. other objects
-     "mva_extraJet0_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[0]['phi'], 'eta':event.extraJets[0]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=1 else -1),
-     "mva_extraJet1_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[1]['phi'], 'eta':event.extraJets[1]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=2 else -1),
-     #"mva_extraJet2_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[2]['phi'], 'eta':event.extraJets[2]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=3 else -1),
-
-# H vs. other objects
-     "mva_extraJet0_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[0]['phi'], 'eta':event.extraJets[0]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=1 else -1),
-     "mva_extraJet1_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[1]['phi'], 'eta':event.extraJets[1]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=2 else -1),
-     #"mva_extraJet2_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[2]['phi'], 'eta':event.extraJets[2]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=3 else -1),
+#     "mva_H_minPtb1b2"           :(lambda event, sample: min([event.H_j1['pt'], event.H_j2['pt']])) ,
+#     "mva_H_DeltaRb1b2"          :(lambda event, sample: deltaR(event.H_j1, event.H_j2)) ,
+#
+## W vs. H
+#     "mva_WH_deltaPhi"           :(lambda event, sample: deltaPhi(event.H_phi, event.W_vecP4.Phi())),
+#     "mva_WH_deltaR"             :(lambda event, sample: deltaR({'phi':event.H_phi, 'eta':event.H_eta},{'phi': event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()})),
+#     "mva_mWH"                   :(lambda event, sample: (event.W_vecP4+event.H_vecP4).M()),
+#
+## thrust
+#    "mva_thrust"                 :(lambda event, sample: event.thrust),
+#    "mva_thrust_min"             :(lambda event, sample: event.thrust_min),
+#
+## W vs. other objects
+#     "mva_extraJet0_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[0]['phi'], 'eta':event.extraJets[0]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=1 else -1),
+#     "mva_extraJet1_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[1]['phi'], 'eta':event.extraJets[1]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=2 else -1),
+#     #"mva_extraJet2_W_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[2]['phi'], 'eta':event.extraJets[2]['eta']}, {'phi':event.W_vecP4.Phi(), 'eta':event.W_vecP4.Eta()} )  if event.nextraJet >=3 else -1),
+#
+## H vs. other objects
+#     "mva_extraJet0_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[0]['phi'], 'eta':event.extraJets[0]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=1 else -1),
+#     "mva_extraJet1_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[1]['phi'], 'eta':event.extraJets[1]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=2 else -1),
+#     #"mva_extraJet2_H_deltaR"    :(lambda event, sample: deltaR({'phi':event.extraJets[2]['phi'], 'eta':event.extraJets[2]['eta']}, {'phi':event.H_phi, 'eta':event.H_eta} )  if event.nextraJet >=3 else -1),
 }
 # global event properties
 
@@ -353,7 +352,7 @@ bit_derivatives  = weight_derivative_combinations[1:]
 
 bit_cfg = { derivative : { 
             'n_trees': 200,
-            'max_depth'     : 3,
+            'max_depth'     : 2,
             'learning_rate' : 0.25,
             'min_size'      : 50,
             'clip_score_quantile': None,

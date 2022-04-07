@@ -228,8 +228,7 @@ mva_vector_variables    =   {
 }
 
 ## Using all variables
-#mva_variables_ = all_mva_variables.keys()
-mva_variables_ = ["mva_Z1_pt"]
+mva_variables_ = all_mva_variables.keys()
 mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
 
@@ -254,7 +253,7 @@ bit_cfg = { 'n_trees': 50,
 
 bit_derivatives  = [ ('cHq1Re11',), ('cHq1Re22',), ('cHq1Re33',), ('cHq1Re11','cHq1Re11'), ('cHq1Re22','cHq1Re22'), ('cHq1Re33','cHq1Re33')]
 
-def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/ttZ_3l_flavor/', bit_derivatives=bit_derivatives):
+def load(directory = '/groups/hephy/cms/$USER/BIT/models/default/ttZ_3l_flavor/', bit_derivatives=bit_derivatives):
     import sys, os
     sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
     from BoostedInformationTree import BoostedInformationTree

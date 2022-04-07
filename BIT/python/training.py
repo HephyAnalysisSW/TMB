@@ -107,17 +107,25 @@ for i_training_sample, training_sample in enumerate(config.training_samples):
     if args.lumi_norm:
         lumi_weights[training_sample.name]    = upfile["Events"].pandas.df(branches = ["lumiweight1fb"] )    
 
-features = pd.concat([features[training_sample.name] for training_sample in config.training_samples])
-features = features.values
+features     = pd.concat([features[training_sample.name] for training_sample in config.training_samples])
+
+# Quick fix in training
+len_features = len(features)
+if args.config == "WH_nlo_delphes":
+    map_ = features.mva_WH_deltaR<5.5 
+else:
+    map_ = np.ones(len(features)).astype('bool')
+
+features = features[map_].values
 
 weight_derivatives = pd.concat([weight_derivatives[training_sample.name] for training_sample in config.training_samples])
 if args.lumi_norm:
     lumi_weights = pd.concat([lumi_weights[training_sample.name] for training_sample in config.training_samples])
 
-weight_derivatives = weight_derivatives.values.reshape((len(features),-1))[:args.maxEvents]
+weight_derivatives = weight_derivatives.values.reshape((len_features,-1))[map_][:args.maxEvents]
 features           = features[:args.maxEvents]
 if args.lumi_norm:
-    lumi_weights       = lumi_weights.values[:,0][:args.maxEvents]
+    lumi_weights       = lumi_weights.values[:,0][map_][:args.maxEvents]
     lumi_weights       = lumi_weights/np.mean(lumi_weights)
 
 # split dataset into Input and output data
@@ -139,14 +147,20 @@ if args.lumi_norm:
 
 # Clip the most extreme scores 
 for derivative in config.bit_derivatives:
+
     if config.bit_cfg[derivative]['clip_score_quantile'] is None: continue
     i_derivative          = config.weight_derivative_combinations.index(derivative)
     clip_score_quantile = config.bit_cfg[derivative]['clip_score_quantile']
+    
+    clip_both_sides = True #(len(derivative)%2==0)
 
     derivative = config.weight_derivative_combinations[i_derivative]
     training_scores          = np.divide( weight_derivatives[:,i_derivative], weight_derivatives[:,0], np.zeros_like(weight_derivatives[:,i_derivative]), where=weight_derivatives[:,0]!=0 )
-    training_score_quantiles = np.quantile( training_scores, [1-clip_score_quantile] if len(derivative)%2==0 else [clip_score_quantile, 1-clip_score_quantile] )
-    if len(derivative)%2==0:
+    training_score_quantiles = np.quantile( training_scores, [clip_score_quantile, 1-clip_score_quantile] if clip_both_sides else [ 1-clip_score_quantile] )
+
+    ## Always clip pos & neg because we're dealing with nlo
+    #if len(derivative)%2==0:
+    if False: #clip_both_sides:
         # quadratic: Clip only positive values
         print "Clip score at percentile %3.2f for %r: s>%3.2f" % (1-clip_score_quantile, derivative, training_score_quantiles[0] )
         to_clip                         = training_scores>training_score_quantiles[0]

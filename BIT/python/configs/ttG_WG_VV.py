@@ -248,7 +248,7 @@ bit_cfg = { derivative : { 'n_trees': 100,
             'clip_score_quantile': None,
             'calibrated'    : False,} for derivative in bit_derivatives }
 
-def load(directory = '/mnt/hephy/cms/$USER/BIT/models/default/ttG_ctZ/', bit_derivatives=bit_derivatives):
+def load(directory = '/groups/hephy/cms/$USER/BIT/models/default/ttG_ctZ/', bit_derivatives=bit_derivatives):
     import sys, os
     sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
     from BoostedInformationTree import BoostedInformationTree
