@@ -10,6 +10,7 @@ c1 = ROOT.TCanvas() # do this to avoid version conflict in png.h with keras impo
 c1.Draw()
 c1.Print('/tmp/delete.png')
 
+import numpy as np
 import copy
 import operator
 import random
@@ -253,6 +254,11 @@ bits = [
 ]
 sequence.extend( config.sequence )
 
+features    = {sample.name:[] for sample in stack.samples}
+predictions = {name:[] for name, _ , _ in bits}
+FIXME NEW Logic for predictions
+
+
 def bit_predict( event, sample ):
 
     for var, func in config.mva_variables:
@@ -260,16 +266,31 @@ def bit_predict( event, sample ):
     
     # get model inputs assuming lstm
     event.features = config.predict_inputs( event, sample )
+    features[sample.name].append( event.features )
     for name, model, _ in bits:
         #print has_lstm, flat_variables, lstm_jets
         prediction = model.predict( event.features )
+        
         setattr( event, name, prediction )
+        predictions[name].append( prediction )
 #        if not prediction>-float('inf'):
 #            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
 #            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
 #            raise RuntimeError("Found NAN prediction?")
 
 sequence.append( bit_predict )
+
+for sample in stack.samples:
+    config.add_weight_derivatives( sample )
+
+weight_derivatives = {sample.name:{weight['comb']:[] for weight in sample.weight_derivatives} for sample in stack.samples } 
+def compute_weight_derivatives( event, sample ):
+    #vector = [{weight['comb']:weight['func'](event, sample)} for weight in sample.weight_derivatives]
+    #print vector
+    for weight in sample.weight_derivatives:
+        weight_derivatives[sample.name][weight['comb']].append( weight['func'](event, sample) )
+
+sequence.append( compute_weight_derivatives )
 
 # load keras models
 from keras.models import load_model
@@ -392,16 +413,9 @@ def drawPlots(plots, subDirectory=''):
 
 plotting.fill(plots+plots2D, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
-#plot_phi_subtr = copy.deepcopy(plots[subtr_phi_ind])
-#plot_phi_subtr.name = plot_phi_subtr.name.replace("pos_","subtr_")
-#plot_phi_subtr.texX = plot_phi_subtr.texX.replace("(pos.)","(subtr)")
-#for i_h_, h_ in enumerate(plots[subtr_phi_ind].histos):
-#    for i_h, h in enumerate(h_):
-#        h_sub = plots[subtr_phi_ind+1].histos[i_h_][i_h].Clone()
-#        h_sub.Scale(-1)
-#        plot_phi_subtr.histos[i_h_][i_h].Add(h_sub)
-#
-#plots.append( plot_phi_subtr )
+{key:np.array(features[key]) for key in features.keys()}
+{key:np.array(weight_derivatives[key]) for key in weight_derivatives.keys()}
+{key:np.array(predictions[key]) for key in predictions.keys()}
 
 #color EFT
 offset = 0 if args.no_bkgs else 1

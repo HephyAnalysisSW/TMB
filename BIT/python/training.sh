@@ -102,17 +102,17 @@
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v2 --derivative cHj3 cHWtil
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes  --name v2 --derivative cHW cHWtil
 
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW 
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHWtil 
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHWtil cHWtil
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW cHW
-#
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHj3 
-#
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHW 
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHWtil
-#python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW cHWtil
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW 
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHWtil 
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHWtil cHWtil
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW cHW
+
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHj3 
+
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHW 
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHj3 cHWtil
+python training.py --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_delphes_bkgs --config WH_delphes_bkgs  --name first_try --derivative cHW cHWtil
 
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpW 
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpqMi 
@@ -126,17 +126,17 @@
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpq3i cpqMi
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpW cpqMi
 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpW 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpqMi 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpqMi cpqMi
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpW cpW
-
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpq3i 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpq3i cpq3i 
-
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpq3i cpW 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpq3i cpqMi
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_bkgs_delphes_comb --config ZH_delphes_bkgs_comb  --name v1 --derivative cpW cpqMi
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHW 
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHWtil 
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHWtil cHWtil
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHW cHW
+                                                                                                                                                                                                                
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHj3 
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHj3 cHj3 
+                                                                                                                                                                                                                
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHj3 cHW 
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHj3 cHWtil
+python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --name v2 --derivative cHW cHWtil
 
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_nlo_delphes --config WH_nlo_delphes  --max_depth 2 --n_trees 300 --clip_score_quantile 0.001 --name v1_clipScore_0p001_max_depth_2_n_trees_300 --derivative cpW 
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_nlo_delphes --config WH_nlo_delphes  --max_depth 2 --n_trees 300 --clip_score_quantile 0.001 --name v1_clipScore_0p001_max_depth_2_n_trees_300 --derivative cpqMi 

@@ -55,9 +55,6 @@ def makeJets( event, sample ):
         #addTransverseVector( p )
         addTLorentzVector( p )
     event.bJets      = filter(lambda j:j['bTag']>=1 and abs(j['eta'])<=2.4, event.jets)
-    print "jets",event.jets
-    print "bJets",event.bJets
-    print 
     event.extraJets  = [ j for i_j, j in enumerate( event.jets ) if i_j not in [event.H_j1_index, event.H_j2_index] ] 
     event.nextraJet = len(event.extraJets)
 

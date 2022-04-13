@@ -65,8 +65,11 @@ def cosThetaStar( Z_mass, Z_pt, Z_eta, Z_phi, l_pt, l_eta, l_phi ):
     
     # get cos(theta) and the lorentz factor, calculate cos(theta*)
     cosTheta = Z*l / (sqrt(Z*Z) * sqrt(l*l))
-    gamma   = sqrt( 1 + Z_pt**2/Z_mass**2 * cosh(Z_eta)**2 )
-    beta    = sqrt( 1 - 1/gamma**2 )
+    gamma   = sqrt( 1. + Z_pt**2/Z_mass**2 * cosh(Z_eta)**2 )
+    beta    = sqrt( 1. - 1./gamma**2 )
+    #print beta, gamma, cosTheta
+    if 1-beta<=10**-14: return -1
+    if 1+beta<=10**-14: return 1
     return (-beta + cosTheta) / (1 - beta*cosTheta)
 
 def deltaPhi(phi1, phi2):

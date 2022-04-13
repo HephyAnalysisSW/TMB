@@ -79,7 +79,6 @@ trueBEff_    = np.array( [ [trueBEff[ptb][etab] for j, etab in enumerate(absEtaB
 trueNonBEff_ = np.array( [ [trueNonBEff[ptb][etab] for j, etab in enumerate(absEtaBins)] for i, ptb in enumerate(ptBins)] )
 #def getBTagWeights( trueBJets, trueNonBJets ):
 
-
 def getBJetProbabilities( trueBJets, trueNonBJets, nbtag_min = 2):
 #if True:
 #    nbtag = 2

@@ -149,7 +149,7 @@ for i_comb, comb in enumerate(WH.weightInfo.make_combinations(weight_variables, 
 
 scale_weight = 10**5
 
-for sample in training_samples:
+def add_weight_derivatives(sample):
     sample.weight_derivatives = []
     for i_comb, comb in enumerate(weight_derivative_combinations):
         #print name, i_comb, comb, weightInfo.get_diff_weight_string(comb)
@@ -173,6 +173,9 @@ for sample in training_samples:
         weight['name']   = '_'.join(comb)
         weight['comb']   = comb
         sample.weight_derivatives.append( weight )
+
+for sample in training_samples:
+    add_weight_derivatives( sample )
 
 def compute_weight_derivatives( event, sample ):
     vector = [{'derivatives':weight['func'](event, sample)} for weight in sample.weight_derivatives]

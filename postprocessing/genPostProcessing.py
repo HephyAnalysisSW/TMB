@@ -129,6 +129,10 @@ if args.addReweights:
             res[str_s[2*i]] = float(str_s[2*i+1].replace('m','-').replace('p','.'))
         return res
 
+    # Suddenly only lower case weight.id ... who on earth does such things?
+    weightInfo_data_lower = {k.lower():val for k, val in weightInfo.data.iteritems()}
+
+
 # Run only job number "args.job" from total of "args.nJobs"
 if args.nJobs>1:
     n_files_before = len(sample.files)
@@ -362,9 +366,6 @@ maker = TreeMaker(
     )
 
 tmp_dir.cd()
-
-# Suddenly only lower case weight.id ... who on earth does such things?
-weightInfo_data_lower = {k.lower():val for k, val in weightInfo.data.iteritems()}
 
 gRandom = ROOT.TRandom3()
 def filler( event ):
@@ -721,6 +722,7 @@ def filler( event ):
             jet_combinatorics.append( (1., recoBJets, recoNonBJets) )
 
         for probability, recoBJets, recoNonBJets in jet_combinatorics:
+            if probability==0: continue
 
             if args.combinatoricalBTags:
                 event.combinatoricalBTagWeight2b = probability

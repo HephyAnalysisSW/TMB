@@ -15,10 +15,10 @@ import TMB.Tools.stat_helpers           as stat_helpers
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',         nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],             help="Log level for logging")
 argParser.add_argument("--lumi",               action='store',      type=float,             default=137, help='Which lumi?')
-argParser.add_argument('--config',             action='store', type=str, default = "ZH_delphes_bkgs", help="config")
+argParser.add_argument('--config',             action='store', type=str, default = "WH_delphes_bkgs", help="config")
 argParser.add_argument('--config_module',      action='store', type=str, default = "TMB.BIT.configs", help = "config directory")
 argParser.add_argument('--plot_directory',     action='store', type=str,   default="BIT_VH_9")
-argParser.add_argument('--flavor',             action='store', type=str,   choices = ["nom", "bkgs"], default="bkgs")
+argParser.add_argument('--flavor',             action='store', type=str,  default="bkgs")
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--name',               action='store', type=str,   default='v2', help="Name of the training")
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/groups/hephy/cms/$USER/BIT/training-ntuple-ZH/MVA-training"))
@@ -156,7 +156,7 @@ for WC, WC_vals in [
             #("cHQ3",   [-.05, -.02, -.01, .01, .02, .05]),
         ]:
 
-    for test_statistic in [ "total", "lin", "quad"] :
+    for test_statistic in [ "total"]:#, "lin", "quad"] :
         for key in ["sig", "bkg"]:
             histos = []
             for i_WC_val, WC_val in enumerate(WC_vals):
@@ -320,7 +320,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:
     plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_lumi_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, args.lumi, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"+args.flavor), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
+    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned_"+args.flavor), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
 
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
