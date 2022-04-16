@@ -77,12 +77,12 @@ if signal.name.endswith("_nlo"):
 else:
     eft_configs = [
         {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
-        {'color':ROOT.kMagenta-4,   'param':{'cHWtil':-1},  'tex':"c_{H#tilde{W}}=-1"},
-        {'color':ROOT.kMagenta+2,   'param':{'cHWtil':1},   'tex':"c_{H#tilde{W}}=1"},
-        {'color':ROOT.kGreen-4,     'param':{'cHW':-1},  'tex':"c_{HW}=-1"},
-        {'color':ROOT.kGreen+2,     'param':{'cHW':1},  'tex':"c_{HW}=1"},
-        {'color':ROOT.kBlue-4,      'param':{'cHj3':-.1}, 'tex':"c_{HQ}^{(3)}=-0.1"},
-        {'color':ROOT.kBlue+2,      'param':{'cHj3':.1},  'tex':"c_{HQ}^{(3)}=0.1"},
+        {'color':ROOT.kMagenta-4,   'param':{'cHWtil':-1},  'tex':"c_{H#tilde{W}}=-1",  'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta+2,   'param':{'cHWtil':1},   'tex':"c_{H#tilde{W}}=1",   'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen-4,     'param':{'cHW':-1},     'tex':"c_{HW}=-1",          'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen+2,     'param':{'cHW':1},      'tex':"c_{HW}=1",           'binning':[20,0,1.5]},
+        {'color':ROOT.kBlue-4,      'param':{'cHj3':-.1},   'tex':"c_{HQ}^{(3)}=-0.1",  'binning':[20,0,50]},
+        {'color':ROOT.kBlue+2,      'param':{'cHj3':.1},    'tex':"c_{HQ}^{(3)}=0.1",   'binning':[20,0,50]},
         ]
 
 for eft in eft_configs:
@@ -128,6 +128,12 @@ else:
         if args.combinatoricalBTags: 
             if args.DYsample == 'all':
                 samples.DYJets_HT_comb.addSelectionString("Sum$(genJet_matchBParton)==0")
+                samples.DYBBJets_comb .texName = "DY + jets"
+                samples.DYJets_HT_comb.notInLegend = True
+                #samples.DYBBJets_comb.style = styles.invisibleStyle()
+                samples.DYJets_HT_comb.style = styles.invisibleStyle()
+                #samples.DYJets_HT_comb.style = styles.fillStyle(ROOT.kBlue)
+
                 stack       = Stack( [samples.DYBBJets_comb, samples.DYJets_HT_comb] )
                 stack[0][0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
                 stack[0][1].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
@@ -144,7 +150,8 @@ eft_weights = []
 if not args.no_bkgs:
     eft_weights =  [[]]
     for sample in stack.samples:
-        sample.style = styles.fillStyle(sample.color)
+        if not hasattr( sample, "style" ):
+            sample.style = styles.fillStyle(sample.color)
         eft_weights[0].append( None )
 
 for i_eft, eft in enumerate(eft_configs):
@@ -238,18 +245,12 @@ elif signal.name.startswith('ZH'):
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
 
 bits = [
-    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
-    ("BIT_cHW_cHW",         bits[('cHW','cHW')],        [30,-5,25]), 
-#    ("BIT_cHWtil",          bits[('cHWtil',)],          [20,-5,5]), 
-#    ("BIT_cHWtil_cHWtil",   bits[('cHWtil','cHWtil')],  [30,-5,25]), 
-    ("BIT_cHj3",            bits[('cHj3',)],          [20,-5,5]), 
-    ("BIT_cHj3_cHj3",       bits[('cHj3','cHj3')],  [30,-5,25]), 
-    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             [20,-1,1]), 
-    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        [30,-5,25]), 
-#    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
-#    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,25]), 
+    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             ([10,-.2,.8] if args.signal=='WH' else [10, -1,9])), 
+    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        ([10, 0,10] if args.signal=='WH' else [10,0,20])), 
+    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
+    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,5]), 
     ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
-    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,25]), 
+    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,5]), 
 ]
 sequence.extend( config.sequence )
 
@@ -268,6 +269,13 @@ def bit_predict( event, sample ):
 #            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
 #            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
 #            raise RuntimeError("Found NAN prediction?")
+
+    # make optimal discriminator for each cfg
+    for eft_config in eft_configs:
+        param = eft_config['param']
+        if len(param)!=1: continue
+        wc_, val_ = list(param.iteritems())[0]
+        setattr( event, "opt_%s_%f"%(wc_, val_), getattr( event, "BIT_bkgs_%s"%wc_ ) + 0.5*val_*getattr( event, "BIT_bkgs_%s_%s"%(wc_, wc_) )) 
 
 sequence.append( bit_predict )
 
@@ -341,6 +349,18 @@ for model_name, model in keras_models:
             attribute = lambda event, sample, disc_name=disc_name: getattr( event, disc_name ),
             binning=[50, 0, 1],
         ))
+
+for eft_config in eft_configs:
+    param = eft_config['param']
+    if len(param)!=1: continue
+    wc_, val_ = list(param.iteritems())[0]
+    name =  "opt_%s_%f"%(wc_, val_)
+    plots.append(Plot(
+        texX = "q(%s=%3.2f)"%(wc_, val_), texY = 'Number of Events',
+        name =  name, 
+        attribute = lambda event, sample, disc_name=name: getattr( event, disc_name ),
+        binning=eft_config['binning'],
+    ))
 
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):

@@ -34,7 +34,6 @@ def get_logger(logLevel, logFile = None, add_sync_level = False):
       # add handler to logger object
       logger.addHandler(fileHandler)
  
-
     # create console handler and set level to debug
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
