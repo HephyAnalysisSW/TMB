@@ -291,7 +291,7 @@ plot_options = {
 
      "mva_WH_Theta"        :{'tex':'#Theta',                'binning':[30,0,pi]},
      "mva_WH_theta"        :{'tex':'#theta',                'binning':[30,0,pi]},
-     "mva_WH_phi"          :{'tex':'#phi',                  'binning':[30,-pi,pi]},
+     "mva_WH_phi"          :{'tex':'#phi',                  'binning':[15,-pi,pi]},
 
      'mva_WH_fLL'          :{ 'tex':'f_{LL}'         ,      'binning':[Nbins,0,1]},
      'mva_WH_f1TT'         :{ 'tex':'f_{1TT}'        ,      'binning':[Nbins,-1,1]},

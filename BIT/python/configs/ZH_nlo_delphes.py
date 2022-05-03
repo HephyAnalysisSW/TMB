@@ -274,7 +274,7 @@ plot_options = {
 
      "mva_ZH_Theta"        :{'tex':'#Theta',                'binning':[30,0,pi]},
      "mva_ZH_theta"        :{'tex':'#theta',                'binning':[30,0,pi]},
-     "mva_ZH_phi"          :{'tex':'#phi',                  'binning':[30,-pi,pi]},
+     "mva_ZH_phi"          :{'tex':'#phi',                  'binning':[15,-pi,pi]},
      #"mva_ZH_signed_Theta" :{'tex':'#Theta#times sign(sin(2#Theta) sin(2#theta)'},
      #"mva_ZH_signed_theta" :{'tex':'#theta#times sign(sin(2#Theta) sin(2#theta)'},
      #"mva_ZH_signed_phi"   :{'tex':'#phi#times sign(sin(2#Theta) sin(2#theta)'},

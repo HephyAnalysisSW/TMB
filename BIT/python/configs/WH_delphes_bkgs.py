@@ -282,7 +282,7 @@ plot_options = {
      "mva_jet2_pt"         :{'tex':'p_{T}(j_{2}) (GeV)',    'binning':[600/20,0,600]},
      "mva_jet2_eta"        :{'tex':'#eta (j_{2})',          'binning':[30,-3,3]},
      "mva_jet2_btag"       :{'tex':'b-jet disc. of j_{2}',  'binning':[5,-2,3]},
-     "mva_W_pt"            :{'tex':'p_{T}(W) (GeV)',        'binning':[600/20,0,600]},       
+     "mva_W_pt"            :{'tex':'p_{T}(W) (GeV)',        'binning':[25,300,800]},       
      "mva_W_eta"           :{'tex':'#eta(W)',               'binning':[30,-3,3]},
      "mva_WH_dPhiMetLep"   :{'tex':'#Delta#phi(l,#nu) from W',   'binning':[30,0,pi]},
      "mva_WH_MT"           :{'tex':'M_{T}(W) (GeV)',        'binning':[300/20,0,300]},
@@ -295,7 +295,7 @@ plot_options = {
 
      "mva_WH_Theta"        :{'tex':'#Theta',                'binning':[30,0,pi]},
      "mva_WH_theta"        :{'tex':'#theta',                'binning':[30,0,pi]},
-     "mva_WH_phi"          :{'tex':'#phi',                  'binning':[30,-pi,pi]},
+     "mva_WH_phi"          :{'tex':'#phi',                  'binning':[15,-pi,pi]},
 
      'mva_WH_fLL'          :{ 'tex':'f_{LL}'         ,      'binning':[Nbins,0,1]},
      'mva_WH_f1TT'         :{ 'tex':'f_{1TT}'        ,      'binning':[Nbins,-1,1]},

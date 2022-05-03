@@ -37,11 +37,12 @@ import pickle
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--plot_directory',     action='store',      default='delphes')
+argParser.add_argument('--plot_directory',     action='store',      default='delphes-v3')
 argParser.add_argument('--selection',          action='store',      default='singlelep-WHJet-onH')
 argParser.add_argument('--DYsample',           action='store',      default='DYBBJets')
 argParser.add_argument('--signal',             action='store',      default='WH', choices = ['WH', 'ZH', 'WH_nlo', 'ZH_nlo'])
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
+argParser.add_argument('--no_bkgs',                                 action='store_true',     help='Skip backgrounds?')
 argParser.add_argument('--overwrite',                               action='store_true',     help='Overwrite?')
 argParser.add_argument('--show_derivatives',                        action='store_true',     help='Show also the derivatives?')
 argParser.add_argument('--sign_reweight',                           action='store_true',     help='Apply sign(sin(2theta)sin(2Theta)) as weight ')
@@ -59,15 +60,14 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-plot_directory      = os.path.join(user.plot_directory, args.plot_directory,  args.signal )
+plot_directory      = os.path.join( user.plot_directory, args.plot_directory,  args.signal )
 results_directory   = os.path.join( user.results_directory, args.plot_directory,  args.signal ) 
 
 if args.small: 
     plot_directory += "_small"
     results_directory += "_small"
-#if args.combinatoricalBTags: 
-#    plot_directory += "_combWeights"
-#    results_directory += "_combWeights"
+if args.no_bkgs: 
+    plot_directory += "_no_bkgs"
 
 # Import samples
 import TMB.Samples.pp_gen_v10 as samples
@@ -131,27 +131,26 @@ def make_eft_weights( event, sample):
 
 combinatoricalBTags = args.signal.startswith("ZH")
 if args.signal.startswith("WH"):
-    stack       = Stack( [samples.TTJets, samples.WJetsToLNu_HT] )
+    backgrounds =  [samples.TTJets, samples.WJetsToLNu_HT]
 elif args.signal.startswith("ZH"):
     if args.DYsample == 'all':
         samples.DYJets_HT.addSelectionString("Sum$(genJet_matchBParton)==0")
-        stack       = Stack( [samples.DYBBJets, samples.DYJets_HT] )
+        backgrounds = [samples.DYBBJets, samples.DYJets_HT]
     else:
-        stack       = Stack( [getattr( samples, args.DYsample )])
+        backgrounds = [getattr( samples, args.DYsample )]
     plot_directory    += "_"+args.DYsample
     results_directory += "_"+args.DYsample
     if combinatoricalBTags: 
         if args.DYsample == 'all':
             samples.DYJets_HT_comb.addSelectionString("Sum$(genJet_matchBParton)==0")
-            stack       = Stack( [samples.DYBBJets_comb, samples.DYJets_HT_comb] )
-            stack[0][0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
-            stack[0][1].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
+            backgrounds = [samples.DYBBJets_comb, samples.DYJets_HT_comb]
+            backgrounds[0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
+            backgrounds[1].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
         else:
-            stack       = Stack( [getattr( samples, stack[0][0].name+'_comb')] )
-            stack[0][0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
+            backgrounds = [getattr( samples, backgrounds[0].name+'_comb')]
+            backgrounds[0].read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
 
-    #stack       = Stack( [samples.DYBBJets]) 
-    #samples.DYBBJets.read_variables = [TreeVariable.fromString("combinatoricalBTagWeight2b/F")]
+stack = Stack( backgrounds )
 
 sequence.append( make_eft_weights )
 
@@ -243,14 +242,21 @@ sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 from BoostedInformationTree import BoostedInformationTree
 if signal.name.startswith('WH'):
     import TMB.BIT.configs.WH_delphes_bkgs as config
-    #bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
-    bits  = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
+    #bits  = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
+
+    #bits  = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/v2/")
+    if args.no_bkgs:
+        bits  = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
+    else:
+        bits  = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs_ptW200/v2/")
 elif signal.name.startswith('ZH'):
     import TMB.BIT.configs.ZH_delphes_bkgs_comb as config
     #bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
     #bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
-    bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
-
+    if args.no_bkgs:
+        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
+    else:
+        bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
 for key, bit in bits.iteritems():
     bit.name = "BIT_"+"_".join( key )
 
@@ -307,24 +313,32 @@ from keras.models import load_model
 
 if signal.name.startswith('ZH'):
     keras_models = [
-        ("ZH_TT_WJets", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/ZH_TT_WJets/ZH_delphes_bkgs/multiclass_model.h5")),
+        ("multiclass", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/ZH_TT_WJets/ZH_delphes_bkgs/multiclass_model.h5")),
     ]
 else:
     keras_models = [
-        ("WH_TT_WJets", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/WH_TT_WJets/WH_delphes_bkgs/multiclass_model.h5")),
+        ("multiclass", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/WH_TT_WJets/WH_delphes_bkgs/multiclass_model.h5")),
     ]
 
-def keras_predict( event, sample ):
+test_statistic_predictions = {sample.name:{model_name:[] for model_name, _ in keras_models} for sample in stack.samples }
+for sample in stack.samples:
+    test_statistic_predictions[sample.name]['pTV'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut'] = [] 
 
+def make_test_statistic_predictions( event, sample ):
     # get model inputs assuming lstm
     for name, model in keras_models:
         prediction = model.predict( event.features.reshape(1,-1) )
-
         #print prediction
         for i_val, val in enumerate( prediction[0] ):
+            if config.training_samples[i_val].name == args.signal:
+                test_statistic_predictions[sample.name][name].append( val )
             setattr( event, name+'_'+config.training_samples[i_val].name, val)
 
-sequence.append( keras_predict )
+    test_statistic_predictions[sample.name]['pTV']   .append( event.WH_W_pt if args.signal.startswith("WH") else event.recoZ_pt )
+    test_statistic_predictions[sample.name]['pTVMCCut'].append( (event.multiclass_WH>0.9 if args.signal.startswith("WH") else event.multiclass_ZH>0.9 )*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+
+sequence.append( make_test_statistic_predictions )
 
 def make_sign_reweight( event, sample):
     event.sign_reweight = copysign( 1, sin(2*event.WH_Theta)*sin(2*event.WH_theta))
@@ -423,7 +437,7 @@ def drawPlots(plots, subDirectory=''):
 # Make plots & np arrays or load these
 results_file = os.path.join( results_directory, "data.pkl")
 if os.path.exists( results_file ) and not args.overwrite:
-    features, weight_derivatives, predictions =  pickle.load( file(results_file) )
+    features, weight_derivatives, predictions, test_statistic_predictions =  pickle.load( file(results_file) )
     logger.info( "Loaded data from %s" % results_file )
 else:
     plotting.fill(plots+plots2D, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
@@ -450,10 +464,10 @@ else:
     features           = {key:np.array(features[key]) for key in features.keys()}
     weight_derivatives = {key1:{key2:np.array(weight_derivatives[key1][key2]) for key2 in weight_derivatives[key1].keys()} for key1 in weight_derivatives.keys()}
     predictions        = {key1:{key2:np.array(predictions[key1][key2]) for key2 in predictions[key1].keys()} for key1 in predictions.keys()}
-
+    test_statistic_predictions  = {key1:{key2:np.array(test_statistic_predictions[key1][key2]) for key2 in test_statistic_predictions[key1].keys()} for key1 in test_statistic_predictions.keys()}
     if not os.path.exists( results_directory ):
         os.makedirs( results_directory )
-    pickle.dump( [features, weight_derivatives, predictions], file( results_file, 'w'))
+    pickle.dump( [features, weight_derivatives, predictions, test_statistic_predictions], file( results_file, 'w'))
     logger.info( "Dumped data to %s" % results_file )
     syncer.sync()
 
@@ -529,7 +543,8 @@ step2 = (WC2_max-WC2_min)/args.nBins
 WC1_vals = np.arange(WC1_min, WC1_max+step1, (WC1_max-WC1_min)/args.nBins)
 WC2_vals = np.arange(WC2_min, WC2_max+step2, (WC2_max-WC2_min)/args.nBins)
 
-test_statistics = ["total", "lin", "quad"]
+#test_statistics = ["multiclass", "pTV", "pTVMCCut"]
+test_statistics = ["lin", "quad", "total"]
 exp_nll_ratio = {}
 power         = {}
 for test_statistic in test_statistics:
@@ -543,65 +558,75 @@ for test_statistic in test_statistics:
 
             eft = {WC1:WC1_val, WC2:WC2_val}
 
-            for sample in [signal]: #stack.samples:#"bkg"]:
+            q_event_cdf = np.array([], 'd')
+            w_sm        = np.array([], 'd')
+            w_bsm       = np.array([], 'd')
 
-                q_event = make_q_event( test_statistic, predictions[sample.name], **eft )
+            for sample in ( [signal] if args.no_bkgs else [signal]+backgrounds ):
 
                 # compute BSM weights
-                w_sm   = lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name] )
-                w_bsm  = lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name], **eft)
+                w_sm   = np.concatenate( (w_sm,  lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name])))
+                w_bsm  = np.concatenate( (w_bsm, lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name], **eft)))
 
-                q_event_argsort     = np.argsort(q_event)
-                q_event_argsort_inv = np.argsort(q_event_argsort)
-                cdf_sm = np.cumsum(w_sm[q_event_argsort])
-                cdf_sm/=cdf_sm[-1]
+                # compute the test statistic
+                if test_statistic in ["lin", "quad", "total"]:
+                    q_event = make_q_event( test_statistic, predictions[sample.name], **eft )
+                else:
+                    q_event = test_statistic_predictions[sample.name][test_statistic]
 
-                # map to the SM CDF of q
+                # map to the SM CDF of q using the signal
                 if sample.name==signal.name: 
+                    q_event_argsort     = np.argsort(q_event)
+                    q_event_argsort_inv = np.argsort(q_event_argsort)
+                    cdf_sm = np.cumsum(w_sm[q_event_argsort])
+                    cdf_sm/=cdf_sm[-1]
                     cdf_map = make_cdf_map( q_event[q_event_argsort], cdf_sm )
 
-                #q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
-                q_event_cdf = cdf_map( q_event )
+                    #q_event_cdf = cdf_sm[q_event_argsort_inv] #uniformly distributed under the SM hypothesis
 
-                #min_, max_ = 0, 1 
-                binning = np.linspace(0, 1, args.nBinsTestStat+1)
+                q_event_cdf = np.concatenate( (q_event_cdf, cdf_map( q_event )) )
 
-                np_histo_sm  = np.histogram(q_event_cdf, bins=binning, weights = w_sm )[0]
-                np_histo_bsm = np.histogram(q_event_cdf, bins=binning, weights = w_bsm )[0]
+            #min_, max_ = 0, 1 
+            binning = np.linspace(0, 1, args.nBinsTestStat+1)
 
-                # Expectation_BSM( -Log( Prod_i( Pois_i( n_i, lambda_i(theta))/Pois_i( n_i, lambda_i(0)) ) ))
-                exp_nll_ratio_ = 2*np.sum(np_histo_sm - np_histo_bsm - np_histo_bsm*np.log(np_histo_sm/np_histo_bsm))
-                exp_nll_ratio[test_statistic].SetBinContent( exp_nll_ratio[test_statistic].FindBin( WC1_val, WC2_val ), exp_nll_ratio_)
+            np_histo_sm  = np.histogram(q_event_cdf, bins=binning, weights = w_sm )[0]
+            np_histo_bsm = np.histogram(q_event_cdf, bins=binning, weights = w_bsm )[0]
 
-                binned_toys_sm    = np.random.poisson(lam=np_histo_sm, size=(n_toys, len(np_histo_sm)))
-                binned_toys_theta = np.random.poisson(lam=np_histo_bsm, size=(n_toys, len(np_histo_bsm)))
+            # Expectation_BSM( -Log( Prod_i( Pois_i( n_i, lambda_i(theta))/Pois_i( n_i, lambda_i(0)) ) ))
+            exp_nll_ratio_ = 2*np.sum(np_histo_sm - np_histo_bsm - np_histo_bsm*np.log(np_histo_sm/np_histo_bsm))
+            exp_nll_ratio[test_statistic].SetBinContent( exp_nll_ratio[test_statistic].FindBin( WC1_val, WC2_val ), exp_nll_ratio_)
 
-                q_theta_given_sm    = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_sm*np.log(np_histo_sm/np_histo_bsm))]
-                q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_theta*np.log(np_histo_sm/np_histo_bsm))]
+            binned_toys_sm    = np.random.poisson(lam=np_histo_sm, size=(n_toys, len(np_histo_sm)))
+            binned_toys_theta = np.random.poisson(lam=np_histo_bsm, size=(n_toys, len(np_histo_bsm)))
 
-                if True:
-                    n = float(len(q_theta_given_sm))
-                    mean_q_theta_given_sm     = np.sum(q_theta_given_sm)/n
-                    sigma_q_theta_given_sm    = sqrt( np.sum((q_theta_given_sm - mean_q_theta_given_sm)**2)/(n-1) )
-                    q_theta_given_sm    = (q_theta_given_sm - mean_q_theta_given_sm)/sigma_q_theta_given_sm
-                    q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_sm)/sigma_q_theta_given_sm
+            q_theta_given_sm    = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_sm*np.log(np_histo_sm/np_histo_bsm))]
+            q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_theta*np.log(np_histo_sm/np_histo_bsm))]
 
-                print i_WC1_val, WC1_val,  i_WC2_val, WC2_val,  "sqrt(2NLL)", sqrt(abs(exp_nll_ratio_))
+            if True:
+                n = float(len(q_theta_given_sm))
+                mean_q_theta_given_sm     = np.sum(q_theta_given_sm)/n
+                sigma_q_theta_given_sm    = sqrt( np.sum((q_theta_given_sm - mean_q_theta_given_sm)**2)/(n-1) )
+                q_theta_given_sm    = (q_theta_given_sm - mean_q_theta_given_sm)/sigma_q_theta_given_sm
+                q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_sm)/sigma_q_theta_given_sm
 
-               # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-                quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-                quantiles_sm    = np.quantile( q_theta_given_sm, quantile_levels )
-                size_           = np.sum(np.histogram( q_theta_given_sm, quantiles_sm)[0])/float(n_toys)
-                #power_histo     = np.histogram( q_theta_given_theta, quantiles_sm)
-                for i_level, level in enumerate(levels):
-                    #if level != 0.68: continue
-                    power_toy_count = np.count_nonzero((q_theta_given_sm>=quantiles_theta[i_level]) & (q_theta_given_sm<quantiles_theta[-1-i_level]))
-                    power_ = 1. - power_toy_count/float(n_toys)
-                    power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( WC1_val, WC2_val ), power_ )
-                #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_sm)[0])/float(n_toys)
-                    print "theta", round(WC1_val,3), round(WC2_val,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2
+            print i_WC1_val, WC1_val,  i_WC2_val, WC2_val,  "sqrt(2NLL)", sqrt(abs(exp_nll_ratio_))
 
-colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
+           # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
+            quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
+            quantiles_sm    = np.quantile( q_theta_given_sm, quantile_levels )
+            size_           = np.sum(np.histogram( q_theta_given_sm, quantiles_sm)[0])/float(n_toys)
+            #power_histo     = np.histogram( q_theta_given_theta, quantiles_sm)
+            for i_level, level in enumerate(levels):
+                #if level != 0.68: continue
+                power_toy_count = np.count_nonzero((q_theta_given_sm>=quantiles_theta[i_level]) & (q_theta_given_sm<quantiles_theta[-1-i_level]))
+                power_ = 1. - power_toy_count/float(n_toys)
+                power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( WC1_val, WC2_val ), power_ )
+            #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_sm)[0])/float(n_toys)
+                print "theta", round(WC1_val,3), round(WC2_val,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2
+
+colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack, 
+             'multiclass':ROOT.kRed, 'pTV':ROOT.kBlue, 'pTVMCCut':ROOT.kBlack}
+
 nll_levels = [2.27, 5.99]
 contours = { key:{level:getContours( exp_nll_ratio[key], level) for level in nll_levels} for key in exp_nll_ratio.keys() }
 contour_objects = []
@@ -624,11 +649,9 @@ for test_statistic in test_statistics:
         logY = False, logX = False, logZ = True, 
         copyIndexPHP=True, 
         drawObjects = contour_objects, 
-        zRange = (0.05,25),
+        zRange = (0.01,25),
         histModifications = [lambda h:ROOT.gStyle.SetPalette(58)],
         )
-
-colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
 
 contours = { key:{level:getContours( power[key][level], 0.5 ) for level in levels } for key in power.keys()}
 contour_objects = []
@@ -652,7 +675,7 @@ for test_statistic in test_statistics:
             logY = False, logX = False, logZ = True, 
             copyIndexPHP=True, 
             drawObjects = contour_objects, 
-            zRange = (0.05,1),
+            zRange = (0.01,1),
             histModifications = [lambda h:ROOT.gStyle.SetPalette(58)],
             )
 

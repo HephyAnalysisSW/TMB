@@ -275,7 +275,7 @@ plot_options = {
      "mva_jet2_pt"         :{'tex':'p_{T}(j_{2}) (GeV)',    'binning':[600/20,0,600]},
      "mva_jet2_eta"        :{'tex':'#eta (j_{2})',          'binning':[30,-3,3]},
      "mva_jet2_btag"       :{'tex':'b-jet disc. of j_{2}',  'binning':[5,-2,3]},
-     "mva_Z_pt"            :{'tex':'p_{T}(Z) (GeV)',        'binning':[600/20,0,600]},
+     "mva_Z_pt"            :{'tex':'p_{T}(Z) (GeV)',        'binning':[25,300,800]},
      "mva_Z_eta"           :{'tex':'#eta(Z)',               'binning':[30,-3,3]},
      "mva_Z_cosThetaStar"  :{'tex':'cos(#theta^{*})',       'binning':[30,-1,1]},
      "mva_Z_lldPhi"        :{'tex':'#Delta#phi(ll) from Z', 'binning':[30,0,pi]},
@@ -287,7 +287,7 @@ plot_options = {
 
      "mva_ZH_Theta"        :{'tex':'#Theta',                'binning':[30,0,pi]},
      "mva_ZH_theta"        :{'tex':'#theta',                'binning':[30,0,pi]},
-     "mva_ZH_phi"          :{'tex':'#phi',                  'binning':[30,-pi,pi]},
+     "mva_ZH_phi"          :{'tex':'#phi',                  'binning':[15,-pi,pi]},
      #"mva_ZH_signed_Theta" :{'tex':'#Theta#times sign(sin(2#Theta) sin(2#theta)'},
      #"mva_ZH_signed_theta" :{'tex':'#theta#times sign(sin(2#Theta) sin(2#theta)'},
      #"mva_ZH_signed_phi"   :{'tex':'#phi#times sign(sin(2#Theta) sin(2#theta)'},

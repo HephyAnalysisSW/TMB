@@ -34,8 +34,6 @@ def parse_value( s ):
             r = s
     return r
         
-#extra_args = {key.lstrip('-'):parse_value(value) for key, value in zip(extra[::2], extra[1::2])}
-
 extra_args = {}
 key        = None
 for arg in extra:

@@ -31,8 +31,8 @@ import user
 # Parser
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_8",                 help="plot sub-directory")
-argParser.add_argument("--model",              action="store",      default="WH_Spannowsky",                 help="plot sub-directory")
+argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_12",                 help="plot sub-directory")
+argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="plot sub-directory")
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,                 help="nEvents")
 #argParser.add_argument('--debug',              action='store_true', help="Make debug plots?")
 #argParser.add_argument('--feature_plots',      action='store_true', help="Feature plots?")
@@ -62,7 +62,7 @@ weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 100
+lambda_expected_sm      = 90.13 #Delphes, ptZ>200
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]

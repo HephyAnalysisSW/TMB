@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Standard imports
-from operator                   import attrgetter
+import operator                  
 from math                       import pi, sqrt, cosh, cos, acos, sin, sinh, copysign
 import ROOT, os, copy
 
@@ -109,8 +109,12 @@ weight_variables = ['cHj3', 'cHW', 'cHWtil']
 max_order        = 2
 
 from TMB.Samples.pp_gen_v10 import *
-#DYJets_HT.setSelectionString("Sum$(genJet_matchBParton)==0")  #FIXME Commented this selection because it interferes with plot script!
-training_samples = [ ZH, DYJets_HT, DYBBJets]
+DYJets_HT_comb_ = copy.deepcopy(DYJets_HT_comb)
+DYJets_HT_comb_.setSelectionString("Sum$(genJet_matchBParton)==0")  #FIXME Commented this selection because it interferes with plot script!
+training_samples = [ ZH, DYJets_HT_comb_, DYBBJets_comb]
+
+DYJets_HT_comb_.read_variables = ["combinatoricalBTagWeight2b/F"]
+DYBBJets_comb.read_variables  = ["combinatoricalBTagWeight2b/F"]
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
@@ -131,7 +135,13 @@ for i_comb, comb in enumerate(ZH.weightInfo.make_combinations(weight_variables, 
 
 scale_weight = 10**5
 
-for sample in training_samples:
+def btag_weighter( event, sample ):
+    if sample.name.startswith("DY"):
+        return event.combinatoricalBTagWeight2b
+    else: 
+        return 1.
+
+def add_weight_derivatives( sample ):
     sample.weight_derivatives = []
     for i_comb, comb in enumerate(weight_derivative_combinations):
         #print name, i_comb, comb, weightInfo.get_diff_weight_string(comb)
@@ -142,7 +152,7 @@ for sample in training_samples:
                 #weight['string'] = "lumiweight1fb*("+sample.weightInfo.get_diff_weight_string(comb)+")"
                 func_            = sample.weightInfo.get_diff_weight_func(comb)
                 # evaluate weight at BSM point, divide by first base weight (SM), norm to lumi
-                weight['func']   = lambda event, sample, func_=func_: func_(event,sample)*event.lumiweight1fb/event.weight_base[0]*scale_weight
+                weight['func']   = lambda event, sample, func_=func_: func_(event,sample)*event.lumiweight1fb/event.weight_base[0]*scale_weight*btag_weighter(event, sample)
             else:
                 print "Warning! Derivative %r put to zero in sample %s because some WC are missing."%( comb, sample.name )
                 weight = {}
@@ -151,10 +161,13 @@ for sample in training_samples:
         else:
             const = 1 if len(comb)==0 else 0 
             print "Warning. Sample %s has no weightInfo. Therefore, weight %r will be %f." % ( sample.name, comb, const )
-            weight['func']   = lambda event, sample, const=const: const*event.lumiweight1fb*scale_weight
+            weight['func']   = lambda event, sample, const=const: const*event.lumiweight1fb*scale_weight*btag_weighter(event, sample)
         weight['name']   = '_'.join(comb)
         weight['comb']   = comb
         sample.weight_derivatives.append( weight )
+
+for sample in training_samples:
+    add_weight_derivatives( sample )
 
 def compute_weight_derivatives( event, sample ):
     vector = [{'derivatives':weight['func'](event, sample)} for weight in sample.weight_derivatives]
@@ -175,7 +188,7 @@ all_mva_variables = {
 # global event properties
      "mva_ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range(event.nrecoJet) ])),
      "mva_met_pt"                :(lambda event, sample: event.recoMet_pt),
-     "mva_nextraJet"            :(lambda event, sample: event.nextraJet),
+     "mva_nextraJet"             :(lambda event, sample: event.nextraJet),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
 
 # jet kinmatics
@@ -262,7 +275,7 @@ plot_options = {
      "mva_jet2_pt"         :{'tex':'p_{T}(j_{2}) (GeV)',    'binning':[600/20,0,600]},
      "mva_jet2_eta"        :{'tex':'#eta (j_{2})',          'binning':[30,-3,3]},
      "mva_jet2_btag"       :{'tex':'b-jet disc. of j_{2}',  'binning':[5,-2,3]},
-     "mva_Z_pt"            :{'tex':'p_{T}(Z) (GeV)',        'binning':[600/20,0,600]},
+     "mva_Z_pt"            :{'tex':'p_{T}(Z) (GeV)',        'binning':[25,300,800]},
      "mva_Z_eta"           :{'tex':'#eta(Z)',               'binning':[30,-3,3]},
      "mva_Z_cosThetaStar"  :{'tex':'cos(#theta^{*})',       'binning':[30,-1,1]},
      "mva_Z_lldPhi"        :{'tex':'#Delta#phi(ll) from Z', 'binning':[30,0,pi]},
@@ -321,6 +334,7 @@ mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
 
 all_mva_variables['lumiweight1fb'] = (lambda event, sample: event.lumiweight1fb)
+all_mva_variables['combinatoricalBTagWeight2b'] = (lambda event, sample: event.combinatoricalBTagWeight2b if hasattr( event, "combinatoricalBTagWeight2b") else 1.)
 
 import numpy as np
 import operator
@@ -332,7 +346,7 @@ def predict_inputs( event, sample):
 # training selection
 from TMB.Tools.delphesCutInterpreter import cutInterpreter
 
-selectionString = cutInterpreter.cutString( 'dilep-ZHJet-onZ-onH' )
+selectionString = cutInterpreter.cutString( 'dilep-ZHJet-onZ-onH-ptZ200' )
 # selectionString = cutInterpreter.cutString( 'trilepT-minDLmass12-onZ1-njet4p-btag1' )
 
 bit_derivatives  = weight_derivative_combinations[1:] 
@@ -374,8 +388,9 @@ if True:
 
     directory = "/groups/hephy/cms/robert.schoefbeck/BIT/models/"
     save_cfgs = [
-        ( "nom",  "ZH_delphes/v2"),
-        ( "bkgs", "ZH_delphes_bkgs/first_try"),
+        #( "nom",  "ZH_delphes/v2"),
+        #( "bkgs", "ZH_delphes_bkgs/first_try"),
+        ( "comb", "ZH_delphes_bkgs_comb/v2"),
         ]
 
     for name, subdir in save_cfgs:

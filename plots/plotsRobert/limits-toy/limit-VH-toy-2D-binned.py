@@ -33,7 +33,7 @@ import user
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_8",                 help="plot sub-directory")
-argParser.add_argument("--model",              action="store",      default="WH_Spannowsky",                 help="plot sub-directory")
+argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="plot sub-directory")
 argParser.add_argument("--WCs",                action="store",      nargs='*', default=["cHQ3", -.08, .08, "cHW", 0,.5],                 help="Wilson coefficients")
 argParser.add_argument("--nBins",              action="store",      type=int, default=30,                 help="Number of bins in each dimension")
 argParser.add_argument("--nBinsTestStat",      action="store",      type=int, default=20,                 help="Number of bins for the test statistic")
@@ -64,12 +64,17 @@ if not os.path.isdir(plot_directory):
 Plot.setDefaults()
 
 features = model.getEvents(args.nEvents)
+
+adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
+ 
+features = features[adhoc]
+
 nEvents  = len(features)
 weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 100
+lambda_expected_sm      = 90.13 #Delphes, ptZ>200
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]
@@ -96,7 +101,7 @@ def make_weights( lin=False, **kwargs):
     return result 
 
 # precompute BITS
-bits = model.load()
+bits = model.load(prefix="bit_ZH_Nakamura_MD6_nTraining_2000000")
 predictions = { der:bits[der].vectorized_predict(features) for der in bits.keys() } 
 
 def make_q( order, truth=False, **kwargs ):
@@ -116,7 +121,6 @@ def make_q( order, truth=False, **kwargs ):
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
     return 0.5*np.log( result**2 )
-
 #event_indices = np.arange(nEvents)
 #def make_toys( yield_per_toy, n_toys, lin=False, **kwargs):
 #    weights_      = make_weights(lin=lin, **kwargs)
@@ -166,6 +170,7 @@ for WC, theta_vals in [
         for i_theta, theta in enumerate(theta_vals):
             print "theta", theta
             q_event = make_q( test_statistic, truth=args.truth, **{WC:theta} )
+
             q_event_argsort     = np.argsort(q_event)
             q_event_argsort_inv = np.argsort(q_event_argsort)
             cdf_sm = np.cumsum(weights[()][q_event_argsort])
@@ -281,7 +286,7 @@ for test_statistic in test_statistics:
                 q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
                 q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
 
-            print i_theta1, theta1, i_theta2, theta2, "sqrt(2NLL)", sqrt(exp_nll_ratio_)
+            print i_theta1, theta1, i_theta2, theta2, "sqrt(2NLL)", sqrt(abs(exp_nll_ratio_))
 
            # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
             quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
@@ -315,7 +320,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:    
     plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
+    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
 
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
@@ -337,6 +342,6 @@ for test_statistic in contours.keys():
 for test_statistic in test_statistics:
     for level in levels:
         plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
-        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
+        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
 
 syncer.sync()

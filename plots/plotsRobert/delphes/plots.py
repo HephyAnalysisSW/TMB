@@ -171,7 +171,7 @@ else:
     #lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
     weight_branches = ["lumiweight1fb"]
 
-lumi  = 59.7
+lumi  = 300
 def weight_getter( branches ):
     getters = [ operator.attrgetter(branch) for branch in branches ]
     def getter( event, sample ):
@@ -239,7 +239,7 @@ if signal.name.startswith('WH'):
     bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
 elif signal.name.startswith('ZH'):
-    import TMB.BIT.configs.ZH_delphes_bkgs as config
+    import TMB.BIT.configs.ZH_delphes_bkgs_comb as config
     bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
     #bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
     bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
