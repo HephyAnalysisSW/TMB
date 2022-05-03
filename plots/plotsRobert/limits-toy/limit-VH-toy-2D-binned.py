@@ -128,9 +128,11 @@ def make_q( order, truth=False, **kwargs ):
 #
 #    return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
 
-tex = ROOT.TLatex()
-tex.SetNDC()
-tex.SetTextSize(0.04)
+#tex = ROOT.TLatex()
+#tex.SetNDC()
+#tex.SetTextSize(0.04)
+
+tex = {'cHW':"C_{HW}", 'cHWtil':"C_{H#tilde{W}}", "cHQ3":"C_{HQ}^{(3)}"}
 
 
 #colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
@@ -319,7 +321,7 @@ for test_statistic in contours.keys():
             contour_objects.append( tgr )
 
 for test_statistic in test_statistics:    
-    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = WC1, texY = WC2 )
+    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
     plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
 
 
@@ -341,7 +343,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:
     for level in levels:
-        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
+        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = tex[WC1], texY = tex[WC2] )
         plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
 
 syncer.sync()
