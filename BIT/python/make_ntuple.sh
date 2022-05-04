@@ -18,9 +18,9 @@ python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/heph
 python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYBBJets_comb --config_module TMB.BIT.configs  --config ZH_delphes_bkgs_comb_ptZ200
 python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-ZH --sample DYJets_HT_comb --config_module TMB.BIT.configs --config ZH_delphes_bkgs_comb_ptZ200
 
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs             --config WH_delphes_bkgs_ptW200
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample TTJets --config_module TMB.BIT.configs         --config WH_delphes_bkgs_ptW200
-python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WJetsToLNu_HT --config_module TMB.BIT.configs  --config WH_delphes_bkgs_ptW200
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs             --config WH_delphes_bkgs_ptW200
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample TTJets --config_module TMB.BIT.configs         --config WH_delphes_bkgs_ptW200
+#python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output /groups/hephy/cms/$USER/BIT/training-ntuple-WH --sample WJetsToLNu_HT --config_module TMB.BIT.configs  --config WH_delphes_bkgs_ptW200
 
 #python $CMSSW_BASE/src/Analysis/MVA/python/make_ntuple.py  --output ${output}/$USER/BIT/training-ntuple-WH --sample WH --config_module TMB.BIT.configs --config WH_delphes
 

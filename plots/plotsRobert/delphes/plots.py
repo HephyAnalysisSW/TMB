@@ -128,10 +128,11 @@ else:
         if args.combinatoricalBTags: 
             if args.DYsample == 'all':
                 samples.DYJets_HT_comb.addSelectionString("Sum$(genJet_matchBParton)==0")
-                samples.DYBBJets_comb .texName = "DY + jets"
-                samples.DYJets_HT_comb.notInLegend = True
+                samples.DYBBJets_comb .texName = "DY + b#bar{b}"
+                samples.DYJets_HT_comb.style = styles.fillStyle(ROOT.kOrange)
+                samples.DYJets_HT_comb.textName = "DY + light jets"
+                #samples.DYJets_HT_comb.notInLegend = True
                 #samples.DYBBJets_comb.style = styles.invisibleStyle()
-                samples.DYJets_HT_comb.style = styles.invisibleStyle()
                 #samples.DYJets_HT_comb.style = styles.fillStyle(ROOT.kBlue)
 
                 stack       = Stack( [samples.DYBBJets_comb, samples.DYJets_HT_comb] )
@@ -270,12 +271,12 @@ def bit_predict( event, sample ):
 #            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
 #            raise RuntimeError("Found NAN prediction?")
 
-    # make optimal discriminator for each cfg
-    for eft_config in eft_configs:
-        param = eft_config['param']
-        if len(param)!=1: continue
-        wc_, val_ = list(param.iteritems())[0]
-        setattr( event, "opt_%s_%f"%(wc_, val_), getattr( event, "BIT_bkgs_%s"%wc_ ) + 0.5*val_*getattr( event, "BIT_bkgs_%s_%s"%(wc_, wc_) )) 
+#    # make optimal discriminator for each cfg
+#    for eft_config in eft_configs:
+#        param = eft_config['param']
+#        if len(param)!=1: continue
+#        wc_, val_ = list(param.iteritems())[0]
+#        setattr( event, "opt_%s_%f"%(wc_, val_), getattr( event, "BIT_bkgs_%s"%wc_ ) + 0.5*val_*getattr( event, "BIT_bkgs_%s_%s"%(wc_, wc_) )) 
 
 sequence.append( bit_predict )
 
@@ -350,17 +351,24 @@ for model_name, model in keras_models:
             binning=[50, 0, 1],
         ))
 
-for eft_config in eft_configs:
-    param = eft_config['param']
-    if len(param)!=1: continue
-    wc_, val_ = list(param.iteritems())[0]
-    name =  "opt_%s_%f"%(wc_, val_)
-    plots.append(Plot(
-        texX = "q(%s=%3.2f)"%(wc_, val_), texY = 'Number of Events',
-        name =  name, 
-        attribute = lambda event, sample, disc_name=name: getattr( event, disc_name ),
-        binning=eft_config['binning'],
-    ))
+#for eft_config in eft_configs:
+#    param = eft_config['param']
+#    if len(param)!=1: continue
+#    wc_, val_ = list(param.iteritems())[0]
+#    name =  "opt_%s_%f"%(wc_, val_)
+#    plots.append(Plot(
+#        texX = "q(%s=%3.2f)"%(wc_, val_), texY = 'Number of Events',
+#        name =  name, 
+#        attribute = lambda event, sample, disc_name=name: getattr( event, disc_name ),
+#        binning=eft_config['binning'],
+#    ))
+
+if 'ptZ200' in args.selection:
+    config.plot_options["mva_Z_pt"]['binning'] = [15,200,800]
+elif 'ptZ300' in args.selection:
+    config.plot_options["mva_Z_pt"]['binning'] = [15,300,800]
+else:
+    config.plot_options["mva_Z_pt"]['binning'] = [20,0,800]
 
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):
