@@ -130,7 +130,7 @@ else:
                 samples.DYJets_HT_comb.addSelectionString("Sum$(genJet_matchBParton)==0")
                 samples.DYBBJets_comb .texName = "DY + b#bar{b}"
                 samples.DYJets_HT_comb.style = styles.fillStyle(ROOT.kOrange)
-                samples.DYJets_HT_comb.textName = "DY + light jets"
+                samples.DYJets_HT_comb.texName = "DY + light jets"
                 #samples.DYJets_HT_comb.notInLegend = True
                 #samples.DYBBJets_comb.style = styles.invisibleStyle()
                 #samples.DYJets_HT_comb.style = styles.fillStyle(ROOT.kBlue)
@@ -363,12 +363,13 @@ for model_name, model in keras_models:
 #        binning=eft_config['binning'],
 #    ))
 
+V_pt = "mva_Z_pt" if args.signal.startswith("ZH") else "mva_W_pt"
 if 'ptZ200' in args.selection:
-    config.plot_options["mva_Z_pt"]['binning'] = [15,200,800]
+    config.plot_options[V_pt]['binning'] = [12,200,800]
 elif 'ptZ300' in args.selection:
-    config.plot_options["mva_Z_pt"]['binning'] = [15,300,800]
+    config.plot_options[V_pt]['binning'] = [10,300,800]
 else:
-    config.plot_options["mva_Z_pt"]['binning'] = [20,0,800]
+    config.plot_options[V_pt]['binning'] = [16,0,800]
 
 #features
 for i_key, (key, _) in enumerate( config.mva_variables ):

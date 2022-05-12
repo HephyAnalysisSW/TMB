@@ -34,7 +34,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_12",                 help="plot sub-directory")
 argParser.add_argument("--prefix",             action="store",      default="bit_ZH_Nakamura_nTraining_5000000",                 help="plot sub-directory")
-argParser.add_argument("--model",              action="store",      default="ZH_Spannowsky",                 help="plot sub-directory")
+argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="plot sub-directory")
 argParser.add_argument("--WCs",                action="store",      nargs='*', default=["cHQ3", -.08, .08, "cHW", 0,.5],                 help="Wilson coefficients")
 argParser.add_argument("--nBins",              action="store",      type=int, default=30,                 help="Number of bins in each dimension")
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,             help="Number of events")
@@ -65,15 +65,16 @@ Plot.setDefaults()
 
 features = model.getEvents(args.nEvents)
 
-adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
-features = features[adhoc]
+if args.model.startswith("ZH"):
+    adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
+    features = features[adhoc]
 
 nEvents  = len(features)
 weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 90.13 #Delphes, ptZ>200
+lambda_expected_sm      = 90.13 if args.model.startswith("ZH") else 599.87 #Delphes, ptZ>200
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]
@@ -171,9 +172,11 @@ n_toys   = 50000
 # do not make the following inconsistent
 levels          = [ 0.95, 0.68]
 quantile_levels = [0.025, 0.16, .5, 1-0.16, 1-0.025]
+#quantile_levels = [0.05, 0.32]
 
 def getContours( h, level):
     _h     = h.Clone()
+    _h.Smooth(1, "k5b")
     ctmp = ROOT.TCanvas()
     _h.SetContour(1,array.array('d', [level]))
     _h.Draw("contzlist")
@@ -215,13 +218,15 @@ for eft in [
         if iteration<0:
             q_event = make_q( "total", truth=True,  **eft )
         else:
-            predictions_i = {key:value[iteration] for key, value in predictions_iterations.iteritems()}
+            predictions_i = {key:(value[iteration] if iteration<bits[key].n_trees else value[bits[key].n_trees-1]) for key, value in predictions_iterations.iteritems()}
             q_event = make_q( "total", truth=False, predictions = predictions_i, **eft )
 
         #log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
         q_theta_given_SM    = np.array([np.sum( q_event[toy_] ) for toy_ in sm_toys ])
         q_theta_given_theta = np.array([np.sum( q_event[toy_] ) for toy_ in eft_toys ])
 
+
+        assert False, ""
         # calibration according to SM
         if True:
             n = float(len(q_theta_given_SM))
@@ -331,6 +336,6 @@ for test_statistic in contours.keys():
 for test_statistic in test_statistics:
     for level in levels: 
         plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
-        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "unbinned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
+        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "unbinned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,1))
 
 syncer.sync()

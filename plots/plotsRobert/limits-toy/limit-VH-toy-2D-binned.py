@@ -65,16 +65,16 @@ Plot.setDefaults()
 
 features = model.getEvents(args.nEvents)
 
-adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
- 
-features = features[adhoc]
+if args.model.startswith("ZH"):
+    adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
+    features = features[adhoc]
 
 nEvents  = len(features)
 weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 90.13 #Delphes, ptZ>200
+lambda_expected_sm      = 90.13 if args.model.startswith("ZH") else 599.87 #Delphes, ptZ>200
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]
@@ -101,7 +101,10 @@ def make_weights( lin=False, **kwargs):
     return result 
 
 # precompute BITS
-bits = model.load(prefix="bit_ZH_Nakamura_MD6_nTraining_2000000")
+if args.model == 'ZH_Nakamura':
+    bits = model.load(prefix="bit_ZH_Nakamura_MD6_nTraining_2000000")
+elif args.model == 'WH_Nakamura':
+    bits = model.load(prefix="bit_WH_Nakamura_MD6_nTraining_2000000")
 predictions = { der:bits[der].vectorized_predict(features) for der in bits.keys() } 
 
 def make_q( order, truth=False, **kwargs ):
@@ -142,6 +145,7 @@ tex = {'cHW':"C_{HW}", 'cHWtil':"C_{H#tilde{W}}", "cHQ3":"C_{HQ}^{(3)}"}
 
 def getContours( h, level):
     _h     = h.Clone()
+    _h.Smooth(1, "k5b")
     ctmp = ROOT.TCanvas()
     _h.SetContour(1,array.array('d', [level]))
     _h.Draw("contzlist")
@@ -322,7 +326,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:    
     plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
-    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.05,25))
+    plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,25))
 
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
@@ -344,6 +348,6 @@ for test_statistic in contours.keys():
 for test_statistic in test_statistics:
     for level in levels:
         plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = tex[WC1], texY = tex[WC2] )
-        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.005,1))
+        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,1))
 
 syncer.sync()

@@ -50,6 +50,7 @@ argParser.add_argument('--sign_reweight',                           action='stor
 
 argParser.add_argument("--nBins",              action="store",      type=int, default=30,                 help="Number of bins in each dimension")
 argParser.add_argument("--nBinsTestStat",      action="store",      type=int, default=20,                 help="Number of bins for the test statistic")
+argParser.add_argument('--altTestStat',        action='store_true', help='Use alternative test statistics?')
 argParser.add_argument("--WCs",                action="store",      nargs='*', default=["cHj3", -.08, .08, "cHW", 0,.5],                 help="Wilson coefficients")
 
 
@@ -61,7 +62,7 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 plot_directory      = os.path.join( user.plot_directory, args.plot_directory,  args.signal )
-results_directory   = os.path.join( user.results_directory, args.plot_directory,  args.signal ) 
+results_directory   = os.path.join( user.results_directory, args.plot_directory,  args.signal, args.selection) 
 
 if args.small: 
     plot_directory += "_small"
@@ -254,9 +255,13 @@ elif signal.name.startswith('ZH'):
     #bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
     #bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
     if args.no_bkgs:
-        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
+        #delphes-v4 bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v2/")
+        # delphes-v3 (the old training) bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
+        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v2_MD5/") #airport MD5 training
     else:
-        bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
+        # delphes-v4 #bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2/")
+        # delphes-v3 (the old training) bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
+        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2_MD5/") #airport MD5 training
 for key, bit in bits.iteritems():
     bit.name = "BIT_"+"_".join( key )
 
@@ -323,7 +328,11 @@ else:
 test_statistic_predictions = {sample.name:{model_name:[] for model_name, _ in keras_models} for sample in stack.samples }
 for sample in stack.samples:
     test_statistic_predictions[sample.name]['pTV'] = [] 
-    test_statistic_predictions[sample.name]['pTVMCCut'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut_1'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut_2'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut_3'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut_4'] = [] 
+    test_statistic_predictions[sample.name]['pTVMCCut_5'] = [] 
 
 def make_test_statistic_predictions( event, sample ):
     # get model inputs assuming lstm
@@ -336,7 +345,18 @@ def make_test_statistic_predictions( event, sample ):
             setattr( event, name+'_'+config.training_samples[i_val].name, val)
 
     test_statistic_predictions[sample.name]['pTV']   .append( event.WH_W_pt if args.signal.startswith("WH") else event.recoZ_pt )
-    test_statistic_predictions[sample.name]['pTVMCCut'].append( (event.multiclass_WH>0.9 if args.signal.startswith("WH") else event.multiclass_ZH>0.9 )*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+    if args.signal.startswith("WH"):
+        test_statistic_predictions[sample.name]['pTVMCCut_1'].append( (event.multiclass_WH>0.80)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_2'].append( (event.multiclass_WH>0.85)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_3'].append( (event.multiclass_WH>0.90)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_4'].append( (event.multiclass_WH>0.95)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_5'].append( (event.multiclass_WH>0.99)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+    else:
+        test_statistic_predictions[sample.name]['pTVMCCut_1'].append( (event.multiclass_ZH>0.95)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_2'].append( (event.multiclass_ZH>0.96)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_3'].append( (event.multiclass_ZH>0.97)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_4'].append( (event.multiclass_ZH>0.98)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
+        test_statistic_predictions[sample.name]['pTVMCCut_5'].append( (event.multiclass_ZH>0.99)*(test_statistic_predictions[sample.name]['pTV'][-1]) )
 
 sequence.append( make_test_statistic_predictions )
 
@@ -519,6 +539,7 @@ def make_cdf_map( x, y ):
 
 def getContours( h, level):
     _h     = h.Clone()
+    _h.Smooth(1, "k5b")
     ctmp = ROOT.TCanvas()
     _h.SetContour(1,array.array('d', [level]))
     _h.Draw("contzlist")
@@ -543,8 +564,11 @@ step2 = (WC2_max-WC2_min)/args.nBins
 WC1_vals = np.arange(WC1_min, WC1_max+step1, (WC1_max-WC1_min)/args.nBins)
 WC2_vals = np.arange(WC2_min, WC2_max+step2, (WC2_max-WC2_min)/args.nBins)
 
-#test_statistics = ["multiclass", "pTV", "pTVMCCut"]
-test_statistics = ["lin", "quad", "total"]
+if args.altTestStat:
+    #test_statistics = [ "pTVMCCut", "pTV", "total"]
+    test_statistics = [ "pTVMCCut_1",  "pTVMCCut_3", "pTVMCCut_5", "total"]
+else:
+    test_statistics = ["lin", "quad", "total"]
 exp_nll_ratio = {}
 power         = {}
 for test_statistic in test_statistics:
@@ -564,15 +588,18 @@ for test_statistic in test_statistics:
 
             for sample in ( [signal] if args.no_bkgs else [signal]+backgrounds ):
 
-                # compute BSM weights
-                w_sm   = np.concatenate( (w_sm,  lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name])))
-                w_bsm  = np.concatenate( (w_bsm, lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name], **eft)))
-
                 # compute the test statistic
                 if test_statistic in ["lin", "quad", "total"]:
                     q_event = make_q_event( test_statistic, predictions[sample.name], **eft )
+                    mask = np.ones_like(q_event).astype('bool') 
                 else:
                     q_event = test_statistic_predictions[sample.name][test_statistic]
+                    mask    = q_event>0
+                    q_event = q_event[mask] # this implements the cut
+
+                # compute BSM weights
+                w_sm   = np.concatenate( (w_sm,  lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name])[mask]))
+                w_bsm  = np.concatenate( (w_bsm, lumi/float(config.scale_weight)*make_weights( weight_derivatives[sample.name], **eft)[mask]))
 
                 # map to the SM CDF of q using the signal
                 if sample.name==signal.name: 
@@ -625,7 +652,7 @@ for test_statistic in test_statistics:
                 print "theta", round(WC1_val,3), round(WC2_val,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack, 
-             'multiclass':ROOT.kRed, 'pTV':ROOT.kBlue, 'pTVMCCut':ROOT.kBlack}
+             'multiclass':ROOT.kRed, 'pTV':ROOT.kCyan+1, 'pTVMCCut_1':ROOT.kOrange+1, 'pTVMCCut_2':ROOT.kOrange+2, 'pTVMCCut_3':ROOT.kOrange+3, 'pTVMCCut_4':ROOT.kOrange+4, 'pTVMCCut_5':ROOT.kOrange+5}
 
 nll_levels = [2.27, 5.99]
 contours = { key:{level:getContours( exp_nll_ratio[key], level) for level in nll_levels} for key in exp_nll_ratio.keys() }
@@ -643,7 +670,7 @@ for test_statistic in contours.keys():
             contour_objects.append( tgr )
 
 for test_statistic in test_statistics:
-    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_lumi_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, lumi, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
+    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_lumi_%3.2f_nBinsTestStat_%i%s"%(test_statistic, WC1, WC2, lumi, args.nBinsTestStat, "_ATS" if args.altTestStat else ""), histos = [[exp_nll_ratio[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
     plotting.draw2D(plot2D, 
         plot_directory = os.path.join( plot_directory, subDirectory, "log"), 
         logY = False, logX = False, logZ = True, 
@@ -669,7 +696,7 @@ for test_statistic in contours.keys():
 
 for test_statistic in test_statistics:
     for level in levels:
-        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_lumi_%3.2f_level_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, lumi, level, args.nBinsTestStat), histos = [[power[test_statistic][level]]], texX = tex[WC1], texY = tex[WC2] )
+        plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_lumi_%3.2f_level_%3.2f_nBinsTestStat_%i%s"%(test_statistic, WC1, WC2, lumi, level, args.nBinsTestStat, "_ATS" if args.altTestStat else ""), histos = [[power[test_statistic][level]]], texX = tex[WC1], texY = tex[WC2] )
         plotting.draw2D(plot2D, 
             plot_directory = os.path.join( plot_directory, subDirectory, "log"), 
             logY = False, logX = False, logZ = True, 

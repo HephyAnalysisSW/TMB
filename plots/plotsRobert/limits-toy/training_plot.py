@@ -33,8 +33,9 @@ import user
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_12",                 help="plot sub-directory")
-argParser.add_argument("--model",              action="store",      default="ZH_Spannowsky",                 help="plot sub-directory")
+argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="Name of the model")
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,             help="Number of events")
+argParser.add_argument("--nToys",              action="store",      type=int, default=100,             help="Number of toys")
 argParser.add_argument('--lumi_factor',        action='store',      type=float, default=1.0, help="Lumi factor" )
 
 args = argParser.parse_args()
@@ -59,15 +60,16 @@ Plot.setDefaults()
 
 features = model.getEvents(args.nEvents)
 
-adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
-features = features[adhoc]
+if args.model.startswith("ZH"):
+    adhoc = (features[:,model.feature_names.index('fLL')]>0.2) & (features[:,model.feature_names.index('f2TT')]<3) & (features[:,model.feature_names.index('cos_theta')]>-0.9) & (features[:,model.feature_names.index('cos_theta')]<0.9) & (features[:,model.feature_names.index('f1TT')]>-0.9) & (features[:,model.feature_names.index('f1TT')]<0.9)  & (features[:,model.feature_names.index('f2TT')]<3.5) 
+    features = features[adhoc]
 
 nEvents  = len(features)
 weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 90.13 #Delphes, ptZ>200
+lambda_expected_sm      = 90.13 if args.model.startswith("ZH") else 599.87 #Delphes, ptZ>200
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]
@@ -143,10 +145,10 @@ quantile_levels = [0.025, 0.16, .5, 1-0.16, 1-0.025]
 h_power     = {}
 
 cfgs = [
-        ( "bit_ZH_Nakamura_MD3_nTraining_2000000", "d_{max} = 2", ROOT.kBlue),
-        ( "bit_ZH_Nakamura_nTraining_2000000",     "d_{max} = 3", ROOT.kRed),
-        ( "bit_ZH_Nakamura_MD5_nTraining_2000000", "d_{max} = 4", ROOT.kGreen+2),
-        ( "bit_ZH_Nakamura_MD6_nTraining_2000000", "d_{max} = 5", ROOT.kBlack),
+        ( "bit_%s_MD3_nTraining_2000000"%args.model, "D = 2", ROOT.kBlue),
+        ( "bit_%s_nTraining_2000000"    %args.model ,"D = 3", ROOT.kRed),
+        ( "bit_%s_MD5_nTraining_2000000"%args.model, "D = 4", ROOT.kGreen+2),
+        ( "bit_%s_MD6_nTraining_2000000"%args.model, "D = 5", ROOT.kBlack),
     ]
 
 #eft = {'cHWtil':0.35, 'cHW':-0.4}
@@ -222,7 +224,7 @@ def make_plot(i_plot):
 
 from multiprocessing import Pool
 p = Pool(5)
-results = p.map(make_plot, range(100))
+results = p.map(make_plot, range(args.nToys))
 
 h_power = {}
 boxes = []
@@ -250,7 +252,7 @@ for i_cfg, (prefix, tex, color) in enumerate(cfgs):
 histos = [[h_power[prefix]['med']] for prefix, _, _ in cfgs ]
 plot = Plot.fromHisto(name = "power_evolution_cHW_%3.2f_cHWtil_%3.2f_cHQ3_%3.2f"%( eft['cHW'], eft['cHWtil'], eft['cHQ3']), 
     histos = histos, 
-    texX = "Boosting iteration", texY = "#beta_{opt}-#beta" )
+    texX = "Boosting iteration", texY = "#beta-#beta_{opt}" )
 plotting.draw(plot, 
     plot_directory = os.path.join( plot_directory, "unbinned"), 
     logY = False, logX = False, copyIndexPHP=True, yRange = (0,.8),

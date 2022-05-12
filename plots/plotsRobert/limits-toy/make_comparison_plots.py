@@ -87,6 +87,7 @@ for pred in [
     plotting.draw2D(plot2D, plot_directory = plot_dir,
         histModifications = [lambda h:ROOT.gStyle.SetPalette(58)],
         drawObjects       = draw_conts,
+        zRange            = (0.095,1),
             )
 
 syncer.sync()
