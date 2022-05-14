@@ -107,36 +107,30 @@ elif args.model == 'WH_Nakamura':
     bits = model.load(prefix="bit_WH_Nakamura_MD6_nTraining_2000000")
 predictions = { der:bits[der].vectorized_predict(features) for der in bits.keys() } 
 
-def make_q( order, truth=False, **kwargs ):
-    eft      = kwargs
+def make_logR_to_SM( order, truth=False, **kwargs ):
+
+    eft      = model.make_eft(**kwargs)
     if order not in ["lin", "quad", "total"]:
         raise RuntimeError("Order %s not known" % order )
     result = np.zeros(nEvents)
     if order in ["lin", "total"]:
-        for coeff in eft.keys():
+        for coeff in model.wilson_coefficients:
+            if eft[coeff] == model.default_eft_parameters[coeff]: continue
             result += (eft[coeff] - model.default_eft_parameters[coeff])*( weights[(coeff,)]/weights[tuple()] if truth else predictions[(coeff,)])
     if order in ["quad", "total"]:
-        for coeff1 in eft.keys():
-            for coeff2 in eft.keys():
+        for coeff1 in model.wilson_coefficients:
+            if eft[coeff1] == model.default_eft_parameters[coeff1]: continue
+            for coeff2 in model.wilson_coefficients:
+                if eft[coeff2] == model.default_eft_parameters[coeff2]: continue
                 result += .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))])
-    result+=1
+
+    result += 1
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
     return 0.5*np.log( result**2 )
-#event_indices = np.arange(nEvents)
-#def make_toys( yield_per_toy, n_toys, lin=False, **kwargs):
-#    weights_      = make_weights(lin=lin, **kwargs)
-#    biased_sample = np.random.choice( event_indices, size=10*nEvents,  p = weights_/np.sum(weights_) )
-#
-#    return np.array( [ np.random.choice( biased_sample, size=n_observed ) for n_observed in np.random.poisson(yield_per_toy, n_toys) ])
-
-#tex = ROOT.TLatex()
-#tex.SetNDC()
-#tex.SetTextSize(0.04)
 
 tex = {'cHW':"C_{HW}", 'cHWtil':"C_{H#tilde{W}}", "cHQ3":"C_{HQ}^{(3)}"}
-
 
 #colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
 #levels   = [ .05,       .32,        .5,          .68,        .95      ]
@@ -175,7 +169,13 @@ for WC, theta_vals in [
         histos = []
         for i_theta, theta in enumerate(theta_vals):
             print "theta", theta
-            q_event = make_q( test_statistic, truth=args.truth, **{WC:theta} )
+            #q_event = make_q( test_statistic, truth=args.truth, **{WC:theta} )
+
+            eft              = {WC:theta}
+            event_logR_to_SM = make_logR_to_SM( test_statistic, truth=args.truth, **eft )
+            const            = args.lumi_factor*(lambda_tot(**eft) - lambda_tot())
+
+            q_event = const - event_logR_to_SM
 
             q_event_argsort     = np.argsort(q_event)
             q_event_argsort_inv = np.argsort(q_event_argsort)
@@ -188,7 +188,7 @@ for WC, theta_vals in [
             binning = np.linspace(0, 1, args.nBinsTestStat+1)
 
             np_histo_SM    = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*weights[()])
-            np_histo_theta = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*make_weights(lin=False, **{WC:theta})  )
+            np_histo_theta = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*make_weights(lin=False, **eft)  )
             #print np_histo_SM
             #print np_histo_theta
             histo_SM       = stat_helpers.make_TH1F(np_histo_SM)
@@ -224,11 +224,9 @@ for WC, theta_vals in [
 
 n_toys = 50000
 
-# do not make the following inconsistent
-levels          = [ 0.95, 0.68]
-quantile_levels = [ 0.025, 0.16, .5, 1-0.16, 1-0.025 ]
-
-exp_nll_ratio = {}
+levels          = [ 0.68, 0.95]
+sigmas          = { 0.68:1, 0.95:2}         
+n_sigma_gauss = {}
 
 step1 = (theta1_max-theta1_min)/args.nBins
 step2 = (theta2_max-theta2_min)/args.nBins
@@ -238,7 +236,7 @@ theta2_vals = np.arange(theta2_min, theta2_max+step2, (theta2_max-theta2_min)/ar
 test_statistics = ["total", "lin", "quad"]
 #test_statistics = ["total"]
 #test_statistics = ["quad"]
-exp_nll_ratio = {}
+n_sigma_gauss = {}
 power         = {}
 for test_statistic in test_statistics: 
 #for test_statistic in ["total"]: 
@@ -246,7 +244,7 @@ for test_statistic in test_statistics:
     print "Test statistic", test_statistic, "truth?", args.truth
     power[test_statistic] = {level:ROOT.TH2D("power_"+test_statistic, "power_"+test_statistic, len(theta1_vals)-1, array.array('d', theta1_vals), len(theta2_vals)-1, array.array('d', theta2_vals)) for level in levels}
 
-    exp_nll_ratio[test_statistic] = ROOT.TH2D("exp_nll_ratio_"+test_statistic, "exp_nll_ratio_"+test_statistic, len(theta1_vals)-1, array.array('d', theta1_vals), len(theta2_vals)-1, array.array('d', theta2_vals))
+    n_sigma_gauss[test_statistic] = ROOT.TH2D("n_sigma_gauss_"+test_statistic, "n_sigma_gauss_"+test_statistic, len(theta1_vals)-1, array.array('d', theta1_vals), len(theta2_vals)-1, array.array('d', theta2_vals))
 
     for i_theta1, theta1 in enumerate( theta1_vals ):
     #for i_theta1, theta1 in enumerate( [0] ):
@@ -256,8 +254,12 @@ for test_statistic in test_statistics:
             if theta1==theta2==0: continue
 
             eft     = {WC1:theta1, WC2:theta2}
-            q_event = make_q( test_statistic, truth=args.truth, **eft )
+            #q_event = make_q( test_statistic, truth=args.truth, **eft )
 
+            event_logR_to_SM = make_logR_to_SM( test_statistic, truth=args.truth, **eft )
+            const            = args.lumi_factor*(lambda_tot(**eft) - lambda_tot())
+
+            q_event = const - event_logR_to_SM
 
             q_event_argsort     = np.argsort(q_event)
             q_event_argsort_inv = np.argsort(q_event_argsort)
@@ -272,45 +274,87 @@ for test_statistic in test_statistics:
             np_histo_SM    = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*weights[()])[0]
             np_histo_theta = np.histogram(q_event_cdf, bins=binning, weights = args.lumi_factor*make_weights(lin=False, **eft)  )[0]
 
-            # Expectation_BSM( -Log( Prod_i( Pois_i( n_i, lambda_i(theta))/Pois_i( n_i, lambda_i(0)) ) ))
-            exp_nll_ratio_ = 2*np.sum(np_histo_SM - np_histo_theta - np_histo_theta*np.log(np_histo_SM/np_histo_theta))
-            exp_nll_ratio[test_statistic].SetBinContent( exp_nll_ratio[test_statistic].FindBin( theta1, theta2 ), exp_nll_ratio_)
+            n_sigma_gauss_ = np.sum( (np_histo_theta - np_histo_SM)*np.log(np_histo_theta/np_histo_SM) )/sqrt( np.sum(np_histo_theta*np.log(np_histo_theta/np_histo_SM)**2) )
+            n_sigma_gauss[test_statistic].SetBinContent( n_sigma_gauss[test_statistic].FindBin( theta1, theta2 ), n_sigma_gauss_)
+            print i_theta1, theta1, i_theta2, theta2, "n_sigma_gauss", round(n_sigma_gauss_,3)
 
             binned_toys_SM    = np.random.poisson(lam=np_histo_SM, size=(n_toys, len(np_histo_SM)))
             binned_toys_theta = np.random.poisson(lam=np_histo_theta, size=(n_toys, len(np_histo_theta)))
 
-            q_theta_given_SM    = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_SM - np_histo_theta  - binned_toys_SM*np.log(np_histo_SM/np_histo_theta))]
-            q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_SM - np_histo_theta  - binned_toys_theta*np.log(np_histo_SM/np_histo_theta))]
+            q_theta_given_SM    = np.array([ np.sum( toy_ll ) for toy_ll in (np_histo_theta - np_histo_SM  - binned_toys_SM*np.log(np_histo_theta/np_histo_SM))])
+            q_theta_given_theta = np.array([ np.sum( toy_ll ) for toy_ll in (np_histo_theta - np_histo_SM  - binned_toys_theta*np.log(np_histo_theta/np_histo_SM))])
 
-            #toys_theta = make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft)
-            #toys_sm    = make_toys( args.lumi_factor*lambda_tot(), n_toys )
+            toy_null_argsort = np.argsort( q_theta_given_theta )
+            p_value_alt  = np.interp( q_theta_given_SM,    q_theta_given_theta[toy_null_argsort],1-np.insert(np.cumsum(np.ones(len(q_theta_given_theta)-1))/float(len(q_theta_given_theta)-1),0,0) )
+            p_value_null = np.interp( q_theta_given_theta, q_theta_given_theta[toy_null_argsort],1-np.insert(np.cumsum(np.ones(len(q_theta_given_theta)-1))/float(len(q_theta_given_theta)-1),0,0) )
 
-            if True:
-                n = float(len(q_theta_given_SM))
-                mean_q_theta_given_SM     = np.sum(q_theta_given_SM)/n
-                sigma_q_theta_given_SM    = sqrt( np.sum((q_theta_given_SM - mean_q_theta_given_SM)**2)/(n-1) )
-                q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
-                q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
+            sizes  = {level: np.count_nonzero(p_value_null<=1-level)/float(n_toys) for level in levels}
+            powers = {level: np.count_nonzero(p_value_alt <=1-level)/float(n_toys) for level in levels}
+            #if True:
+            #    n = float(len(q_theta_given_SM))
+            #    mean_q_theta_given_SM     = np.sum(q_theta_given_SM)/n
+            #    sigma_q_theta_given_SM    = sqrt( np.sum((q_theta_given_SM - mean_q_theta_given_SM)**2)/(n-1) )
+            #    q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
+            #    q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
 
-            print i_theta1, theta1, i_theta2, theta2, "sqrt(2NLL)", sqrt(abs(exp_nll_ratio_))
 
-           # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-            quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-            quantiles_SM    = np.quantile( q_theta_given_SM, quantile_levels )
-            size_           = np.sum(np.histogram( q_theta_given_SM, quantiles_SM)[0])/float(n_toys)
-            #power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
+            ## Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
+            #quantiles_theta = np.quantile( q_theta_given_theta, levels )
+            #quantiles_SM    = np.quantile( q_theta_given_SM, levels )
+            ##power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
+            #sizes  = {level:np.count_nonzero(q_theta_given_theta<=quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
+            #powers = {level:np.count_nonzero(q_theta_given_SM>quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
+
+            if True: #debug histo
+                drawObjects = []
+                binning = np.linspace(np.min(np.concatenate((q_theta_given_theta, q_theta_given_SM))), np.max(np.concatenate((q_theta_given_theta, q_theta_given_SM))),20)
+                h_null = stat_helpers.make_TH1F( np.histogram( q_theta_given_theta, binning) )
+                h_null.style = styles.lineStyle(ROOT.kBlack)
+                h_alt  = stat_helpers.make_TH1F( np.histogram( q_theta_given_SM, binning) )
+                h_alt.style = styles.lineStyle(ROOT.kRed)
+
+                min_, max_ = min([h_null.GetMinimum(), h_alt.GetMinimum()]), max([h_null.GetMaximum(), h_alt.GetMaximum()])
+
+                null_mean  = np.mean( q_theta_given_theta )
+                null_sigma = sqrt(np.var( q_theta_given_theta ))
+                null_median = np.median( q_theta_given_theta )
+                null_quantiles = np.quantile( q_theta_given_theta, levels )
+
+                drawObjects.append( ROOT.TLine( null_mean, min_, null_mean, max_ ) )
+                drawObjects[-1].SetLineColor(ROOT.kBlack)
+                drawObjects.append( ROOT.TLine( null_median, min_, null_median, max_ ) )
+                drawObjects[-1].SetLineColor(ROOT.kBlack)
+                drawObjects[-1].SetLineStyle(ROOT.kDashed)
+
+                alt_mean  = np.mean( q_theta_given_SM )
+                alt_sigma = sqrt(np.var( q_theta_given_SM ))
+                alt_median = np.median( q_theta_given_SM )
+                alt_quantiles = np.quantile( q_theta_given_SM, levels )
+                drawObjects.append( ROOT.TLine( alt_mean, min_, alt_mean, max_ ) )
+                drawObjects[-1].SetLineColor(ROOT.kRed)
+                drawObjects.append( ROOT.TLine( alt_median, min_, alt_median, max_ ) )
+                drawObjects[-1].SetLineColor(ROOT.kRed)
+                drawObjects[-1].SetLineStyle(ROOT.kDashed)
+
+
+                plot = Plot.fromHisto( "debug_%s_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, truth_txt, WC, args.lumi_factor, args.nBinsTestStat), [[h] for h in [h_null,h_alt]], texX = "q", texY = "Entries" )
+                plotting.draw( plot,
+                    plot_directory = os.path.join( plot_directory, "binned", "debug" ),
+                    logX = False, sorting = False,
+                    #legend         = ( (0.15,0.7,0.9,0.92),2),
+                    drawObjects    = drawObjects,
+                    copyIndexPHP   = True,
+                    extensions     = ["png","pdf"], 
+                  )  
+            
             for i_level, level in enumerate(levels):
-                #if level != 0.68: continue
-                power_toy_count = np.count_nonzero((q_theta_given_SM>=quantiles_theta[i_level]) & (q_theta_given_SM<quantiles_theta[-1-i_level]))
-                power_ = 1. - power_toy_count/float(n_toys)
-                power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), power_ )
-            #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_SM)[0])/float(n_toys)
-                print "theta", round(theta1,3), round(theta2,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2,  "truth", args.truth
+                power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), powers[level] )
+                print "theta", round(theta1,3), round(theta2,3), "level", level, "size", round(sizes[level],3), "power", round(powers[level],3), test_statistic, WC1, WC2,  "truth", args.truth
 
+            assert False, ""
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
-nll_levels = [2.27, 5.99]
-contours = { key:{level:getContours( exp_nll_ratio[key], level) for level in nll_levels} for key in exp_nll_ratio.keys() }
+contours = { key:{level:getContours( n_sigma_gauss[key], sigmas[level]) for level in levels} for key in n_sigma_gauss.keys() }
 contour_objects = []
 for test_statistic in contours.keys():
     for level in contours[test_statistic].keys():
@@ -320,12 +364,12 @@ for test_statistic in contours.keys():
 
             tgr.SetLineColor(colors[test_statistic])
             tgr.SetLineWidth(2)
-            tgr.SetLineStyle(ROOT.kDashed if level!=nll_levels[-1] else 1)
+            tgr.SetLineStyle(ROOT.kDashed if sigmas[level]==1 else 1)
             tgr.SetMarkerStyle(0)
             contour_objects.append( tgr )
 
 for test_statistic in test_statistics:    
-    plot2D = Plot2D.fromHisto(name = "exp_nll_ratio_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[exp_nll_ratio[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
+    plot2D = Plot2D.fromHisto(name = "n_sigma_gauss_%s_%s_vs_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, args.nBinsTestStat), histos = [[n_sigma_gauss[test_statistic]]], texX = tex[WC1], texY = tex[WC2] )
     plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "binned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,25))
 
 

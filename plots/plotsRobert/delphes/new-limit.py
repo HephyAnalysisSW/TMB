@@ -552,8 +552,8 @@ def getContours( h, level):
 n_toys = 50000
 
 # do not make the following inconsistent
-levels          = [ 0.95, 0.68]
-quantile_levels = [ 0.025, 0.16, .5, 1-0.16, 1-0.025 ]
+levels          = [  0.68, 0.95]
+#quantile_levels = [ 0.025, 0.16, .5, 1-0.16, 1-0.025 ]
 
 exp_nll_ratio = {}
 # interpret args
@@ -626,8 +626,8 @@ for test_statistic in test_statistics:
             binned_toys_sm    = np.random.poisson(lam=np_histo_sm, size=(n_toys, len(np_histo_sm)))
             binned_toys_theta = np.random.poisson(lam=np_histo_bsm, size=(n_toys, len(np_histo_bsm)))
 
-            q_theta_given_sm    = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_sm*np.log(np_histo_sm/np_histo_bsm))]
-            q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in 2*(np_histo_sm - np_histo_bsm  - binned_toys_theta*np.log(np_histo_sm/np_histo_bsm))]
+            q_theta_given_sm    = [ np.sum( toy_ll ) for toy_ll in -(np_histo_sm - np_histo_bsm  - binned_toys_sm*np.log(np_histo_sm/np_histo_bsm))]
+            q_theta_given_theta = [ np.sum( toy_ll ) for toy_ll in -(np_histo_sm - np_histo_bsm  - binned_toys_theta*np.log(np_histo_sm/np_histo_bsm))]
 
             if True:
                 n = float(len(q_theta_given_sm))
@@ -639,17 +639,13 @@ for test_statistic in test_statistics:
             print i_WC1_val, WC1_val,  i_WC2_val, WC2_val,  "sqrt(2NLL)", sqrt(abs(exp_nll_ratio_))
 
            # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-            quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-            quantiles_sm    = np.quantile( q_theta_given_sm, quantile_levels )
-            size_           = np.sum(np.histogram( q_theta_given_sm, quantiles_sm)[0])/float(n_toys)
-            #power_histo     = np.histogram( q_theta_given_theta, quantiles_sm)
+            quantiles_theta = np.quantile( q_theta_given_theta, levels )
+            quantiles_sm    = np.quantile( q_theta_given_sm, levels )
+            sizes  = {level:np.count_nonzero(q_theta_given_theta<=quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
+            powers = {level:np.count_nonzero(q_theta_given_sm>quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
             for i_level, level in enumerate(levels):
-                #if level != 0.68: continue
-                power_toy_count = np.count_nonzero((q_theta_given_sm>=quantiles_theta[i_level]) & (q_theta_given_sm<quantiles_theta[-1-i_level]))
-                power_ = 1. - power_toy_count/float(n_toys)
-                power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( WC1_val, WC2_val ), power_ )
-            #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_sm)[0])/float(n_toys)
-                print "theta", round(WC1_val,3), round(WC2_val,3), "level", level, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2
+                power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( WC1_val, WC2_val ), powers[level] )
+                print "theta", round(WC1_val,3), round(WC2_val,3), "level", level, "size", round(sizes[level],3), "power", round(powers[level],3), test_statistic, WC1, WC2
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack, 
              'multiclass':ROOT.kRed, 'pTV':ROOT.kCyan+1, 'pTVMCCut_1':ROOT.kOrange+1, 'pTVMCCut_2':ROOT.kOrange+2, 'pTVMCCut_3':ROOT.kOrange+3, 'pTVMCCut_4':ROOT.kOrange+4, 'pTVMCCut_5':ROOT.kOrange+5}

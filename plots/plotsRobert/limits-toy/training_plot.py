@@ -137,9 +137,7 @@ colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
 n_toys   = 50000
 
 # do not make the following inconsistent
-levels          = [ 0.95, 0.68]
-quantile_levels = [0.025, 0.16, .5, 1-0.16, 1-0.025]
-
+level          = 0.95
 
 # precompute BITS
 h_power     = {}
@@ -203,9 +201,9 @@ def make_plot(i_plot):
                 q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
 
             # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-            quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-            quantiles_SM    = np.quantile( q_theta_given_SM, quantile_levels )
-            size_           = np.sum(np.histogram( q_theta_given_SM, quantiles_SM)[0])/float(n_toys)
+            quantiles_theta = np.quantile( q_theta_given_theta, level )
+            quantiles_SM    = np.quantile( q_theta_given_SM, level )
+            size_           = np.count_nonzero(q_theta_given_SM>quantiles_SM)/float(n_toys)
             #power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
             for i_level, level in enumerate(levels[-1:]):
                 #if level != 0.68: continue

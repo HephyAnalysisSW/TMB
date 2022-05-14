@@ -32,7 +32,7 @@ import user
 # Parser
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_12",                 help="plot sub-directory")
+argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_13",                 help="plot sub-directory")
 argParser.add_argument("--prefix",             action="store",      default="bit_ZH_Nakamura_nTraining_5000000",                 help="plot sub-directory")
 argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="plot sub-directory")
 argParser.add_argument("--WCs",                action="store",      nargs='*', default=["cHQ3", -.08, .08, "cHW", 0,.5],                 help="Wilson coefficients")
@@ -40,6 +40,7 @@ argParser.add_argument("--nBins",              action="store",      type=int, de
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,             help="Number of events")
 argParser.add_argument('--truth',              action='store_true', help="Truth?" )
 argParser.add_argument('--lumi_factor',        action='store',      type=float, default=1.0, help="Lumi factor" )
+argParser.add_argument('--ignoreR',            action='store_true', help="Truth?" )
 
 args = argParser.parse_args()
 
@@ -74,7 +75,7 @@ weights  = model.getWeights(features, eft=model.default_eft_parameters)
 print ("Created data set of size %i" % nEvents )
 
 # normalize to SM event yield
-lambda_expected_sm      = 90.13 if args.model.startswith("ZH") else 599.87 #Delphes, ptZ>200
+lambda_expected_sm      = 90.13 if args.model.startswith("ZH") else 599.87 #Delphes, ptZ>200, lumi 350
 lambda_current          = np.sum(weights[tuple()])
 for key in weights.keys():
     weights[key] = lambda_expected_sm/lambda_current*weights[key]
@@ -104,31 +105,11 @@ def make_weights( lin=False, **kwargs):
 bits = model.load(prefix=args.prefix)
 predictions = { der:bits[der].vectorized_predict(features) for der in bits.keys() } 
 
-#def make_q( order, eft_norm=None, truth=False, **kwargs ):
-#    if eft_norm is not None:
-#        # we interpret kwargs as the direction in parameter space, i.e., q = n_theta.t + eft_norm*n_theta^T.s.n_theta
-#        eft     = copy.deepcopy(kwargs)
-#        norm    = sqrt(sum( np.array(kwargs.values())**2 ) )
-#        eft     = { k:eft[k]/norm for k in eft.keys() }
-#    else:
-#        # we interpret kwargs as the eft parameter point, i.e., q = theta.t + theta^T.s.theta
-#        eft_norm = 1
-#        eft      = kwargs
-#    
-#    if order not in ["lin", "quad", "total"]:
-#        raise RuntimeError("Order %s not known" % order )
-#    result = np.zeros(nEvents)    
-#    if order in ["lin", "total"]:
-#        for coeff in eft.keys():
-#            result += (eft[coeff] - model.default_eft_parameters[coeff])*( weights[(coeff,)]/weights[tuple()] if truth else predictions[(coeff,)]) 
-#    if order in ["quad", "total"]:
-#        for coeff1 in eft.keys():
-#            for coeff2 in eft.keys():
-#                prefac = eft_norm if order=="total" else 1
-#                result += prefac* .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))]) 
-#    return result
+def make_logR_to_SM( order, truth=False, predictions=predictions, **kwargs ):
 
-def make_q( order, truth=False, predictions = predictions, **kwargs ):
+    if args.ignoreR:
+        return log(lambda_ratio(**kwargs))*np.ones(len(weights[()])) 
+
     eft      = model.make_eft(**kwargs)
     if order not in ["lin", "quad", "total"]:
         raise RuntimeError("Order %s not known" % order )
@@ -143,16 +124,12 @@ def make_q( order, truth=False, predictions = predictions, **kwargs ):
             for coeff2 in model.wilson_coefficients:
                 if eft[coeff2] == model.default_eft_parameters[coeff2]: continue
                 result += .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))])
+
     result += 1
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
     return 0.5*np.log( result**2 )
-
-    #if order == "lin":
-    #    return np.log( (1. + result)**2 )
-    #else:
-    #    return np.log( (1. + result) )
 
 event_indices = np.arange(nEvents)
 def make_toys( yield_per_toy, n_toys, lin=False, **kwargs):
@@ -167,12 +144,38 @@ tex.SetTextSize(0.04)
 
 colors   = [ ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kBlue, ROOT.kRed]
 #extended = True
-n_toys   = 50000
+n_toys   = 500000
 
 # do not make the following inconsistent
-levels          = [ 0.95, 0.68]
-quantile_levels = [0.025, 0.16, .5, 1-0.16, 1-0.025]
+levels          = [ 0.68, 0.95 ]
+#quantile_levels = [ 0.32, 0.05 ]
 #quantile_levels = [0.05, 0.32]
+
+# P(n|lambda) = exp(-lambda)lambda^n/n!
+#    lambda_theta = lambda_tot(cHWtil=.3)
+#    lambda_0     = lambda_tot()
+
+
+def PoissonExclusionPower( lambda_theta, lambda_0 ):
+    lambda_theta = args.lumi_factor*lambda_tot(**eft)
+    lambda_0     = args.lumi_factor*lambda_tot()
+
+    n_lambda_theta = np.random.poisson( lambda_theta, n_toys )
+    n_lambda_0     = np.random.poisson( lambda_0, n_toys )
+
+    q_null = lambda_theta - lambda_0 - n_lambda_theta*log(lambda_theta/float(lambda_0) ) 
+    q_alt  = lambda_theta - lambda_0 - n_lambda_0*log(lambda_theta/float(lambda_0) ) 
+
+    q_null, q_alt = (q_null - np.mean(q_null) )/sqrt(np.var(q_null)), (q_alt  - np.mean(q_null) )/sqrt(np.var(q_null))
+
+    #print "Null mean, sigma",np.mean(q_null), sqrt(np.var(q_null)), "Alt mean, sigma", np.mean(q_alt), sqrt(np.var(q_alt))
+
+    quantiles_null  = np.quantile( q_null, levels )
+    sizes = {level:len(q_null[q_null<=quantiles_null[i_level]])/float(len(q_null)) for i_level, level in enumerate(levels) }
+    powers = {level:np.count_nonzero(q_alt>quantiles_null[i_level])/float(n_toys) for i_level, level in enumerate( levels ) }
+
+    return {'size':sizes, 'power':powers}
+
 
 def getContours( h, level):
     _h     = h.Clone()
@@ -191,13 +194,20 @@ def getContours( h, level):
 
 predictions_iterations = { der:np.cumsum(bits[der].vectorized_predict(features, summed = False), axis=0) for der in bits.keys() } 
 n_iterations   = len(predictions_iterations.values()[0])
-h_power = ROOT.TH1F("power", "power", n_iterations, 0 ,n_iterations )
-h_power.style = styles.lineStyle( ROOT.kBlack, width = 2)
+h_power = {level:ROOT.TH1F("power", "power", n_iterations, 0 ,n_iterations ) for level in levels}
+for h in h_power.values():
+    h.style = styles.lineStyle( ROOT.kBlack, width = 2)
 #eft = {'cHWtil':0.35, 'cHW':-0.4}
 for eft in [ 
         #{'cHWtil':0.1,  'cHW':0,     'cHQ3':0},
         #{'cHWtil':0.25,  'cHW':0,     'cHQ3':0},
-        {'cHWtil':0.20,  'cHW':0,     'cHQ3':0},
+        {'cHWtil':0,  'cHW':0.15,     'cHQ3':-0.015},
+        {'cHWtil':0,  'cHW':0.15,     'cHQ3':0},
+        {'cHWtil':0,  'cHW':0,        'cHQ3':-0.015},
+        {'cHWtil':0,  'cHW':-.1,      'cHQ3':0},
+        {'cHWtil':0,  'cHW':-.15,      'cHQ3':0.01},
+        {'cHWtil':0.2,  'cHW':0,      'cHQ3':0.},
+        {'cHWtil':-0.2,  'cHW':0,      'cHQ3':0.},
         #{'cHWtil':0.15,  'cHW':0,     'cHQ3':0},
         #{'cHW':0.3,  'cHWtil':0,     'cHQ3':0},
         #{'cHW':0.25,  'cHWtil':0,     'cHQ3':0},
@@ -211,51 +221,46 @@ for eft in [
         #{'cHWtil':0.15, 'cHW':-0.15, 'cHQ3':0},
         #{'cHWtil':0.35, 'cHW':-0.4,  'cHQ3':0},
         ]:
-    sm_toys = make_toys( args.lumi_factor*lambda_tot(), n_toys ) 
-    eft_toys= make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft)
-
+    power_truth = {}
+    theta_toys= make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft)
+    sm_toys   = make_toys( args.lumi_factor*lambda_tot(), n_toys ) 
+    const     = args.lumi_factor*(lambda_tot(**eft) - lambda_tot())
     for iteration in range( -1, n_iterations ):
         if iteration<0:
-            q_event = make_q( "total", truth=True,  **eft )
+            event_logR_to_SM = make_logR_to_SM( "total", truth=True, **eft)
         else:
             predictions_i = {key:(value[iteration] if iteration<bits[key].n_trees else value[bits[key].n_trees-1]) for key, value in predictions_iterations.iteritems()}
-            q_event = make_q( "total", truth=False, predictions = predictions_i, **eft )
-
-        #log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
-        q_theta_given_SM    = np.array([np.sum( q_event[toy_] ) for toy_ in sm_toys ])
-        q_theta_given_theta = np.array([np.sum( q_event[toy_] ) for toy_ in eft_toys ])
-
-
-        assert False, ""
-        # calibration according to SM
+            event_logR_to_SM = make_logR_to_SM( "total", truth=False, predictions=predictions_i, **eft)
+    
+        q_null = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in theta_toys ]) #NULL
+        q_alt  = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in sm_toys ])    #ALT
+        # calibration according to the null
         if True:
-            n = float(len(q_theta_given_SM))
-            mean_q_theta_given_SM     = np.sum(q_theta_given_SM)/n
-            sigma_q_theta_given_SM    = sqrt( np.sum((q_theta_given_SM - mean_q_theta_given_SM)**2)/(n-1) ) 
-            q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
-            q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
+            n = float(len(q_null))
+            mean_q_null     = np.sum(q_null)/n
+            sigma_q_null    = sqrt( np.sum((q_null - mean_q_null)**2)/(n-1) ) 
+            q_alt  = (q_alt  - mean_q_null)/sigma_q_null
+            q_null = (q_null - mean_q_null)/sigma_q_null
 
-        # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-        quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-        quantiles_SM    = np.quantile( q_theta_given_SM, quantile_levels )
-        size_           = np.sum(np.histogram( q_theta_given_SM, quantiles_SM)[0])/float(n_toys)
-        #power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
-        for i_level, level in enumerate(levels[-1:]):
-            #if level != 0.68: continue
-            power_toy_count = np.count_nonzero((q_theta_given_SM>=quantiles_theta[i_level]) & (q_theta_given_SM<quantiles_theta[-1-i_level]))
-            power_ = 1. - power_toy_count/float(n_toys)
-            #power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), power_ )
-            #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_SM)[0])/float(n_toys)
+        quantiles_null  = np.quantile( q_null, levels )
+        #quantiles_alt   = np.quantile( q_alt, levels )
+        sizes = {level:len(q_null[q_null<quantiles_null[i_level]])/float(len(q_null)) for i_level, level in enumerate(levels) }
+        #power_histo     = np.histogram( q_given_theta, quantiles_SM)
+        
+        powers = {level:np.count_nonzero(q_alt>=quantiles_null[i_level])/float(n_toys) for i_level, level in enumerate(levels) }
+
+        for  i_level, level in enumerate(levels):
             if iteration>=0:
-                h_power.SetBinContent( h_power.FindBin( iteration ), power_ )
+                h_power[level].SetBinContent( h_power[level].FindBin( iteration ), powers[level] )
             else:
-                truth = power_
-            print "iteration",iteration, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), WC1, WC2
+                power_truth[level] = powers[level]
+            print "iteration",iteration, "size", sizes[levels[i_level]], "power", round(powers[level],3)
 
-    plot = Plot.fromHisto(name = "power_evolution_cHW_%3.2f_cHWtil_%3.2f_cHQ3_%3.2f"%( eft['cHW'], eft['cHWtil'], eft['cHQ3']), histos = [[h_power]], texX = "Boosting iteration", texY = "power" )
-    line = ROOT.TLine(0,truth,n_iterations,truth)
-    line.SetLineWidth(2)
-    plotting.draw(plot, plot_directory = os.path.join( plot_directory, "unbinned"), logY = False, logX = False, copyIndexPHP=True, drawObjects = [ROOT.TLine(0,truth,n_iterations,truth)], yRange = (0,1))
+    for i_level, level in enumerate(levels):
+        plot = Plot.fromHisto(name = "power_evolution_cHW_%3.2f_cHWtil_%3.2f_cHQ3_%3.2f_level_%3.2f"%( eft['cHW'], eft['cHWtil'], eft['cHQ3'], level), histos = [[h_power[level]]], texX = "Boosting iteration", texY = "power" )
+        line = ROOT.TLine(0,power_truth[level],n_iterations,power_truth[level])
+        line.SetLineWidth(2)
+        plotting.draw(plot, plot_directory = os.path.join( plot_directory, "unbinned" if not args.ignoreR else "1bin"), logY = False, logX = False, copyIndexPHP=True, drawObjects = [line], yRange = (0,1))
 
 syncer.sync()
 
@@ -281,7 +286,8 @@ for test_statistic in test_statistics:
 
     min_, max_ = float('inf'), -float('inf')
 
-    sm_toys = make_toys( args.lumi_factor*lambda_tot(), n_toys ) 
+    sm_toys = make_toys( args.lumi_factor*lambda_tot(), n_toys )
+ 
     for i_theta1, theta1 in enumerate( theta1_vals ):
         #for i_theta1, theta1 in enumerate( [0] ):
         for i_theta2, theta2 in enumerate( theta2_vals ):
@@ -290,32 +296,32 @@ for test_statistic in test_statistics:
             if theta1==theta2==0: continue
 
             eft     = {WC1:theta1, WC2:theta2}
-            q_event = make_q( test_statistic, truth=args.truth, **eft )
+            event_logR_to_SM = make_logR_to_SM( test_statistic, truth=args.truth, **eft )
+            const   = args.lumi_factor*(lambda_tot(**eft) - lambda_tot())
 
-            #log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
-            q_theta_given_SM    = np.array([np.sum( q_event[toy_] ) for toy_ in sm_toys ])
-            q_theta_given_theta = np.array([np.sum( q_event[toy_] ) for toy_ in make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft) ])
-
-            # calibration according to SM
+            q_null = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in make_toys( args.lumi_factor*lambda_tot(**eft), n_toys, **eft) ]) #NULL
+            q_alt  = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in sm_toys ])    #ALT
+            # calibration according to the null
             if True:
-                n = float(len(q_theta_given_SM))
-                mean_q_theta_given_SM     = np.sum(q_theta_given_SM)/n
-                sigma_q_theta_given_SM    = sqrt( np.sum((q_theta_given_SM - mean_q_theta_given_SM)**2)/(n-1) ) 
-                q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
-                q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
+                mean_q_null     = np.mean(q_null)
+                sigma_q_null    = sqrt( np.var(q_null ))
+                q_alt  = (q_alt  - mean_q_null)/sigma_q_null
+                q_null = (q_null - mean_q_null)/sigma_q_null
 
-            # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-            quantiles_theta = np.quantile( q_theta_given_theta, quantile_levels )
-            quantiles_SM    = np.quantile( q_theta_given_SM, quantile_levels )
-            size_           = np.sum(np.histogram( q_theta_given_SM, quantiles_SM)[0])/float(n_toys)
-            #power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
+            quantiles_null  = np.quantile( q_null, levels )
+            #quantiles_alt   = np.quantile( q_alt, levels )
+            sizes = {level:len(q_null[q_null<=quantiles_null[i_level]])/float(len(q_null)) for i_level, level in enumerate(levels) }
+            #power_histo     = np.histogram( q_given_theta, quantiles_SM)
+
             for i_level, level in enumerate(levels):
-                #if level != 0.68: continue
-                power_toy_count = np.count_nonzero((q_theta_given_SM>=quantiles_theta[i_level]) & (q_theta_given_SM<quantiles_theta[-1-i_level]))
-                power_ = 1. - power_toy_count/float(n_toys)
+                power_ = np.count_nonzero(q_alt>quantiles_null[i_level])/float(n_toys)
                 power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), power_ )
-                #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_SM)[0])/float(n_toys)
-                print "theta", round(theta1,3), round(theta2,3), "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3), test_statistic, WC1, WC2,  "truth", args.truth
+                print "theta", round(theta1,3), round(theta2,4), "size", sizes[level], "power", round(power_,4), test_statistic, WC1, WC2,  "truth", args.truth
+
+            pois = PoissonExclusionPower(args.lumi_factor*lambda_tot(**eft), args.lumi_factor*lambda_tot())
+            for level in levels:
+                print "PoissonExclusionpower (alphs=%4.3f): %4.3f" % ( pois['size'][level], pois['power'][level] )
+            print
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
 
@@ -336,6 +342,6 @@ for test_statistic in contours.keys():
 for test_statistic in test_statistics:
     for level in levels: 
         plot2D = Plot2D.fromHisto(name = "power_%s_%s_vs_%s_%s_lumi_factor_%3.2f_level_%3.2f"%(test_statistic, WC1, WC2, ("truth" if args.truth else "predicted"), args.lumi_factor, level), histos = [[power[test_statistic][level]]], texX = WC1, texY = WC2 )
-        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "unbinned"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,1))
+        plotting.draw2D(plot2D, plot_directory = os.path.join( plot_directory, "unbinned" if not args.ignoreR else "1bin"), histModifications = [lambda h:ROOT.gStyle.SetPalette(58)], logY = False, logX = False, logZ = True, copyIndexPHP=True, drawObjects = contour_objects, zRange = (0.01,1))
 
 syncer.sync()
