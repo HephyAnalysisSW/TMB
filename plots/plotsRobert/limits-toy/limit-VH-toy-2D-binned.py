@@ -305,7 +305,7 @@ for test_statistic in test_statistics:
             #sizes  = {level:np.count_nonzero(q_theta_given_theta<=quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
             #powers = {level:np.count_nonzero(q_theta_given_SM>quantiles_theta[i_level])/float(n_toys) for i_level, level in enumerate(levels)}
 
-            if True: #debug histo
+            if False: #debug histo
                 drawObjects = []
                 binning = np.linspace(np.min(np.concatenate((q_theta_given_theta, q_theta_given_SM))), np.max(np.concatenate((q_theta_given_theta, q_theta_given_SM))),20)
                 h_null = stat_helpers.make_TH1F( np.histogram( q_theta_given_theta, binning) )
@@ -336,7 +336,6 @@ for test_statistic in test_statistics:
                 drawObjects[-1].SetLineColor(ROOT.kRed)
                 drawObjects[-1].SetLineStyle(ROOT.kDashed)
 
-
                 plot = Plot.fromHisto( "debug_%s_%s_%s_lumi_factor_%3.2f_nBinsTestStat_%i"%(test_statistic, truth_txt, WC, args.lumi_factor, args.nBinsTestStat), [[h] for h in [h_null,h_alt]], texX = "q", texY = "Entries" )
                 plotting.draw( plot,
                     plot_directory = os.path.join( plot_directory, "binned", "debug" ),
@@ -350,8 +349,6 @@ for test_statistic in test_statistics:
             for i_level, level in enumerate(levels):
                 power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), powers[level] )
                 print "theta", round(theta1,3), round(theta2,3), "level", level, "size", round(sizes[level],3), "power", round(powers[level],3), test_statistic, WC1, WC2,  "truth", args.truth
-
-            assert False, ""
 
 colors   = { 'quad':ROOT.kRed, 'lin':ROOT.kBlue, 'total':ROOT.kBlack}
 contours = { key:{level:getContours( n_sigma_gauss[key], sigmas[level]) for level in levels} for key in n_sigma_gauss.keys() }

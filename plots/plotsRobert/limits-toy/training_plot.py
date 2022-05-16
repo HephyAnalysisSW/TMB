@@ -32,7 +32,7 @@ import user
 # Parser
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_12",                 help="plot sub-directory")
+argParser.add_argument("--plot_directory",     action="store",      default="BIT_VH_14",                 help="plot sub-directory")
 argParser.add_argument("--model",              action="store",      default="ZH_Nakamura",                 help="Name of the model")
 argParser.add_argument("--nEvents",            action="store",      type=int, default=200000,             help="Number of events")
 argParser.add_argument("--nToys",              action="store",      type=int, default=100,             help="Number of toys")
@@ -95,7 +95,8 @@ def make_weights( lin=False, **kwargs):
         result += sum( [ .5*(kwargs[coeff1] - model.default_eft_parameters[coeff1])*(kwargs[coeff2] - model.default_eft_parameters[coeff2])*weights[tuple(sorted((coeff1,coeff2)))] for coeff1 in kwargs.keys()  for coeff2 in kwargs.keys()])
     return result 
 
-def make_q( order, truth, predictions, **kwargs ):
+def make_logR_to_SM( order, truth=False, predictions=None, **kwargs ):
+
     eft      = model.make_eft(**kwargs)
     if order not in ["lin", "quad", "total"]:
         raise RuntimeError("Order %s not known" % order )
@@ -110,16 +111,12 @@ def make_q( order, truth, predictions, **kwargs ):
             for coeff2 in model.wilson_coefficients:
                 if eft[coeff2] == model.default_eft_parameters[coeff2]: continue
                 result += .5*(eft[coeff1] - model.default_eft_parameters[coeff1])*(eft[coeff2] - model.default_eft_parameters[coeff2])*( weights[tuple(sorted((coeff1,coeff2)))]/weights[tuple()] if truth else predictions[tuple(sorted((coeff1,coeff2)))])
+
     result += 1
     neg_frac = len(result[result<0])/float(len(result))
     if neg_frac>10**-3:
         print "Fraction of negative test statistics for %s: %3.2f"% ( order, neg_frac )
     return 0.5*np.log( result**2 )
-
-    #if order == "lin":
-    #    return np.log( (1. + result)**2 )
-    #else:
-    #    return np.log( (1. + result) )
 
 event_indices = np.arange(nEvents)
 def make_toys( yield_per_toy, n_toys, lin=False, **kwargs):
@@ -165,11 +162,13 @@ cfgs = [
         #{'cHWtil':0.15, 'cHW':-0.15, 'cHQ3':0},
         #{'cHWtil':0.35, 'cHW':-0.4,  'cHQ3':0},
 eft = {'cHWtil':0.20,  'cHW':0,     'cHQ3':0}
+const     = args.lumi_factor*(lambda_tot(**eft) - lambda_tot())
 bits        = {prefix:model.load(prefix=prefix) for prefix,_,_ in cfgs}
 predictions = {prefix:{ der:bits[prefix][der].vectorized_predict(features) for der in bits[prefix].keys() } for prefix,_,_ in cfgs} 
 
 def make_plot(i_plot):  
-
+#if True:
+#    i_plot=0
     for prefix, tex, color in cfgs:
 
         predictions_iterations = { der:np.cumsum(bits[prefix][der].vectorized_predict(features, summed = False), axis=0) for der in bits[prefix].keys() } 
@@ -183,42 +182,35 @@ def make_plot(i_plot):
 
         for iteration in range( -1, n_iterations ):
             if iteration<0:
-                q_event = make_q( "total", truth=True,  predictions = None, **eft )
+                event_logR_to_SM = make_logR_to_SM( "total", truth=True, **eft)
             else:
-                predictions_i = {key:value[iteration] for key, value in predictions_iterations.iteritems()}
-                q_event = make_q( "total", truth=False, predictions = predictions_i, **eft )
+                predictions_i = {key:(value[iteration] if iteration<bits[prefix][key].n_trees else value[bits[prefix][key].n_trees-1]) for key, value in predictions_iterations.iteritems()}
+                event_logR_to_SM = make_logR_to_SM( "total", truth=False, predictions=predictions_i, **eft)
 
-            #log_sigma_tot_ratio_subtraction = np.log(sigma_tot_ratio(theta)) if not extended else 0
-            q_theta_given_SM    = np.array([np.sum( q_event[toy_] ) for toy_ in sm_toys ])
-            q_theta_given_theta = np.array([np.sum( q_event[toy_] ) for toy_ in eft_toys ])
-
-            # calibration according to SM
+            q_null = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in eft_toys ]) #NULL
+            q_alt  = const-np.array([np.sum( event_logR_to_SM[toy_] ) for toy_ in sm_toys ])    #ALT
+            # calibration according to the null
             if True:
-                n = float(len(q_theta_given_SM))
-                mean_q_theta_given_SM     = np.sum(q_theta_given_SM)/n
-                sigma_q_theta_given_SM    = sqrt( np.sum((q_theta_given_SM - mean_q_theta_given_SM)**2)/(n-1) ) 
-                q_theta_given_SM    = (q_theta_given_SM - mean_q_theta_given_SM)/sigma_q_theta_given_SM
-                q_theta_given_theta = (q_theta_given_theta - mean_q_theta_given_SM)/sigma_q_theta_given_SM
+                n = float(len(q_null))
+                mean_q_null     = np.sum(q_null)/n
+                sigma_q_null    = sqrt( np.sum((q_null - mean_q_null)**2)/(n-1) )
+                q_alt  = (q_alt  - mean_q_null)/sigma_q_null
+                q_null = (q_null - mean_q_null)/sigma_q_null
 
             # Exclusion: The null hypothesis is the BSM point, the alternate is the SM.
-            quantiles_theta = np.quantile( q_theta_given_theta, level )
-            quantiles_SM    = np.quantile( q_theta_given_SM, level )
-            size_           = np.count_nonzero(q_theta_given_SM>quantiles_SM)/float(n_toys)
-            #power_histo     = np.histogram( q_theta_given_theta, quantiles_SM)
-            for i_level, level in enumerate(levels[-1:]):
-                #if level != 0.68: continue
-                power_toy_count = np.count_nonzero((q_theta_given_SM>=quantiles_theta[i_level]) & (q_theta_given_SM<quantiles_theta[-1-i_level]))
-                power_ = 1. - power_toy_count/float(n_toys)
-                #power[test_statistic][level].SetBinContent( power[test_statistic][level].FindBin( theta1, theta2 ), power_ )
-                #power_ = 1-np.sum(np.histogram( q_theta_given_theta, quantiles_SM)[0])/float(n_toys)
-                if iteration>=0:
-                    h_power[prefix].SetBinContent( h_power[prefix].FindBin( iteration ), truth-power_ )
-                else:
-                    truth = power_
-                print "iteration",iteration, "size", quantile_levels[-1-i_level] - quantile_levels[i_level], "power", round(power_,3)
+            quantile_alt  = np.quantile( q_alt, level )
+            quantile_null = np.quantile( q_null, level )
+            size_         = np.count_nonzero(q_null>=quantile_null)/float(n_toys)
+            #power_histo     = np.histogram( q_theta_given_theta, quantile_SM)
 
+            power_ = np.count_nonzero(q_alt>=quantile_null)/float(n_toys)
+            if iteration>=0:
+                h_power[prefix].SetBinContent( h_power[prefix].FindBin( iteration ), truth-power_ )
+            else:
+                truth = power_
+            print "iteration",iteration, "size", size_, "power", round(power_,3)
+#assert False, ""
     return [h_power[prefix] for prefix, _, _ in cfgs ]
-
 
 from multiprocessing import Pool
 p = Pool(5)
