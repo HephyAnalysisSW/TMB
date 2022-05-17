@@ -5,10 +5,10 @@ import Analysis.Tools.syncer as syncer
 import array
 
 # Unbinned
-plot_dir = "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_12_MD6/ZH_Nakamura/unbinned/"
+plot_dir = "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_13_MD5/ZH_Nakamura/unbinned/"
 
 # Binned
-plot_dir_binned= "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_12_MD6/ZH_Nakamura/binned/"
+plot_dir_binned= "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_14_MD6/ZH_Nakamura/binned/"
 
 tex = {'cHW':"C_{HW}", 'cHWtil':"C_{H#tilde{W}}", "cHQ3":"C_{HQ}^{(3)}"}
 

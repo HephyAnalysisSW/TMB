@@ -18,7 +18,9 @@ special_cuts = {
     "trilep":    "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
     "onZ"   :    "abs(recoZ_mass-91.2)<10",
     "onH"   :    "(H_dijet_mass>90&&H_dijet_mass<150)",
-    "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)"
+    "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)",
+    "odd":       "(evt%2==1)",
+    "even":      "(evt%2==0)",
   }
 
 continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt"), ("ptZ", "recoZ_pt"), ("ptW", "WH_W_pt")]
