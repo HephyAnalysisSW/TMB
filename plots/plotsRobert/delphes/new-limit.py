@@ -179,6 +179,9 @@ else:
     weight_branches = ["lumiweight1fb"]
 
 lumi  = 350
+if "even" in args.selection:
+    lumi*=2
+
 def weight_getter( branches ):
     getters = [ operator.attrgetter(branch) for branch in branches ]
     def getter( event, sample ):
@@ -261,7 +264,8 @@ elif signal.name.startswith('ZH'):
     else:
         # delphes-v4 #bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2/")
         # delphes-v3 (the old training) bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
-        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2_MD5/") #airport MD5 training
+        #bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2_MD5/") #airport MD5 training
+        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_odd/v2_MD5/") #post-panic MD5 training, aiming at inclusive selection
 for key, bit in bits.iteritems():
     bit.name = "BIT_"+"_".join( key )
 

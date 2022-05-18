@@ -138,17 +138,26 @@
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpq3i cpqMi
 #python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_nlo_delphes --config ZH_nlo_delphes  --name v1 --derivative cpW cpqMi
 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHW 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHWtil 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHWtil cHWtil
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHW cHW
-                                                                                                                                                                           --max_depth 5 --name v2_MD5                             
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHj3 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHj3 cHj3 
-                                                                                                                                                                           --max_depth 5 --name v2_MD5                             
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHj3 cHW 
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHj3 cHWtil
-python training.py  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb  --max_depth 5 --name v2_MD5  --derivative cHW cHWtil
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHW 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHWtil 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHWtil cHWtil
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHW cHW
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHj3 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHj3 cHj3 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHj3 cHW 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHj3 cHWtil
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 5 --name v2_MD5  --derivative cHW cHWtil
+
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHW 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHWtil 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHWtil cHWtil
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHW cHW
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHj3 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHj3 cHj3 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHj3 cHW 
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHj3 cHWtil
+python training.py  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-ZH/MVA-training/ZH_delphes_bkgs_comb --config ZH_delphes_bkgs_comb_odd  --max_depth 6 --name v2_MD6  --derivative cHW cHWtil
+
 
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_nlo_delphes --config WH_nlo_delphes  --max_depth 2 --n_trees 300 --clip_score_quantile 0.001 --name v1_clipScore_0p001_max_depth_2_n_trees_300 --derivative cpW 
 #python training.py --overwrite  --debug  --input_directory /groups/hephy/cms/robert.schoefbeck/BIT/training-ntuple-WH/MVA-training/WH_nlo_delphes --config WH_nlo_delphes  --max_depth 2 --n_trees 300 --clip_score_quantile 0.001 --name v1_clipScore_0p001_max_depth_2_n_trees_300 --derivative cpqMi 

@@ -25,6 +25,8 @@ def getContours( h, level):
     return contours.At(0).Clone()
 
 stuff=[]
+#CLs =  [ "0.68", "0.95" ]
+CLs =  [ "0.95" ]
 
 for pred in [
     "power_total_cHQ3_vs_cHWtil_predicted_lumi_factor_1.00_level_0.68.root",
@@ -37,12 +39,12 @@ for pred in [
     texY = tex[pred.split('_')[4]]
 
     for stat in ["truth", "predicted"]:
-        for CL in [ "0.68", "0.95" ]:
+        for CL in CLs:
             f = ROOT.TFile(os.path.join( plot_dir, pred.replace("predicted", stat).replace("0.68", CL)))
             c = f.Get("ROOT.c1")
             h_2D  = c.GetListOfPrimitives().At(1)
             stuff.append(h_2D)
-            if CL=="0.68" and stat=="predicted":
+            if (CL=="0.68" or len(CLs)==1) and stat=="predicted":
                 pred_h_2D = h_2D
 
             h_2D.Smooth(1, "k5b")
@@ -50,7 +52,7 @@ for pred in [
             conts = getContours(h_2D, 0.5)
             for cont in conts:
                 if stat == "truth":
-                    cont.SetLineColor(ROOT.kRed - 2)
+                    cont.SetLineColor(ROOT.kRed - 4)
                     cont.SetLineWidth(2)
                 else:
                     cont.SetLineColor(ROOT.kBlack)
@@ -60,8 +62,8 @@ for pred in [
                 draw_conts.append(cont)
                 stuff.append(cont)
             
-    for nBinsTestStat in [1, 2, 5]:
-        for CL in [ "0.68", "0.95" ]:
+    for nBinsTestStat in [1, 2, 5,30]:
+        for CL in CLs:
             pred_binned = pred.replace(".root", "_nBinsTestStat_%i.root"%nBinsTestStat).replace("0.68", CL)
             f_binned    = ROOT.TFile(os.path.join( plot_dir_binned, pred_binned))
             c_binned    = f_binned.Get("ROOT.c1")
