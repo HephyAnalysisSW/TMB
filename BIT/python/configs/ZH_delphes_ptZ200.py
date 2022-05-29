@@ -350,7 +350,7 @@ bit_cfg = { derivative : {
             'n_trees': 200,
             'max_depth'     : 3,
             'learning_rate' : 0.25,
-            'min_size'      : 50,
+            'min_size'      : 30,
             'clip_score_quantile': None,
             'calibrated'    : False,} for derivative in bit_derivatives }
 

@@ -131,6 +131,7 @@ if args.addReweights:
 
     # Suddenly only lower case weight.id ... who on earth does such things?
     weightInfo_data_lower = {k.lower():val for k, val in weightInfo.data.iteritems()}
+    weightInfo_data_lower.update(weightInfo.data)
 
 
 # Run only job number "args.job" from total of "args.nJobs"
@@ -145,6 +146,7 @@ max_jet_abseta = 5.1
 if args.miniAOD:
     products = {
         'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
+        'gen':{'type':'GenEventInfoProduct', 'label':'generator'},
         'gp':{'type':'vector<reco::GenParticle>', 'label':("prunedGenParticles")},
         #'gpPacked':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
         #'gp':{'type':'vector<pat::PackedGenParticle>', 'label':("packedGenParticles")},
@@ -154,6 +156,7 @@ if args.miniAOD:
 else:
     products = {
         'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
+        'gen':{'type':'GenEventInfoProduct', 'label':'generator'},
         'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
         'genJets':{'type':'vector<reco::GenJet>', 'label':("ak4GenJets")},
         'genMET':{'type':'vector<reco::GenMET>',  'label':("genMetTrue")},
@@ -218,6 +221,9 @@ boson_varnames = [ 'pt', 'phi', 'eta', 'mass', 'status']
 boson_all_varnames = boson_varnames + ['cosThetaStar', 'daughter_pdgId','l1_index', 'l2_index', 'mother_pdgId', 'grandmother_pdgId']
 variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
 variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
+variables     += ["LHE_genZ_pt/F", "LHE_genZ_eta/F", "LHE_genZ_phi/F", "LHE_genZ_mass/F"]
+variables     += ["LHE_genH_pt/F", "LHE_genH_eta/F", "LHE_genH_phi/F", "LHE_genH_mass/F"]
+variables     += ["x1/F", "x2/F"]
 # Z vector from genleps
 # gamma vector
 gen_photon_vars = "pt/F,phi/F,eta/F,mass/F,mother_pdgId/I,grandmother_pdgId/I,isISR/I,relIso04/F"#,minLeptonDR/F,minJetDR/F"
@@ -385,12 +391,14 @@ def filler( event ):
             weight_id = weight.id.rstrip('_nlo')
             if weight_id in ['rwgt_1','dummy']: 
                 event.rw_nominal = weight.wgt
-            if not weight_id in weightInfo_data_lower.keys(): 
+            #print "Hello weight", weight_id, ( weight_id.lower() in weightInfo_data_lower.keys()) 
+            if not weight_id.lower() in weightInfo_data_lower.keys(): 
                 continue
             pos = weightInfo_data_lower[weight_id]
+            #print "pos", weight.wgt, event.weight_base[pos]
             event.weight_base[pos] = weight.wgt
             weights.append( weight.wgt )
-            interpreted_weight = interpret_weight(weight_id) 
+            interpreted_weight = interpret_weight(weight_id.lower()) 
             #for var in weightInfo.variables:
             #    getattr( event, "rw_"+var )[pos] = interpreted_weight[var]
             # weight data for interpolation
@@ -403,9 +411,9 @@ def filler( event ):
 
         if not hyperPoly.initialized: 
             print "evt,run,lumi", event.run, event.lumi, event.evt
-            print "ref point", ref_point_coordinates
-            for i_p, p in enumerate(param_points):
-                print "weight", i_p, weights[i_p], " ".join([ "%s=%3.2f"%( weightInfo.variables[i], p[i]) for i in range(len(p)) if p[i]!=0])
+            #print "ref point", ref_point_coordinates, "param_points", param_points
+            #for i_p, p in enumerate(param_points):
+                #print "weight", i_p, weights[i_p], " ".join([ "%s=%3.2f"%( weightInfo.variables[i], p[i]) for i in range(len(p)) if p[i]!=0])
             hyperPoly.initialize( param_points, ref_point_coordinates )
 
         coeff = hyperPoly.get_parametrization( weights )
@@ -419,6 +427,10 @@ def filler( event ):
             #print n, "p_C", n, coeff[n]
         # lumi weight / w0
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
+
+    # parton x1 x2
+    event.x1 = fwliteReader.products['gen'].pdf().x.first
+    event.x2 = fwliteReader.products['gen'].pdf().x.second
 
     # MET
     genMet = {'pt':fwliteReader.products['genMET'][0].pt(), 'phi':fwliteReader.products['genMET'][0].phi()}
@@ -457,6 +469,27 @@ def filler( event ):
         genLeps_dict[i_genLep]['mother_pdgId']      = mother_pdgId
         genLeps_dict[i_genLep]['grandmother_pdgId'] = grandmother_pdgId
     fill_vector_collection( event, "genLep", lep_all_varnames, genLeps_dict ) 
+
+    # LHE Zs (Suman's example: https://github.com/Sumantifr/XtoYH/blob/master/Analysis/NTuplizer/plugins/NTuplizer_XYH.cc#L1973-L1992 )
+    hepup = fwliteReader.products['lhe'].hepeup()
+    lhe_particles = hepup.PUP
+    for i_p, p in enumerate(lhe_particles):
+        if hepup.IDUP[i_p]!=23: continue
+        p4 = ROOT.TLorentzVector(lhe_particles[i_p][0], lhe_particles[i_p][1], lhe_particles[i_p][2], lhe_particles[i_p][3])
+        event.LHE_genZ_pt  = p4.Pt()
+        event.LHE_genZ_eta = p4.Eta()
+        event.LHE_genZ_phi  = p4.Phi()
+        event.LHE_genZ_mass = p4.M()
+        break
+    for i_p, p in enumerate(lhe_particles):
+        if hepup.IDUP[i_p]!=25: continue
+        p4 = ROOT.TLorentzVector(lhe_particles[i_p][0], lhe_particles[i_p][1], lhe_particles[i_p][2], lhe_particles[i_p][3])
+        event.LHE_genH_pt  = p4.Pt()
+        event.LHE_genH_eta = p4.Eta()
+        event.LHE_genH_phi  = p4.Phi()
+        event.LHE_genH_mass = p4.M()
+        break
+        #print "LHE Z", i_p, hepup.IDUP[i_p], p4.Pt(), "status", hepup.ISTUP[i_p]
 
     # generated Zs decaying to leptons
     genZs = [ (search.ascend(genZ), genZ) for genZ in filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp) ]

@@ -386,7 +386,7 @@ def drawObjects( hasData = False ):
     tex.SetTextSize(0.04)
     tex.SetTextAlign(11) # align right
     lines = [
-      (0.15, 0.95, 'CMS Preliminary' if hasData else "CMS Simulation"), 
+      (0.15, 0.95, 'CMS Preliminary' if hasData else "Delphes Simulation"), 
       #(0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV) Scale %3.2f'% ( lumi_scale, dataMCScale ) ) if plotData else (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale)
     ]
     return [tex.DrawLatex(*l) for l in lines] 

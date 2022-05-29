@@ -180,6 +180,16 @@ ZH.xsec    = 5.846e-02
 ZH.nEvents = 14769665
 ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
 
+ZH0jEFTDecay = FWLiteSample.fromDAS("ZH0jEFTDecay", "/ZH_LeptonicZ_LO_EFTdecay/schoef-ZH_LeptonicZ_LO_EFTdecay-5417d03250adc50a58497470a3c5d9ce/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+ZH0jEFTDecay.xsec    = 5.661e-02
+ZH0jEFTDecay.nEvents = 9970000
+ZH0jEFTDecay.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+
+ZH0jNoEFTDecay = FWLiteSample.fromDAS("ZH0jNoEFTDecay", "/ZH_LeptonicZ_LO_noEFTdecay/schoef-ZH_LeptonicZ_LO_noEFTdecay-19aeb1e0afed694fb1b4064801813391/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+ZH0jNoEFTDecay.xsec    = 5.653e-02
+ZH0jNoEFTDecay.nEvents =  9980000
+ZH0jNoEFTDecay.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+
 WH_nlo = FWLiteSample.fromDAS("WH_nlo", "/WH_LeptonicW_NLO/schoef-WH_LeptonicW_NLO-e8f00ac48edff02e5195d18b5cd83462/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 WH_nlo.xsec     = 4.798e-01  
 WH_nlo.nEvents  = 29949998

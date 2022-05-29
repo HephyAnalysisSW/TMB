@@ -16,29 +16,32 @@
 #python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 4  --sample ZH_nlo #SPLIT599
 #python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 4  --sample WH_nlo #SPLIT599
 #
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYBBJetsToLL_M50_LO #SPLIT145
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT253
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
-python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 2  --sample ZH0jNoEFTDecay #SPLIT998
+python genPostProcessing.py --delphesEra RunII --targetDir v10 --addReweights --logLevel INFO --interpolationOrder 2  --sample ZH0jEFTDecay #SPLIT997
 
-python genPostProcessing.py --combinatoricalBTags           --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJets #SPLIT595
-
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYBBJetsToLL_M50_LO #SPLIT145
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT253
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
-python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
-
-python genPostProcessing.py           --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJets #SPLIT595
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYBBJetsToLL_M50_LO #SPLIT145
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT253
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
+#python genPostProcessing.py --combinatoricalBTags --miniAOD --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
+#
+#python genPostProcessing.py --combinatoricalBTags           --delphesEra RunII --targetDir v10_combinatoricalBTagWeights --logLevel INFO  --sample DYJets #SPLIT595
+#
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYBBJetsToLL_M50_LO #SPLIT145
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT70to100_LO #SPLIT237
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT100to200_LO #SPLIT232
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT200to400_LO #SPLIT311
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO_ext2 #SPLIT253
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT600to800_LO #SPLIT264
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT800to1200_LO #SPLIT109
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT1200to2500_LO #SPLIT23
+#python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT2500toInf_LO #SPLIT23
+#
+#python genPostProcessing.py           --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJets #SPLIT595
 
 #python genPostProcessing.py --miniAOD --delphesEra RunII --targetDir v10 --logLevel INFO  --sample DYJetsToLL_M50_HT400to600_LO #SPLIT249
 #

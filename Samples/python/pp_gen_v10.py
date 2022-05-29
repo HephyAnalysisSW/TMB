@@ -88,6 +88,14 @@ ZH = Sample.fromDirectory("ZH", texName = "ZH", directory = [os.path.join( pp_di
 ZH.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
 ZH.objects  = ['Z']
 
+ZH0jEFTDecay = Sample.fromDirectory("ZH0jEFTDecay", texName = "ZH0jEFTDecay", directory = [os.path.join( pp_dir, "ZH0jEFTDecay" )], color = ROOT.kBlue+1) 
+ZH0jEFTDecay.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+ZH0jEFTDecay.objects  = ['Z']
+
+ZH0jNoEFTDecay = Sample.fromDirectory("ZH0jNoEFTDecay", texName = "ZH0jNoEFTDecay", directory = [os.path.join( pp_dir, "ZH0jNoEFTDecay" )], color = ROOT.kBlue+1) 
+ZH0jNoEFTDecay.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH/SMEFTsim_VH_reweight_card.pkl"
+ZH0jNoEFTDecay.objects  = ['Z']
+
 WH_nlo = Sample.fromDirectory("WH_nlo", texName = "WH (NLO)", directory = [os.path.join( pp_dir, "WH_nlo" )], color = ROOT.kGreen+3) 
 WH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/WH_LeptonicW_NLO/WH_LeptonicW_NLO_reweight_card.pkl"
 WH_nlo.objects  = ['W']

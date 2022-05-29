@@ -1,6 +1,4 @@
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal WH --comparison cHW
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal WH --comparison cHWtil
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal WH --comparison cHj3
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal ZH --comparison cHW
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal ZH --comparison cHWtil
-python comparison-toy.py --plot_directory BIT_VH_11_uncut --signal ZH --comparison cHj3
+#!/bin/sh
+python comparison-toy.py $@ --plot_directory BIT_VH_14_comp_5f --signal ZH0jNoEFTDecay --comparison cHW --comparison cHW 
+python comparison-toy.py $@ --plot_directory BIT_VH_14_comp_5f --signal ZH0jNoEFTDecay --comparison cHWtil --comparison cHWtil 
+python comparison-toy.py $@ --plot_directory BIT_VH_14_comp_5f --signal ZH0jNoEFTDecay --comparison cHj3 --comparison cHj3 

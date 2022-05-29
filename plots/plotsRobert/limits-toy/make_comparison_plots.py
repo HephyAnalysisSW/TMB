@@ -5,7 +5,7 @@ import Analysis.Tools.syncer as syncer
 import array
 
 # Unbinned
-plot_dir = "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_13_MD5/ZH_Nakamura/unbinned/"
+plot_dir = "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_14_MD5/ZH_Nakamura/unbinned/"
 
 # Binned
 plot_dir_binned= "/groups/hephy/cms/robert.schoefbeck/www/BIT/BIT_VH_14_MD6/ZH_Nakamura/binned/"
@@ -29,9 +29,9 @@ stuff=[]
 CLs =  [ "0.95" ]
 
 for pred in [
-    "power_total_cHQ3_vs_cHWtil_predicted_lumi_factor_1.00_level_0.68.root",
-    "power_total_cHQ3_vs_cHW_predicted_lumi_factor_1.00_level_0.68.root",
-    "power_total_cHW_vs_cHWtil_predicted_lumi_factor_1.00_level_0.68.root",
+    "power_total_cHQ3_vs_cHWtil_predicted_lumi_factor_1.00_level_0.95.root",
+    "power_total_cHQ3_vs_cHW_predicted_lumi_factor_1.00_level_0.95.root",
+    "power_total_cHW_vs_cHWtil_predicted_lumi_factor_1.00_level_0.95.root",
         ]:
     draw_conts = []
 
@@ -40,13 +40,12 @@ for pred in [
 
     for stat in ["truth", "predicted"]:
         for CL in CLs:
-            f = ROOT.TFile(os.path.join( plot_dir, pred.replace("predicted", stat).replace("0.68", CL)))
+            f = ROOT.TFile(os.path.join( plot_dir, pred.replace("predicted", stat).replace("0.95", CL)))
             c = f.Get("ROOT.c1")
             h_2D  = c.GetListOfPrimitives().At(1)
             stuff.append(h_2D)
             if (CL=="0.68" or len(CLs)==1) and stat=="predicted":
                 pred_h_2D = h_2D
-
             h_2D.Smooth(1, "k5b")
             h_2D.Smooth(1, "k5b")
             conts = getContours(h_2D, 0.5)

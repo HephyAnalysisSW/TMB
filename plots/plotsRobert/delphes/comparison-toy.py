@@ -30,8 +30,8 @@ import TMB.Tools.stat_helpers       as stat_helpers
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--plot_directory',     action='store',      default='BIT_VH_9')
-argParser.add_argument('--signal',             action='store',      default='ZH', choices = ['WH', 'ZH'])
+argParser.add_argument('--plot_directory',     action='store',      default='BIT_VH_14')
+argParser.add_argument('--signal',             action='store',      default='ZH', choices = ['WH', 'ZH', 'ZH0jEFTDecay', 'ZH0jNoEFTDecay'])
 argParser.add_argument('--comparison',         action='store',      default='cHW', choices = ['cHW', 'cHWtil', 'cHj3'])
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 args = argParser.parse_args()
@@ -49,10 +49,12 @@ if args.small: plot_directory += "_small"
 import TMB.Samples.pp_gen_v10 as samples
     
 signal = getattr( samples, args.signal)
-if args.signal == 'WH':
+if args.signal.startswith('WH'):
     selectionString = "ngenW>0"
-elif args.signal == 'ZH':
-    selection = "ngenZ>0"
+elif args.signal.startswith('ZH'):
+    selectionString = "LHE_genZ_pt>=0"
+    #selectionString = "genZ_pt>=0"#&&abs(genZ_eta)<2" #fixme
+
 
 # WeightInfo
 signal.weightInfo = WeightInfo(signal.reweight_pkl)
@@ -62,51 +64,51 @@ signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 if args.comparison=='cHW':
     eft_configs = [
         {'color':ROOT.kBlack,      'delphes':{}, 'tex':"SM"},
-        {'color':ROOT.kMagenta-4,  'delphes':{'cHW':-2.5},  'tex':"c_{HW}=-2.5"},
-        {'color':ROOT.kMagenta+2,  'delphes':{'cHW':-2},   'tex':"c_{HW}=-2"},
-        {'color':ROOT.kGreen-4,    'delphes':{'cHW':-1.5},     'tex':"c_{HW}=-1.5"},
-        {'color':ROOT.kGreen+2,    'delphes':{'cHW':-1},      'tex':"c_{HW}=-1"},
-        {'color':ROOT.kBlue-4,     'delphes':{'cHW':-.5},   'tex':"c_{HW}=-.5"},
-        {'color':ROOT.kBlue+2,     'delphes':{'cHW':.5},    'tex':"c_{HW}=.5"},
-        {'color':ROOT.kOrange-4,   'delphes':{'cHW':1.},   'tex':"c_{HW}=1"},
-        {'color':ROOT.kOrange+2,   'delphes':{'cHW':1.5},    'tex':"c_{HW}=1.5"},
-        {'color':ROOT.kRed-4,      'delphes':{'cHW':2},   'tex':"c_{HW}=2"},
-        {'color':ROOT.kRed+2,      'delphes':{'cHW':2.5},    'tex':"c_{HW}=2.5"},
+#        {'color':ROOT.kMagenta-4,  'delphes':{'cHW':-2.5},  'tex':"c_{HW}=-2.5"},
+        {'color':ROOT.kMagenta+2,  'delphes':{'cHW':-1},   'tex':"c_{HW}=-1"},
+#        {'color':ROOT.kGreen-4,    'delphes':{'cHW':-1.5},     'tex':"c_{HW}=-1.5"},
+        {'color':ROOT.kGreen+2,    'delphes':{'cHW':-.5},      'tex':"c_{HW}=-.5"},
+#        {'color':ROOT.kBlue-4,     'delphes':{'cHW':-.5},   'tex':"c_{HW}=-.5"},
+#        {'color':ROOT.kBlue+2,     'delphes':{'cHW':.5},    'tex':"c_{HW}=.5"},
+        {'color':ROOT.kOrange-4,   'delphes':{'cHW':.5},   'tex':"c_{HW}=.5"},
+#        {'color':ROOT.kOrange+2,   'delphes':{'cHW':1.5},    'tex':"c_{HW}=1.5"},
+        {'color':ROOT.kRed-4,      'delphes':{'cHW':1},   'tex':"c_{HW}=1"},
+#        {'color':ROOT.kRed+2,      'delphes':{'cHW':2.5},    'tex':"c_{HW}=2.5"},
     ]
 elif args.comparison=='cHWtil':
     eft_configs = [
         {'color':ROOT.kBlack,      'delphes':{}, 'tex':"SM"},
-        {'color':ROOT.kMagenta-4,  'delphes':{'cHWtil':-2.5},  'tex':"c_{H#tilde{W}}=-2.5"},
-        {'color':ROOT.kMagenta+2,  'delphes':{'cHWtil':-2},   'tex':"c_{H#tilde{W}}=-2"},
-        {'color':ROOT.kGreen-4,    'delphes':{'cHWtil':-1.5},     'tex':"c_{H#tilde{W}}=-1.5"},
-        {'color':ROOT.kGreen+2,    'delphes':{'cHWtil':-1},      'tex':"c_{H#tilde{W}}=-1"},
-        {'color':ROOT.kBlue-4,     'delphes':{'cHWtil':-.5},   'tex':"c_{H#tilde{W}}=-.5"},
+#        {'color':ROOT.kMagenta-4,  'delphes':{'cHWtil':-2.5},  'tex':"c_{H#tilde{W}}=-2.5"},
+        {'color':ROOT.kMagenta+2,  'delphes':{'cHWtil':-1},   'tex':"c_{H#tilde{W}}=-1"},
+#        {'color':ROOT.kGreen-4,    'delphes':{'cHWtil':-1.5},     'tex':"c_{H#tilde{W}}=-1.5"},
+        {'color':ROOT.kGreen+2,    'delphes':{'cHWtil':-.5},      'tex':"c_{H#tilde{W}}=-.5"},
+#        {'color':ROOT.kBlue-4,     'delphes':{'cHWtil':-.5},   'tex':"c_{H#tilde{W}}=-.5"},
         {'color':ROOT.kBlue+2,     'delphes':{'cHWtil':.5},    'tex':"c_{H#tilde{W}}=.5"},
-        {'color':ROOT.kOrange-4,   'delphes':{'cHWtil':1.},   'tex':"c_{H#tilde{W}}=1"},
-        {'color':ROOT.kOrange+2,   'delphes':{'cHWtil':1.5},    'tex':"c_{H#tilde{W}}=1.5"},
-        {'color':ROOT.kRed-4,      'delphes':{'cHWtil':2},   'tex':"c_{H#tilde{W}}=2"},
-        {'color':ROOT.kRed+2,      'delphes':{'cHWtil':2.5},    'tex':"c_{H#tilde{W}}=2.5"},
+#        {'color':ROOT.kOrange-4,   'delphes':{'cHWtil':1.},   'tex':"c_{H#tilde{W}}=1"},
+        {'color':ROOT.kOrange+2,   'delphes':{'cHWtil':1},    'tex':"c_{H#tilde{W}}=1"},
+#        {'color':ROOT.kRed-4,      'delphes':{'cHWtil':2},   'tex':"c_{H#tilde{W}}=2"},
+#        {'color':ROOT.kRed+2,      'delphes':{'cHWtil':2.5},    'tex':"c_{H#tilde{W}}=2.5"},
     ]
 elif args.comparison=='cHj3':
     eft_configs = [
         {'color':ROOT.kBlack,      'delphes':{}, 'tex':"SM"},
-        {'color':ROOT.kMagenta-4,  'delphes':{'cHj3':-.25},  'tex':"c_{HQ}^{(3)}=-.25"},
-        {'color':ROOT.kMagenta+2,  'delphes':{'cHj3':-.2},   'tex':"c_{HQ}^{(3)}=-.2"},
-        {'color':ROOT.kGreen-4,    'delphes':{'cHj3':-.15},  'tex':"c_{HQ}^{(3)}=-.15"},
-        {'color':ROOT.kGreen+2,    'delphes':{'cHj3':-.1},   'tex':"c_{HQ}^{(3)}=-.1"},
-        {'color':ROOT.kBlue-4,     'delphes':{'cHj3':-.05},  'tex':"c_{HQ}^{(3)}=-.5"},
-        {'color':ROOT.kBlue+2,     'delphes':{'cHj3':.05},   'tex':"c_{HQ}^{(3)}=.5"},
-        {'color':ROOT.kOrange-4,   'delphes':{'cHj3':.1},    'tex':"c_{HQ}^{(3)}=.1"},
-        {'color':ROOT.kOrange+2,   'delphes':{'cHj3':.15},   'tex':"c_{HQ}^{(3)}=.15"},
-        {'color':ROOT.kRed-4,      'delphes':{'cHj3':.2},    'tex':"c_{HQ}^{(3)}=.2"},
-        {'color':ROOT.kRed+2,      'delphes':{'cHj3':.25},   'tex':"c_{HQ}^{(3)}=.25"},
+ #       {'color':ROOT.kMagenta-4,  'delphes':{'cHj3':-.25},  'tex':"c_{HQ}^{(3)}=-.25"},
+        {'color':ROOT.kMagenta+2,  'delphes':{'cHj3':-.1},   'tex':"c_{HQ}^{(3)}=-.1"},
+#        {'color':ROOT.kGreen-4,    'delphes':{'cHj3':-.15},  'tex':"c_{HQ}^{(3)}=-.15"},
+        {'color':ROOT.kGreen+2,    'delphes':{'cHj3':-.05},   'tex':"c_{HQ}^{(3)}=-.05"},
+#        {'color':ROOT.kBlue-4,     'delphes':{'cHj3':-.05},  'tex':"c_{HQ}^{(3)}=-.5"},
+#        {'color':ROOT.kBlue+2,     'delphes':{'cHj3':.05},   'tex':"c_{HQ}^{(3)}=.5"},
+        {'color':ROOT.kOrange-4,   'delphes':{'cHj3':.05},    'tex':"c_{HQ}^{(3)}=.05"},
+#        {'color':ROOT.kOrange+2,   'delphes':{'cHj3':.15},   'tex':"c_{HQ}^{(3)}=.15"},
+        {'color':ROOT.kRed-4,      'delphes':{'cHj3':.1},    'tex':"c_{HQ}^{(3)}=.1"},
+#        {'color':ROOT.kRed+2,      'delphes':{'cHj3':.25},   'tex':"c_{HQ}^{(3)}=.25"},
     ]
 
 # import the toy VH model
 sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
 import VH_models
 #toy_model = getattr(VH_models, "WH_Spannowsky" if args.signal=="WH" else "ZH_Spannowsky")
-toy_model = getattr(VH_models, "WH_Nakamura" if args.signal=="WH" else "ZH_Nakamura")
+toy_model = getattr(VH_models, "WH_Nakamura" if args.signal=="WH" else "ZH_Nakamura_debug")
 
 for eft in eft_configs:
     eft['func'] = signal.weightInfo.get_weight_func(**eft['delphes']) 
@@ -115,6 +117,8 @@ for eft in eft_configs:
     if eft['toy'].has_key( 'cHj3' ):
         eft['toy']['cHQ3'] = eft['toy']['cHj3'] 
         del eft['toy']['cHj3']
+    #for key in eft['toy'].keys():
+    #     eft['toy'][key] = eft['toy'][key]/sqrt(2.)#FIXME DIRTY PATCH
     eft['toy'] = toy_model.make_eft( **eft['toy'] )
     
 toy_feature_names = toy_model.feature_names
@@ -159,8 +163,9 @@ for sample in stack.samples:
 
 # Training variables
 read_variables = [\
-    "ngenZ/I", "genZ[pt/F]",
-    "ngenW/I", "genW[pt/F]",
+    "ngenZ/I", "genZ[pt/F,eta/F]",
+    "LHE_genZ_pt/F", "x1/F", "x2/F",
+    "ngenW/I", "genW[pt/F,eta/F]",
 
 #    "nBTag/I", 
 #    "nBTag_loose/I",
@@ -194,17 +199,17 @@ for sample in stack.samples:
         #sample.reduceFiles( factor = 30 )
         sample.reduceFiles( to = 15 )
 
-#BITs
-import sys, os, time
-from BoostedInformationTree import BoostedInformationTree
-if signal.name == 'WH':
-    import TMB.BIT.configs.WH_delphes as config
-    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
-    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
-elif signal.name == 'ZH':
-    import TMB.BIT.configs.ZH_delphes as config
-    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
-    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
+##BITs
+#import sys, os, time
+#from BoostedInformationTree import BoostedInformationTree
+#if signal.name == 'WH':
+#    import TMB.BIT.configs.WH_delphes as config
+#    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
+#    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
+#elif signal.name == 'ZH':
+#    import TMB.BIT.configs.ZH_delphes as config
+#    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
+#    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
 
 models = [
 #    ("BIT_cHW",             bits[('cHW',)],             [20,-5,5]), 
@@ -262,47 +267,147 @@ plots        = []
 
 #features
 
-if args.signal == "ZH":
+#binning = [1000/20,0,1000] 
+#if args.signal.startswith("ZH"):
+#    plots.append(
+#        Plot( name = "pT" ,
+#              texX = "p_{T}(Z)", texY = 'Number of Events',
+#              attribute = lambda event, sample: event.LHE_genZ_pt, #genZ_pt[0],
+#              binning = binning,
+#    ))
+#else:
+#    plots.append(
+#        Plot( name = "pT" ,
+#              texX = "p_{T}(W)", texY = 'Number of Events',
+#              attribute = lambda event, sample: event.genW_pt[0],
+#              binning = binning,
+#    ))
+#
+#features = toy_features[:, toy_model.feature_names.index('pT')]
+#plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram( 
+#        features, 
+#        bins    = np.linspace(binning[1], binning[2], 1+binning[0]), 
+#        weights = eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+
+binning_x1x2 = [100,0.,.173] 
+plots.append(
+    Plot( name = "sqrt_x1x2" ,
+          texX = "#sqrt{x1x2}", texY = 'Number of Events',
+          attribute = lambda event, sample: sqrt(event.x1*event.x2), #genZ_pt[0],
+          binning = binning_x1x2,
+))
+
+features = toy_features[:, toy_model.feature_names.index('sqrt_s_hat')]/(13000.)
+plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram( 
+        features, 
+        bins    = np.linspace(binning_x1x2[1], binning_x1x2[2], 1+binning_x1x2[0]), 
+        weights = eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+
+plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
+
+for plot in plots:
+    scale = plot.histos[0][0].Integral() / plot.toy_histos[0].Integral()
+    logger.info( "Scaling %s. Delphes: %3.2f for a lumi of %3.2f. Toy normalistion: %3.2f. Scale factor: %3.2f", plot.name, plot.histos[0][0].Integral(), lumi, plot.toy_histos[0].Integral(), scale )
+
+
+    for i_eft, eft in enumerate(eft_configs):
+        plot.histos[i_eft][0].legendText = eft['tex']
+        plot.histos[i_eft][0].style      = styles.lineStyle(eft['color'],width=2)
+        plot.histos[i_eft][0].SetName(eft['name'])
+
+        # scale according to SM
+        plot.toy_histos[i_eft].Scale( scale )
+        plot.toy_histos[i_eft].legendText = eft['tex'] + ' (toy)'
+        plot.toy_histos[i_eft].style      = styles.lineStyle(eft['color'],width=2, dashed=True)
+        plot.toy_histos[i_eft].SetName(eft['name'])
+
+        param_val    = 0 if i_eft==0 else eft['delphes'].values()[0]
+
+        if len(eft['delphes'])==1:
+            WC = eft['delphes'].keys()[0]
+
+    draw_plot = Plot.fromHisto( plot.name+'_'+WC, plot.histos+[[h] for h in plot.toy_histos], texX = plot.texX, texY = plot.texY )
+    draw_plot.stack = None
+    for log in [False, True]:
+        plot_directory_ = os.path.join(plot_directory, "log") if log else os.path.join(plot_directory, "lin")
+        plotting.draw( 
+            plot = draw_plot,
+            plot_directory = plot_directory_,
+            #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+            yRange         = (10**-2,"auto"),
+            logY = log, logX = False, sorting = False,
+            legend         = ( (0.15,0.7,0.9,0.92),2),
+            drawObjects    = [], #quantile_lines + drawObjects,
+            copyIndexPHP   = True,
+            extensions     = ["png", "pdf"],
+          )
+#toy rw histo
+toy_rw_histo = plots[-1].histos[0][0].Clone()
+toy_rw_histo.Divide(plots[-1].toy_histos[0]) 
+
+toy_rw = np.array( [ toy_rw_histo.GetBinContent(toy_rw_histo.FindBin(sqrt_s_hat/(13000.))) for sqrt_s_hat in toy_features[:, toy_model.feature_names.index('sqrt_s_hat')] ] )
+
+# plot once again with pt_reweighting
+plots = []
+if args.signal.startswith("ZH"):
     plots.append(
-        Plot( name = "pT" ,
+        Plot( name = "pt_rw" ,
               texX = "p_{T}(Z)", texY = 'Number of Events',
-              attribute = lambda event, sample: event.genZ_pt[0],
+              attribute = lambda event, sample: event.LHE_genZ_pt, #genZ_pt[0],
               binning = [600/20,0,600],
     ))
 else:
     plots.append(
-        Plot( name = "pT" ,
+        Plot( name = "pt_rw" ,
               texX = "p_{T}(W)", texY = 'Number of Events',
               attribute = lambda event, sample: event.genW_pt[0],
               binning = [600/20,0,600],
     ))
 
-binning = [600/20,0,600] 
+binning = [1000/20,0,1000]
 features = toy_features[:, toy_model.feature_names.index('pT')]
+plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram(
+        features,
+        bins    = np.linspace(binning[1], binning[2], 1+binning[0]),
+        weights = toy_rw*eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+
+
+#mask = np.ones(len(toy_features)) #np.abs(toy_features[:, toy_model.feature_names.index('y')])<2
+binning = [20,-5,5] 
+if args.signal.startswith("ZH"):
+    plots.append(
+        Plot( name = "eta_rw" ,
+              texX = "#eta(Z)", texY = 'Number of Events',
+              attribute = lambda event, sample: event.genZ_eta[0],
+              binning = binning,
+    ))
+else:
+    plots.append(
+        Plot( name = "eta_rw" ,
+              texX = "#eta(W)", texY = 'Number of Events',
+              attribute = lambda event, sample: event.genW_eta[0],
+              binning = binning,
+    ))
+
+features = toy_features[:, toy_model.feature_names.index('y')]
 plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram( 
         features, 
         bins    = np.linspace(binning[1], binning[2], binning[0]), 
-        weights = eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+        weights = toy_rw*eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
 
-#correspondence = {
-#    ('mva_Z_pt' if args.signal=="ZH" else 'mva_W_pt'):{'toy_name':'pT', 'features':toy_features[:, toy_model.feature_names.index('pT')]},
-#}
+plots.append(
+    Plot( name = "sqrt_x1x2_rw" ,
+          texX = "#sqrt{x1x2}", texY = 'Number of Events',
+          attribute = lambda event, sample: sqrt(event.x1*event.x2), #genZ_pt[0],
+          binning = binning_x1x2,
+))
 
-##features
-#for i_key, (key, _) in enumerate( config.mva_variables ):
-#    if not key in correspondence.keys(): continue
-#
-#    plots.append(Plot( name = key.replace("mva_", ""),
-#      texX = config.plot_options[key]['tex'], texY = 'Number of Events',
-#      attribute = lambda event, sample, i_key=i_key: event.features[i_key],
-#      binning   =  config.plot_options[key]['binning'],
-#    ))
-#
-#    binning = config.plot_options[key]['binning']
-#    plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram( 
-#            correspondence[key]['features'], 
-#            bins    = np.linspace(binning[1], binning[2], binning[0]), 
-#            weights = eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+features = toy_features[:, toy_model.feature_names.index('sqrt_s_hat')]/(13000.)
+plots[-1].toy_histos = [ stat_helpers.make_TH1F( np.histogram( 
+        features, 
+        bins    = np.linspace(binning_x1x2[1], binning_x1x2[2], 1+binning_x1x2[0]), 
+        weights = toy_rw*eft_config['toy_weights'][()] )) for eft_config in eft_configs ]
+
 
 # Text on the plots
 def drawObjects( hasData = False ):
@@ -318,8 +423,6 @@ def drawObjects( hasData = False ):
 
 plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
-#color EFT
-#draw_plots = []
 for plot in plots:
     scale = plot.histos[0][0].Integral() / plot.toy_histos[0].Integral()
     logger.info( "Scaling %s. Delphes: %3.2f for a lumi of %3.2f. Toy normalistion: %3.2f. Scale factor: %3.2f", plot.name, plot.histos[0][0].Integral(), lumi, plot.toy_histos[0].Integral(), scale )
@@ -358,6 +461,7 @@ for plot in plots:
             plot = draw_plot,
             plot_directory = plot_directory_,
             #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+            yRange         = (10**-2,"auto"),
             logY = log, logX = False, sorting = False,
             legend         = ( (0.15,0.7,0.9,0.92),2),
             drawObjects    = [], #quantile_lines + drawObjects,

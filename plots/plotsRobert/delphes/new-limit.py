@@ -260,7 +260,8 @@ elif signal.name.startswith('ZH'):
     if args.no_bkgs:
         #delphes-v4 bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v2/")
         # delphes-v3 (the old training) bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
-        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v2_MD5/") #airport MD5 training
+        #bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v2_MD5/") #airport MD5 training
+        bits   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_ptZ200/v3_MD5/") #post-panic MD5 training, targeting consistency with toy
     else:
         # delphes-v4 #bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb_ptZ200/v2/")
         # delphes-v3 (the old training) bits = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
@@ -556,7 +557,8 @@ def getContours( h, level):
 n_toys = 50000
 
 # do not make the following inconsistent
-levels          = [  0.68, 0.95]
+#levels          = [  0.68, 0.95]
+levels          = [ 0.95]
 #quantile_levels = [ 0.025, 0.16, .5, 1-0.16, 1-0.025 ]
 
 exp_nll_ratio = {}
@@ -570,7 +572,7 @@ WC2_vals = np.arange(WC2_min, WC2_max+step2, (WC2_max-WC2_min)/args.nBins)
 
 if args.altTestStat:
     #test_statistics = [ "pTVMCCut", "pTV", "total"]
-    test_statistics = [ "pTVMCCut_1",  "pTVMCCut_3", "pTVMCCut_5", "total"]
+    test_statistics = [ "pTVMCCut_1",  "pTVMCCut_4", "pTVMCCut_5", "total"]
 else:
     test_statistics = ["lin", "quad", "total"]
 exp_nll_ratio = {}
@@ -676,7 +678,7 @@ for test_statistic in test_statistics:
         logY = False, logX = False, logZ = True, 
         copyIndexPHP=True, 
         drawObjects = contour_objects, 
-        zRange = (0.01,25),
+        zRange = (0.05,25),
         histModifications = [lambda h:ROOT.gStyle.SetPalette(58)],
         )
 
@@ -702,7 +704,7 @@ for test_statistic in test_statistics:
             logY = False, logX = False, logZ = True, 
             copyIndexPHP=True, 
             drawObjects = contour_objects, 
-            zRange = (0.01,1),
+            zRange = (0.05,1),
             histModifications = [lambda h:ROOT.gStyle.SetPalette(58)],
             )
 
