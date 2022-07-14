@@ -70,10 +70,10 @@ class DelphesReader( DelphesReaderBase ): # version RootTools reader
     def genMet( self ):
         return self.read_collection( 'GenMissingET', [('MET', 'pt'), ('Phi', 'phi')] )
 
-    def genParticles( self ):
-        return self.read_collection( 'Particle', 
-            [   ('PT', 'pt'), ( 'Eta', 'eta'), ('Phi', 'phi'), ('Status', 'status'), ('PID', 'pdgId')
-            ])
+#    def genParticles( self ):
+#        return self.read_collection( 'Particle', 
+#            [   ('PT', 'pt'), ( 'Eta', 'eta'), ('Phi', 'phi'), ('Status', 'status'), ('PID', 'pdgId')
+#            ])
 
 #    def getEntry( self, entry ):
 #        # Set the Suchi-Reader 

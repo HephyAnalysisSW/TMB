@@ -247,11 +247,13 @@ elif signal.name.startswith('ZH'):
 
 bits = [
     ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             ([10,-.2,.8] if args.signal=='WH' else [10, -1,9])), 
-    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        ([10, 0,10] if args.signal=='WH' else [10,0,20])), 
+    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        ([10, 0,10] if args.signal=='WH' else [10,0,4])), 
     ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
-    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [30,-5,5]), 
-    ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
-    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,5]), 
+    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [10,0,4]), 
+    ("BIT_cHWtil_cHWtil",        bits[('cHWtil','cHWtil')],  [10,0,4]), 
+    ("BIT_cHWtil_cHWtil_wide",   bits[('cHWtil','cHWtil')],  [30,0,10]), 
+#    ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
+#    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,5]), 
 ]
 sequence.extend( config.sequence )
 

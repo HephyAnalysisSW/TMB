@@ -790,10 +790,12 @@ def filler( event ):
             allRecoLeps.sort( key = lambda p:-p['pt'] )
             recoLeps =  filter( isGoodRecoLepton, allRecoLeps )
 
-            delphesGenLeptons = filter( lambda p: abs(p['pdgId']) in [11,13] and p['status']==1, delphesReader.genParticles() )
+            #delphesGenLeptons = filter( lambda p: abs(p['pdgId']) in [11,13] and p['status']==1, delphesReader.genParticles() )
             # gen-match leptons with delphes particles
             for recoLep in allRecoLeps:
-                recoLep['genMatched'] = any( deltaR( recoLep, genLep )<0.1 for genLep in delphesGenLeptons )
+                #recoLep['genMatched'] = any( deltaR( recoLep, genLep )<0.1 for genLep in delphesGenLeptons )
+                recoLep['genMatched'] = any( deltaR( recoLep, genLep )<0.1 for genLep in genLeps_dict )
+                #print recoLep, recoLep['genMatched'], recoLep['genMatched2']
                 
                 #print recoLep['genMatched'], [deltaR( recoLep, genLep ) for genLep in delphesGenLeptons], recoLep
 
