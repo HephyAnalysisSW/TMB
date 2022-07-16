@@ -118,9 +118,36 @@ def makeThrust( event, sample ):
     (event.thrust, event.thrust_min) = Thrust(event.W_vecP4,[j['vecP4'] for j in event.jets] )
 
 sequence.append( makeThrust )
+coefficients = sorted(['cHbox','cHDD', 'cbHRe', 'cHj3', 'cHW', 'cHWtil', 'cHu'])
+tex          = {"cHW":"C_{HW}", "cHWtil":"C_{H#tilde{W}}", "cHj3":"C_{Hj^{(3)}}", "cHu":"C_{Hu}", "cHbox":"C_{H#Box}", "cHDD":"C_{HD}", "cbHRe":"C_{bH}"}
 
-coefficients = sorted(['cHj1', 'cHj3', 'cHW', 'cHWtil'])
+#coefficients = sorted(['cHj1', 'cHj3', 'cHW', 'cHWtil'])
 max_order        = 2
+
+default_eft_parameters = { 'Lambda':1000. }
+default_eft_parameters.update( {var:0. for var in coefficients} )
+def make_eft(**kwargs):
+    result = { key:val for key, val in default_eft_parameters.iteritems() }
+    for key, val in kwargs.iteritems():
+        if not key in coefficients+["Lambda"]:
+            raise RuntimeError ("Coefficient not known.")
+        else:
+            result[key] = float(val)
+    return result
+
+sm         = make_eft()
+
+eft_plot_points = [
+    {'color':ROOT.kBlack,       'eft':sm, 'tex':"SM"},
+    {'color':ROOT.kBlue+2,      'eft':make_eft(cHj3 = .05),  'tex':"C_{Hj}^{(3)} = 0.05"},
+    {'color':ROOT.kBlue-4,      'eft':make_eft(cHj3 = -.05), 'tex':"C_{Hj}^{(3)} = -0.05"},
+    {'color':ROOT.kOrange+2,   'eft':make_eft(cHDD = 0.5),   'tex':"C_{HD} = 0.5"},
+    {'color':ROOT.kOrange-4,   'eft':make_eft(cHbox = 0.5),  'tex':"C_{H#Box} = 0.5"},
+    {'color':ROOT.kGreen+2,     'eft':make_eft(cHW = 0.5),   'tex':"C_{HW} = 0.5"},
+    {'color':ROOT.kGreen-4,     'eft':make_eft(cHW = -0.5),  'tex':"C_{HW} = -0.5"},
+    {'color':ROOT.kMagenta+2,   'eft':make_eft(cHWtil = 0.5),   'tex':"C_{H#tilde{W}} = 0.5"},
+    {'color':ROOT.kMagenta-4,   'eft':make_eft(cbHRe =  0.05),  'tex':"C_{bH} = 0.05"},
+]
 
 from TMB.Samples.pp_gen_v10 import *
 training_samples = [ WH, TTJets, WJetsToLNu_HT]
@@ -138,17 +165,15 @@ for sample in training_samples:
             ]
 
 # make all combinations
-weight_derivative_combinations = []
+combinations = []
 for i_comb, comb in enumerate(WH.weightInfo.make_combinations(coefficients, max_order)):
-    weight_derivative_combinations.append(comb)
+    combinations.append(comb)
 
 scale_weight = 10**5
 
-assert False, ""
-
 def add_weight_derivatives(sample):
     sample.weight_derivatives = []
-    for i_comb, comb in enumerate(weight_derivative_combinations):
+    for i_comb, comb in enumerate(combinations):
         #print name, i_comb, comb, weightInfo.get_diff_weight_string(comb)
         weight = {}
         if hasattr( sample, "weightInfo"):
@@ -349,66 +374,7 @@ from TMB.Tools.delphesCutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( 'singlelep-WHJet-onH' )
 # selectionString = cutInterpreter.cutString( 'trilepT-minDLmass12-onZ1-njet4p-btag1' )
 
-bit_derivatives  = weight_derivative_combinations[1:] 
-
-bit_cfg = { derivative : { 
-            'n_trees': 200,
-            'max_depth'     : 3,
-            'learning_rate' : 0.25,
-            'min_size'      : 50,
-            'clip_score_quantile': None,
-            'calibrated'    : False,} for derivative in bit_derivatives }
-
-def load(directory = '/groups/hephy/cms/$USER/BIT/models/default/WH/', bit_derivatives=bit_derivatives):
-    import sys, os
-    sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
-    from BoostedInformationTree import BoostedInformationTree
-    bits = {} 
-    for derivative in bit_derivatives:
-        if derivative == tuple(): continue
-
-        filename = os.path.expandvars(os.path.join(directory, "bit_derivative_%s"% ('_'.join(derivative))) + '.pkl')
-        try:
-            print ("Loading %s for %r"%( filename, derivative))
-            bits[derivative] = BoostedInformationTree.load(filename) 
-        except IOError:
-            print ("Could not load %s for %r"%( filename, derivative))
-
-    return bits
-
-#BITs -> Add pre-calculated BITs for limits, comparisons, etc.
-if True:
-    import sys, os, time
-    sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
-    from BoostedInformationTree import BoostedInformationTree
-
-    save_derivatives = [ ('cHW',), ('cHW','cHW'), ('cHWtil',), ('cHWtil','cHWtil'), ('cHW','cHWtil'), ('cHj3',), ('cHj3','cHj3'), ('cHj3', 'cHW'), ('cHj3', 'cHWtil')]
-    bits             = {}
-
-    directory = "/groups/hephy/cms/robert.schoefbeck/BIT/models/"
-    save_cfgs = [
-        ( "nom",  "WH_delphes/v2"),
-        ( "bkgs", "WH_delphes_bkgs/first_try"),
-        ]
-
-    for name, subdir in save_cfgs:
-        bits[name] = load(os.path.join( directory, subdir), bit_derivatives=save_derivatives)
-        for der in save_derivatives:
-            der_name = "BIT_"+name+"_"+"_".join(list(der))
-            all_mva_variables[der_name] = (lambda event, sample, der_name=der_name: getattr( event, der_name))
-            #all_mva_variables[der_name] = (lambda event, sample, der_name=der_name: bits[name][der].predict( event ))
-
-    def bit_save_predict( event, sample ):
-
-        for name, func in mva_variables:
-            setattr( event, name, func(event, sample) )
-
-        features = [ getattr( event, var[0] ) for var in mva_variables ]
-
-        for name, _ in save_cfgs:
-            for der in save_derivatives:
-                prediction = bits[name][der].predict( features )
-                setattr( event, "BIT_"+name+"_"+"_".join(der), prediction )
-
-    sequence.append( bit_save_predict )
-
+multi_bit_cfg = {'n_trees': 200,
+                 'max_depth': 4,
+                 'learning_rate': 0.25,
+                 'min_size': 50 }
