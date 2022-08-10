@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class DelphesProducer:
 
     def __init__(self, card = 'delphes_card_CMS'):
-        self.delphes_dir = os.path.expandvars( '$CMSSW_BASE/../delphes2' )
+        self.delphes_dir = os.path.expandvars( '$CMSSW_BASE/../delphes' )
         self.card = 'cards/' + card + '.tcl'
 
     def produce( self, infiles, outfile, executable = 'fwlite'):
