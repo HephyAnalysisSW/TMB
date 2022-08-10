@@ -18,6 +18,20 @@ if os.environ['USER'] in ['robert.schoefbeck']:
     model_directory                     = "/groups/hephy/cms/robert.schoefbeck/BIT/models/"
     data_directory                      = "/groups/hephy/cms/robert.schoefbeck/TMB/BIT/data/"
 
+if os.environ['USER'] in ['suman.chatterjee']:
+
+    results_directory                   = "/groups/hephy/cms/suman.chatterjee/TMB/results/"
+    skim_output_directory               = "/groups/hephy/cms/suman.chatterjee/TMB/postprocessed/"
+    plot_directory                      = "/groups/hephy/cms/suman.chatterjee/www/TMB/"
+
+    #gridpack_directory                  = "/eos/vbc/user/suman.chatterjee/gridpacks/"
+
+    cache_directory                     = "/users/suman.chatterjee/public/cache/TMB/"
+
+    model_directory                     = "/groups/hephy/cms/suman.chatterjee/BIT/models/"
+    data_directory                      = "/groups/hephy/cms/suman.chatterjee/TMB/BIT/data/"
+
+
 if os.environ['USER'] in ['rosmarie.schoefbeck']:
 
     #tmp_directory                       = "/mnt/hephy/cms/rosmarie.schoefbeck/tmp/TMB/"
