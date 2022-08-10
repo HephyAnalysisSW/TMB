@@ -203,4 +203,4 @@ ZH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/ZH_
 VBFH_HWW = FWLiteSample.fromDAS("VBFH_HWW", "/VBFH_HWW_SMEFTsim/chatterj-VBFH_HWW_SMEFTsim-28febdfbf61405b173c80a7ae9a2f3b0/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 VBFH_HWW.xsec    = 7.204e-02 
 VBFH_HWW.nEvents = 1810000 
-VBFH_HWW.reweight_pkl = "/groups/hephy/cms/suman.chatterjee/BIT/ggH_HWW_SMEFTsim_reweight_card.pkl "
+VBFH_HWW.reweight_pkl = "/groups/hephy/cms/suman.chatterjee/BIT/ggH_HWW_SMEFTsim_reweight_card.pkl"
