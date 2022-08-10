@@ -24,7 +24,7 @@ if os.environ['USER'] in ['suman.chatterjee']:
     skim_output_directory               = "/groups/hephy/cms/suman.chatterjee/TMB/postprocessed/"
     plot_directory                      = "/groups/hephy/cms/suman.chatterjee/www/TMB/"
 
-    #gridpack_directory                  = "/eos/vbc/user/suman.chatterjee/gridpacks/"
+    gridpack_directory                  = "/eos/vbc/group/cms/suman.chatterjee/gridpacks/"
 
     cache_directory                     = "/users/suman.chatterjee/public/cache/TMB/"
 

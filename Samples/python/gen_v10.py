@@ -29,45 +29,45 @@ test.nEvents      = 50000
 # for flavor analysis 
 
 gridpack_directory = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/v7/"
-WGjj = FWLiteSample.fromDAS("WGjj", "/WGjj_VBF/schoef-WGjj_VBF-ded83965d0d897daece5550e2bd76aff/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WGjj.xsec         = 5.245e-01 
-WGjj.reweight_pkl = os.path.join(gridpack_directory, "WGjj_VBF_reweight_card.pkl")
-WGjj.nEvents      = 29450000 
-
-WGToLNu  = FWLiteSample.fromDAS("WGToLNu", "/WGToLNu/schoef-WGToLNu-3396e5d19c87e3124f7e9b553fcaca2c/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WGToLNu.xsec = 6.275e+01  
-WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "WGToLNu_reweight_card.pkl")
-WGToLNu.nEvents      = 11298801
-
-WG20To130ToLNu  = FWLiteSample.fromDAS("WG20To130ToLNu", "/WG20To130ToLNu/schoef-WG20To130ToLNu-383dc2402bb0fa0c195be4a5319db7c8/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WG20To130ToLNu.xsec = 2.548e+01 
-WG20To130ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG20To130ToLNu_reweight_card.pkl")
-WG20To130ToLNu.nEvents      = 10485159
-
-WG130To300ToLNu  = FWLiteSample.fromDAS("WG130To300ToLNu", "/WG130To300ToLNu/schoef-WG130To300ToLNu-a18c6b1e17bf5a0e6bed9fd71b7ca83c/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WG130To300ToLNu.xsec = 6.481e-01  
-WG130To300ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG130To300ToLNu_reweight_card.pkl")
-WG130To300ToLNu.nEvents      = 9701591
-
-WG300To500ToLNu  = FWLiteSample.fromDAS("WG300To500ToLNu", "/WG300To500ToLNu/schoef-WG300To500ToLNu-ed17bc4e8efeba8bccab6b5d5fc7f5dd/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WG300To500ToLNu.xsec = 4.782e-02  
-WG300To500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG300To500ToLNu_reweight_card.pkl")
-WG300To500ToLNu.nEvents      = 9098674
-
-WG500ToLNu  = FWLiteSample.fromDAS("WG500ToLNu", "/WG500ToLNu/schoef-WG500ToLNu-809d9b04747d0bfff5a6caabc1a59bf0/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-WG500ToLNu.xsec = 7.962e-03
-WG500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG500ToLNu_reweight_card.pkl")
-WG500ToLNu.nEvents      = 8810781
-
-ZZ  = FWLiteSample.fromDAS("ZZ", "/ZZ/schoef-ZZ-3d151550d5cebaa869431ac7c227b1f2/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-ZZ.xsec = 1.187e-01
-ZZ.reweight_pkl = os.path.join(gridpack_directory, "ZZ_reweight_card.pkl")
-ZZ.nEvents      = 15139425
-
-ZZjj  = FWLiteSample.fromDAS("ZZjj", "/ZZjj_VBF/schoef-ZZjj_VBF-fb8d234640c8186dca4b1e7cc5fc4553/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-ZZjj.xsec=1.096e-03
-ZZjj.reweight_pkl = os.path.join(gridpack_directory, "ZZjj_VBF_reweight_card.pkl")
-ZZjj.nEvents      = 25650000
+#WGjj = FWLiteSample.fromDAS("WGjj", "/WGjj_VBF/schoef-WGjj_VBF-ded83965d0d897daece5550e2bd76aff/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WGjj.xsec         = 5.245e-01 
+#WGjj.reweight_pkl = os.path.join(gridpack_directory, "WGjj_VBF_reweight_card.pkl")
+#WGjj.nEvents      = 29450000 
+#
+#WGToLNu  = FWLiteSample.fromDAS("WGToLNu", "/WGToLNu/schoef-WGToLNu-3396e5d19c87e3124f7e9b553fcaca2c/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WGToLNu.xsec = 6.275e+01  
+#WGToLNu.reweight_pkl = os.path.join(gridpack_directory, "WGToLNu_reweight_card.pkl")
+#WGToLNu.nEvents      = 11298801
+#
+#WG20To130ToLNu  = FWLiteSample.fromDAS("WG20To130ToLNu", "/WG20To130ToLNu/schoef-WG20To130ToLNu-383dc2402bb0fa0c195be4a5319db7c8/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WG20To130ToLNu.xsec = 2.548e+01 
+#WG20To130ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG20To130ToLNu_reweight_card.pkl")
+#WG20To130ToLNu.nEvents      = 10485159
+#
+#WG130To300ToLNu  = FWLiteSample.fromDAS("WG130To300ToLNu", "/WG130To300ToLNu/schoef-WG130To300ToLNu-a18c6b1e17bf5a0e6bed9fd71b7ca83c/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WG130To300ToLNu.xsec = 6.481e-01  
+#WG130To300ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG130To300ToLNu_reweight_card.pkl")
+#WG130To300ToLNu.nEvents      = 9701591
+#
+#WG300To500ToLNu  = FWLiteSample.fromDAS("WG300To500ToLNu", "/WG300To500ToLNu/schoef-WG300To500ToLNu-ed17bc4e8efeba8bccab6b5d5fc7f5dd/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WG300To500ToLNu.xsec = 4.782e-02  
+#WG300To500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG300To500ToLNu_reweight_card.pkl")
+#WG300To500ToLNu.nEvents      = 9098674
+#
+#WG500ToLNu  = FWLiteSample.fromDAS("WG500ToLNu", "/WG500ToLNu/schoef-WG500ToLNu-809d9b04747d0bfff5a6caabc1a59bf0/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#WG500ToLNu.xsec = 7.962e-03
+#WG500ToLNu.reweight_pkl = os.path.join(gridpack_directory, "WG500ToLNu_reweight_card.pkl")
+#WG500ToLNu.nEvents      = 8810781
+#
+#ZZ  = FWLiteSample.fromDAS("ZZ", "/ZZ/schoef-ZZ-3d151550d5cebaa869431ac7c227b1f2/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#ZZ.xsec = 1.187e-01
+#ZZ.reweight_pkl = os.path.join(gridpack_directory, "ZZ_reweight_card.pkl")
+#ZZ.nEvents      = 15139425
+#
+#ZZjj  = FWLiteSample.fromDAS("ZZjj", "/ZZjj_VBF/schoef-ZZjj_VBF-fb8d234640c8186dca4b1e7cc5fc4553/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+#ZZjj.xsec=1.096e-03
+#ZZjj.reweight_pkl = os.path.join(gridpack_directory, "ZZjj_VBF_reweight_card.pkl")
+#ZZjj.nEvents      = 25650000
 
 DYJets = FWLiteSample.fromDAS("DYJets", "/DYJets/schoef-DYJets-ceb522b2459205cbd7e9c77e14159897/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 DYJets.xsec    = 5.475e+03
