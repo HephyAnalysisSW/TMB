@@ -103,3 +103,4 @@ WH_nlo.objects  = ['W']
 ZH_nlo = Sample.fromDirectory("ZH_nlo", texName = "ZH_nlo", directory = [os.path.join( pp_dir, "ZH_nlo" )], color = ROOT.kBlue+1) 
 ZH_nlo.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/VH_nlo/ZH_LeptonicZ_NLO/ZH_LeptonicZ_NLO_reweight_card.pkl"
 ZH_nlo.objects  = ['Z']
+
