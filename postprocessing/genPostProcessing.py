@@ -897,7 +897,6 @@ def filler( event ):
                 event.H_j1_index = recoBJets[0]['index']
                 event.H_j2_index = recoBJets[1]['index']
 
-
             # store WH information
             if len(recoLeps)>=1:
                 WH_lepton       = recoLeps[0]
