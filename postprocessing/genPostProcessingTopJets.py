@@ -156,7 +156,7 @@ if args.addReweights:
 
 variables += ["partonTop_pt/F", "partonTop_eta/F", "partonTop_phi/F", "partonTop_mass/F", "partonTop_pdgId/I"]
 variables += ["genQ1_pt/F", "genQ1_eta/F", "genQ1_phi/F", "genQ1_mass/F", "genQ1_pdgId/I"]
-variables += ["genQ2_pt/F", "genQ2_eta/F", "genQ2_phi/F", "genQ2_mass/F", "genQ2_pdgId"]
+variables += ["genQ2_pt/F", "genQ2_eta/F", "genQ2_phi/F", "genQ2_mass/F", "genQ2_pdgId/I"]
 variables += ["genb_pt/F", "genb_eta/F", "genb_phi/F", "genb_mass/F", "genb_pdgId/I"]
 variables += ["genW_pt/F", "genW_eta/F", "genW_phi/F", "genW_mass/F"]
 variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
