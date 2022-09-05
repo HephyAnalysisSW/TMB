@@ -37,7 +37,7 @@ argParser.add_argument('--logLevel',           action='store',      default='INF
 argParser.add_argument('--small',              action='store_true', help='Run only on a small subset of the data?')#, default = True)
 argParser.add_argument('--overwrite',          action='store',      nargs='?', choices = ['none', 'all', 'target'], default = 'none', help='Overwrite?')#, default = True)
 argParser.add_argument('--targetDir',          action='store',      default='v1')
-argParser.add_argument('--sample',             action='store',      default='tmp', help="Name of the sample loaded from fwlite_benchmarks. Only if no inputFiles are specified")
+argParser.add_argument('--sample',             action='store',      default='tt1LepHad', help="Name of the sample loaded from fwlite_benchmarks. Only if no inputFiles are specified")
 argParser.add_argument('--inputFiles',         action='store',      nargs = '*', default=[])
 argParser.add_argument('--delphesEra',         action='store',      default = None, choices = ["RunII", "RunIICentral", "RunIInoDelphesIso", "RunIIPileUp", "PhaseII"], help="specify delphes era")
 argParser.add_argument('--addReweights',       action='store_true',   help="Add reweights?")
