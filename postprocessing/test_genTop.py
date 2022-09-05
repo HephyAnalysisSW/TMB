@@ -41,7 +41,8 @@ jet_read_vars       =  "pt/F,eta/F,phi/F,isMuon/I,isElectron/I,isPhoton/I"
 jet_read_varnames   =  varnames( jet_read_vars )
 
 # from here on GEN specific:
-GEN = FWLiteSample.fromFiles("GEN", ["/users/robert.schoefbeck/CMS/CMSSW_10_6_27/src/Samples/cfg/GEN_LO_0j_102X.root"])
+#GEN = FWLiteSample.fromFiles("GEN", ["/users/robert.schoefbeck/CMS/CMSSW_10_6_27/src/Samples/cfg/GEN_LO_0j_102X.root"])
+GEN = FWLiteSample.fromFiles("GEN", ["root://cms-xrd-global.cern.ch//store/user/schoef/PNet/PNet/220904_093006/0000/GEN_LO_0j_102X_27.root"])
 logger.info("Compute parametrisation from GEN relying on the same sequence of weights as in the card file.")
 
 products = {
@@ -96,7 +97,7 @@ while fwliteReader.run( ):
     chi2_ndof = hyperPoly.chi2_ndof(coeff, weights)
     logger.debug( "chi2_ndof %f coeff %r", chi2_ndof, coeff )
     if chi2_ndof>10**-6: logger.warning( "chi2_ndof is large: %f", chi2_ndof )
-    
+
     p_C_GEN.append( [ coeff[n] for n in xrange(hyperPoly.ndof) ] )
 
     counter+=1

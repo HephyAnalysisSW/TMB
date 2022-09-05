@@ -44,7 +44,7 @@ argParser.add_argument('--addReweights',       action='store_true',   help="Add 
 argParser.add_argument('--nJobs',              action='store',      nargs='?', type=int, default=1,  help="Maximum number of simultaneous jobs.")
 argParser.add_argument('--job',                action='store',      nargs='?', type=int, default=0,  help="Run only job i")
 argParser.add_argument('--removeDelphesFiles', action='store_true',   help="remove Delphes file after postprocessing?")
-argParser.add_argument('--interpolationOrder', action='store',      nargs='?', type=int, default=3,  help="Interpolation order for EFT weights.")
+argParser.add_argument('--interpolationOrder', action='store',      nargs='?', type=int, default=2,  help="Interpolation order for EFT weights.")
 args = argParser.parse_args()
 
 #
@@ -171,10 +171,10 @@ categories = [
     {'name':'neh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()==0 }, #photons 
 ]
 
-cand_vars           =  "pt/F,eta/F,phi/F"
+cand_vars           =  "pt/F,etarel/F,phirel/F,eta/F,phi/F"
 cand_varnames       =  varnames( cand_vars )
 for cat in categories:
-    variables.append( "%s[%s]"%(cat['name'], cand_vars) )
+    variables.append( VectorTreeVariable.fromString("%s[%s]"%(cat['name'], cand_vars), nMax=1000 ) )
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects):
     setattr( event, "n"+collection_name, len(objects) )
@@ -248,7 +248,7 @@ output_file = ROOT.TFile( output_filename, 'recreate')
 output_file.cd()
 maker = TreeMaker(
     #sequence  = [ filler ],
-    variables = [ TreeVariable.fromString(x) for x in variables ] + extra_variables,
+    variables = [ (TreeVariable.fromString(x) if type(x)==str else x) for x in variables ] + extra_variables,
     treeName = "Events"
     )
 
@@ -447,6 +447,10 @@ def filler( event ):
             for cat in categories:
                 cands = filter( cat['func'], gen_particles )
                 cands_list = [ {'pt':c.pt(), 'eta':c.eta(), 'phi':c.phi()} for c in cands ]
+                for p in cands_list:
+                    p['phirel'] = deltaPhi(event.genJet_phi, p['phi'], returnAbs=False)
+                    #p['phirel'] = acos(cos(p['phi'] - event.genJet_phi) )
+                    p['etarel'] = p['eta'] - event.genJet_eta
 
                 cands_list.sort( key = lambda p:-p['pt'] )
                 addIndex( cands_list )

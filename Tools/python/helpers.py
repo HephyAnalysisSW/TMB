@@ -72,14 +72,17 @@ def cosThetaStar( Z_mass, Z_pt, Z_eta, Z_phi, l_pt, l_eta, l_phi ):
     if 1+beta<=10**-14: return 1
     return (-beta + cosTheta) / (1 - beta*cosTheta)
 
-def deltaPhi(phi1, phi2):
+def deltaPhi(phi1, phi2, returnAbs = True):
     if isnan(phi1) or isnan(phi2): return float('nan')
     dphi = phi2-phi1
     if  dphi > pi:
         dphi -= 2.0*pi
     if dphi <= -pi:
         dphi += 2.0*pi
-    return abs(dphi)
+    if returnAbs:   
+        return abs(dphi)
+    else:
+        return dphi
 
 def deltaR2(l1, l2):
     if isnan(l1['phi']) or isnan(l2['phi']) or isnan(l1['eta']) or isnan(l2['eta']): return float('nan')

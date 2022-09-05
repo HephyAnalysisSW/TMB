@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python genPostProcessingTopJets.py -- --overwrite --sample tt1LepHad #SPLIT 100
+python genPostProcessingTopJets.py --overwrite --addReweights --sample tt1LepHad #SPLIT100
