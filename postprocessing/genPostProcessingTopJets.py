@@ -86,6 +86,7 @@ if not os.path.exists( output_directory ):
 extra_variables = []
 if args.addReweights:
     weightInfo = WeightInfo( sample.reweight_pkl )
+    weightInfo.set_order( args.interpolationOrder ) 
     # Determine coefficients for storing in vector
     # Sort Ids wrt to their position in the card file
 
@@ -162,6 +163,9 @@ variables += ["genW_pt/F", "genW_eta/F", "genW_phi/F", "genW_mass/F"]
 variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
 variables += ["theta/F", "phi/F"]
 variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
+
+variables += ["label_lin_0/I", "label_lin_1/I", "label_lin_2/I", "label_lin_3/I"]
+variables += ["label_quad_0/I", "label_quad_1/I", "label_quad_2/I", "label_quad_3/I"]
 
 categories = [
     {'name':'e',   'func':lambda p:abs(p.pdgId())==11}, #electrons 
@@ -306,13 +310,25 @@ def filler( event ):
             #print n, "p_C", n, coeff[n]
         # lumi weight / w0
 
+    index_lin  = weightInfo.combinations.index(('ctWRe',))
+    lin_rel     = event.p_C[index_lin]/event.p_C[0]
+    event.label_lin_0 = lin_rel<=-0.3 
+    event.label_lin_1 = lin_rel>-0.3 and lin_rel<=-0.2 
+    event.label_lin_2 = lin_rel>-0.2 and lin_rel<=-0.1 
+    event.label_lin_3 = lin_rel>-0.1  
+    index_quad = weightInfo.combinations.index(('ctWRe','ctWRe'))
+    quad_rel    = event.p_C[index_quad]/event.p_C[0]
+    event.label_quad_0 = quad_rel<=0.01 
+    event.label_quad_1 = quad_rel>0.01 and quad_rel<=0.02
+    event.label_quad_2 = quad_rel>0.02 and quad_rel<=0.03
+    event.label_quad_3 = quad_rel>0.03  
+
     # All gen particles
     gp        = fwliteReader.products['gp']
     #gpPacked  = fwliteReader.products['gpPacked']
 
     # for searching
     search  = GenSearch( gp )
-
 
     # all gen-tops
     gen_tops = filter( lambda p:abs(p.pdgId())==6 and search.isLast(p), gp)

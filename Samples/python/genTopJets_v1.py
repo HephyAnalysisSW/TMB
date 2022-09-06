@@ -29,5 +29,11 @@ tt1LepHad_test.reweight_pkl = os.path.join(gridpack_directory, "tt01j-1l-NPtHad_
 #tmp = FWLiteSample.fromFiles("GEN", ["/users/robert.schoefbeck/CMS/CMSSW_10_6_27/src/Samples/cfg/GEN_LO_0j_102X.root"]) 
 #tmp.reweight_pkl = "/users/robert.schoefbeck/tt01j-1l-NPtHad_reweight_card.pkl" 
 
-tt1LepHad = FWLiteSample.fromDAS("tt1LepHad", "/PNet/schoef-PNet-54f3d650012e99eaac4060c8f33d741f/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
-tt1LepHad.reweight_pkl = os.path.join(gridpack_directory, "tt01j-1l-NPtHad_HT800_slc7_amd64_gcc700_CMSSW_10_6_19_tarball.pkl") 
+tsch_test = FWLiteSample.fromFiles("tsch_test", ["/eos/vbc/group/cms/robert.schoefbeck/ParticleNet/test-tsch/GEN_LO_0j_102X.root"])
+tsch_test.reweight_pkl = os.path.join(gridpack_directory, "t-sch_reweight_card.pkl")
+
+tschRefPoint_test = FWLiteSample.fromFiles("tschRefPoint_test", ["/eos/vbc/group/cms/robert.schoefbeck/ParticleNet/test-tsch-RefPoint/GEN_LO_0j_102X.root"])
+tschRefPoint_test.reweight_pkl = os.path.join(gridpack_directory, "t-sch-RefPoint_reweight_card.pkl")
+
+tschRefPointNoWidthRW = FWLiteSample.fromDAS("tschRefPointNoWidthRW", "/t-sch-RefPoint-noWidthRW/schoef-t-sch-RefPoint-noWidthRW-ad4a531db5c6d25218664ba7bdd18ceb/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+tschRefPointNoWidthRW.reweight_pkl = os.path.join(gridpack_directory, "t-sch-RefPoint-noWidthRW_reweight_card.pkl")
