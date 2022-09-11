@@ -60,8 +60,7 @@ if len(args.inputFiles)>0:
     logger.info( "Input files found. Ignoring 'sample' argument. Files: %r", args.inputFiles)
     sample = FWLiteSample( args.targetSampleName, args.inputFiles)
 else:
-    if args.targetDir.startswith('v1'):
-        sample_file = "$CMSSW_BASE/python/TMB/Samples/genTopJets_v1.py"
+    sample_file = "$CMSSW_BASE/python/TMB/Samples/genTopJets_v1.py"
     samples = imp.load_source( "samples", os.path.expandvars( sample_file ) )
     sample = getattr( samples, args.sample )
     logger.debug( 'Loaded sample %s with %i files.', sample.name, len(sample.files) )
@@ -81,6 +80,12 @@ if not os.path.exists( output_directory ):
     except OSError:
         pass
     logger.info( "Created output directory %s", output_directory )
+
+# upgrade JEC
+# upgradeJECUncertainty = UpgradeJECUncertainty()
+
+# variables
+variables = []
 
 # Load reweight pickle file if supposed to keep weights. 
 extra_variables = []
@@ -112,6 +117,11 @@ if args.addReweights:
     weightInfo_data_lower = {k.lower():val for k, val in weightInfo.data.iteritems()}
     weightInfo_data_lower.update(weightInfo.data)
 
+    target_coeff = {}
+    for i_comb, comb in enumerate(weightInfo.combinations[1:]):
+        variables.append( "target_%s/F"%("_".join(comb)) )
+        target_coeff[i_comb] = "_".join(comb)
+
 # Run only job number "args.job" from total of "args.nJobs"
 if args.nJobs>1:
     n_files_before = len(sample.files)
@@ -138,12 +148,6 @@ def addIndex( collection ):
     for i  in range(len(collection)):
         collection[i]['index'] = i
 
-# upgrade JEC
-# upgradeJECUncertainty = UpgradeJECUncertainty()
-
-# variables
-variables = []
-
 # EDM standard variables
 variables  += ["run/I", "lumi/I", "evt/l"]
 
@@ -161,8 +165,8 @@ variables += ["genQ2_pt/F", "genQ2_eta/F", "genQ2_phi/F", "genQ2_mass/F", "genQ2
 variables += ["genb_pt/F", "genb_eta/F", "genb_phi/F", "genb_mass/F", "genb_pdgId/I"]
 variables += ["genW_pt/F", "genW_eta/F", "genW_phi/F", "genW_mass/F"]
 variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
-variables += ["theta/F", "phi/F"]
-variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
+variables += ["gen_theta/F", "gen_phi/F"]
+variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
 
 variables += ["label_lin_0/I", "label_lin_1/I", "label_lin_2/I", "label_lin_3/I"]
 variables += ["label_quad_0/I", "label_quad_1/I", "label_quad_2/I", "label_quad_3/I"]
@@ -175,10 +179,15 @@ categories = [
     {'name':'neh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()==0 }, #photons 
 ]
 
-cand_vars           =  "pt/F,etarel/F,phirel/F,eta/F,phi/F"
+cand_vars           =  "pt/F,etarel/F,phirel/F,eta/F,phi/F,pdgId/I"
 cand_varnames       =  varnames( cand_vars )
+cand_ch_vars        =  "pt/F,etarel/F,phirel/F,eta/F,phi/F,pdgId/I,charge/I"
+cand_ch_varnames    =  varnames( cand_ch_vars )
 for cat in categories:
-    variables.append( VectorTreeVariable.fromString("%s[%s]"%(cat['name'], cand_vars), nMax=1000 ) )
+    if cat['name'] in ['ph', 'neh']:
+        variables.append( VectorTreeVariable.fromString("%s[%s]"%(cat['name'], cand_vars), nMax=1000 ) )
+    else:
+        variables.append( VectorTreeVariable.fromString("%s[%s]"%(cat['name'], cand_ch_vars), nMax=1000 ) )
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects):
     setattr( event, "n"+collection_name, len(objects) )
@@ -307,7 +316,8 @@ def filler( event ):
         if event.chi2_ndof>10**-6: logger.warning( "chi2_ndof is large: %f", event.chi2_ndof )
         for n in xrange(hyperPoly.ndof):
             event.p_C[n] = coeff[n]
-            #print n, "p_C", n, coeff[n]
+            if n>0:
+                setattr( event, "target_"+target_coeff[n-1], coeff[n]/coeff[0] )
         # lumi weight / w0
 
     index_lin  = weightInfo.combinations.index(('ctWRe',))
@@ -428,22 +438,21 @@ def filler( event ):
         sign_flip =  1 if ( ((n_scatter.Cross(n_decay))*(vec_W.Vect())) > 0 ) else -1
 
         try:
-            event.phi = sign_flip*acos(n_scatter.Dot(n_decay))
+            event.gen_phi = sign_flip*acos(n_scatter.Dot(n_decay))
         except ValueError:
-            pass
-            event.phi = -100
+            event.gen_phi = -100
 
         boost_W = vec_W.BoostVector()
 
         vec_quark1.Boost(-boost_W)
 
-        theta = float('nan')
+        gen_theta = float('nan')
         try:
-            event.theta = (vec_W).Angle(vec_quark1.Vect())
+            event.gen_theta = (vec_W).Angle(vec_quark1.Vect())
         except ValueError:
-            event.theta = -100
+            event.gen_theta = -100
 
-        #print "theta,phi",theta,phi
+        #print "theta,phi",gen_theta,gen_phi
 
         # match gen jet
         matched_genJet = next( (j for j in genJets if deltaR( {'eta':j.eta(),'phi':j.phi()}, {'eta':hadronic_gen_top.eta(), 'phi':hadronic_gen_top.phi()}) < 0.6), None)
@@ -454,6 +463,7 @@ def filler( event ):
             event.genJet_pt  = matched_genJet.pt()
             event.genJet_eta = matched_genJet.eta()
             event.genJet_phi = matched_genJet.phi()
+            event.genJet_mass= matched_genJet.mass()
             event.genJet_nConstituents  = len( gen_particles )
             event.genJet_isMuon         = matched_genJet.isMuon()
             event.genJet_isElectron     = matched_genJet.isElectron()
@@ -462,15 +472,19 @@ def filler( event ):
             count = 0 
             for cat in categories:
                 cands = filter( cat['func'], gen_particles )
-                cands_list = [ {'pt':c.pt(), 'eta':c.eta(), 'phi':c.phi()} for c in cands ]
+                cands_list = [ {'pt':c.pt(), 'eta':c.eta(), 'phi':c.phi(), 'charge':c.charge(), 'pdgId':c.pdgId()} for c in cands ]
                 for p in cands_list:
                     p['phirel'] = deltaPhi(event.genJet_phi, p['phi'], returnAbs=False)
                     #p['phirel'] = acos(cos(p['phi'] - event.genJet_phi) )
                     p['etarel'] = p['eta'] - event.genJet_eta
+                    #print (p['pdgId'], p['charge'])
 
                 cands_list.sort( key = lambda p:-p['pt'] )
                 addIndex( cands_list )
-                fill_vector_collection( event, cat['name'], cand_varnames, cands_list)
+                if cat['name'] in ['ph', 'neh']:
+                    fill_vector_collection( event, cat['name'], cand_varnames, cands_list)
+                else:
+                    fill_vector_collection( event, cat['name'], cand_ch_varnames, cands_list)
                 count+=len(cands)
             assert count == len( gen_particles ), "Missing a gen particle in categorization!!"
 
