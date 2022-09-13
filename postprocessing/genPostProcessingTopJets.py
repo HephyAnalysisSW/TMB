@@ -171,6 +171,8 @@ variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "g
 variables += ["label_lin_0/I", "label_lin_1/I", "label_lin_2/I", "label_lin_3/I"]
 variables += ["label_quad_0/I", "label_quad_1/I", "label_quad_2/I", "label_quad_3/I"]
 
+variables += ["gen_cand_sum_pt/F"]
+
 categories = [
     {'name':'e',   'func':lambda p:abs(p.pdgId())==11}, #electrons 
     {'name':'mu',  'func':lambda p:abs(p.pdgId())==13}, #muons 
@@ -468,6 +470,8 @@ def filler( event ):
             event.genJet_isMuon         = matched_genJet.isMuon()
             event.genJet_isElectron     = matched_genJet.isElectron()
             event.genJet_isPhoton       = matched_genJet.isPhoton()
+
+            event.gen_cand_sum_pt = sum([c.pt() for c in gen_particles],0)
 
             count = 0 
             for cat in categories:

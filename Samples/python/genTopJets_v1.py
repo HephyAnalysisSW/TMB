@@ -39,5 +39,8 @@ tschRefPoint_test.reweight_pkl = os.path.join(gridpack_directory, "t-sch-RefPoin
 #tschRefPointNoWidthRW = FWLiteSample.fromDAS("tschRefPointNoWidthRW", "/t-sch-RefPoint-noWidthRW/schoef-t-sch-RefPoint-noWidthRW-ad4a531db5c6d25218664ba7bdd18ceb/USER", "phys03", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
 #tschRefPointNoWidthRW.reweight_pkl = os.path.join(gridpack_directory, "t-sch-RefPoint-noWidthRW_reweight_card.pkl")
 
+tschRefPoint = FWLiteSample.fromDirectory("tschRefPoint", "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint/")
+tschRefPoint.reweight_pkl = "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint/t-sch-RefPoint_reweight_card.pkl"
+
 tschRefPointNoWidthRW = FWLiteSample.fromDirectory("tschRefPointNoWidthRW", "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint-noWidthRW/")
 tschRefPointNoWidthRW.reweight_pkl = "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint-noWidthRW/t-sch-RefPoint-noWidthRW_reweight_card.pkl"
