@@ -30,7 +30,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--plot_directory',     action='store',      default='particleNet')
-argParser.add_argument('--selection',          action='store',      default=None)
+argParser.add_argument('--selection',          action='store',      default='genTopPt500-maxDR0To0.6')
 argParser.add_argument('--sample',             action='store',      default='tschRefPoint')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 argParser.add_argument('--show_derivatives',                        action='store_true',     help='Show also the derivatives?')
@@ -47,7 +47,7 @@ plot_directory = os.path.join(plot_directory, args.plot_directory,  args.sample 
 if args.small: plot_directory += "_small"
 
 # Import samples
-import TMB.Samples.pp_genTopJets_v1 as samples
+import TMB.Samples.pp_genTopJets_v2 as samples
     
 sample = getattr( samples, args.sample)
  
@@ -58,10 +58,10 @@ sample.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 eft_configs = [
     {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
-    {'color':ROOT.kMagenta-4,   'param':{'ctWRe':3},   'tex':"c_{tW}^{Re}=5",    'binning':[20,-1.5,1.5]},
-    {'color':ROOT.kMagenta+2,   'param':{'ctWIm':5},   'tex':"c_{tW}^{Im}=5",     'binning':[20,-1.5,1.5]},
-    {'color':ROOT.kGreen-4,     'param':{'cHtbRe':5},  'tex':"c_{Htb}^{Re}=5",    'binning':[20,-1.5,1.5]},
-    {'color':ROOT.kGreen+2,     'param':{'cHtbIm':5},  'tex':"c_{Htb}^{Im}=5",     'binning':[20,-1.5,1.5]},
+    {'color':ROOT.kMagenta-4,   'param':{'ctWRe':3},   'tex':"c_{tW}^{Re}=5",   'binning':[20,-1.5,1.5]},
+    {'color':ROOT.kMagenta+2,   'param':{'ctWIm':5},   'tex':"c_{tW}^{Im}=5",   'binning':[20,-1.5,1.5]},
+    {'color':ROOT.kGreen-4,     'param':{'cHtbRe':5},  'tex':"c_{Htb}^{Re}=5",  'binning':[20,-1.5,1.5]},
+    {'color':ROOT.kGreen+2,     'param':{'cHtbIm':5},  'tex':"c_{Htb}^{Im}=5",  'binning':[20,-1.5,1.5]},
     {'color':ROOT.kBlue+2,      'param':{'cHQ3':5},    'tex':"c_{HQ}^{(3)}=5",  'binning':[20,-1.5,1.5]},
     #{'color':ROOT.kBlue-4,      'param':{'cHQ3':-.1},  'tex':"c_{HQ}^{(3)}=-0.1", 'binning':[20,-1.5,1.5]},
     ]
@@ -94,23 +94,9 @@ def make_eft_weights( event, sample):
 
 sequence.append( make_eft_weights )
 
-
-def make_deltaR( event, sample ):
-    event.dR_jet_Q1  = deltaR( {'phi':event.genQ1_phi, 'eta':event.genQ1_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-    event.dR_jet_Q2  = deltaR( {'phi':event.genQ2_phi, 'eta':event.genQ2_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-    event.dR_jet_W   = deltaR( {'phi':event.genW_phi, 'eta':event.genW_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-    event.dR_jet_b   = deltaR( {'phi':event.genb_phi, 'eta':event.genb_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-    event.dR_jet_top = deltaR( {'phi':event.genTop_phi, 'eta':event.genTop_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-
-sequence.append( make_deltaR )
-
 stack = Stack( )
 
 eft_weights =  []
-#for sample in stack.samples:
-#    if not hasattr( sample, "style" ):
-#        sample.style = styles.fillStyle(sample.color)
-#    eft_weights[0].append( None )
 
 for i_eft, eft in enumerate(eft_configs):
     stack.append( [sample] )
@@ -119,28 +105,6 @@ for i_eft, eft in enumerate(eft_configs):
 for i_eft, eft in enumerate(eft_derivatives):
     stack.append( [sample] )
     eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_derivatives[i_eft]] )
-
-#if args.sign_reweight:
-#    weight_branches = ["lumiweight1fb", "sign_reweight"]
-#else:
-#    #lumi_weight = lambda event, sample: lumi*event.lumiweight1fb#*sin(2*event.VV_angles['Theta'])*sin(2*event.VV_angles['theta_V1'])
-#    weight_branches = ["lumiweight1fb"]
-##lumi  = 300
-#def weight_getter( branches ):
-#    getters = [ operator.attrgetter(branch) for branch in branches ]
-#    def getter( event, sample ):
-##        for b, g in zip( branches, getters ):
-##            print b, g(event)
-##        print
-#        return reduce( operator.mul , [ g(event) for g in getters ], lumi ) 
-#    return getter
-#
-#for sample in stack.samples:
-#    sample.weight = weight_getter( weight_branches + ( ["combinatoricalBTagWeight2b"] if "DY" in sample.name and args.combinatoricalBTags else [] ) )
-
-# Read variables and sequences
-#jetVars          = ['pt/F', 'eta/F', 'phi/F', 'bTag/F', 'bTagPhys/I']
-#jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 read_variables = [\
     "partonTop_pt/F", "partonTop_eta/F", "partonTop_phi/F", "partonTop_mass/F", "partonTop_pdgId/I", 
@@ -151,13 +115,14 @@ read_variables = [\
     "genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F", 
     "genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I",
     "gen_phi/F", "gen_theta/F", 
+    "dR_genJet_maxQ1Q2b/F", "dR_genJet_top/F", "dR_genJet_b/F", "dR_genJet_Q1/F", "dR_genJet_Q2/F", "dR_genJet_W/F",
     "ne/I", "nmu/I", "nph/I", "nchh/I", "nneh/I",
 ]
 
 preselection = [ 
 ]
 
-selectionString  = "&&".join( [ c[1] for c in preselection] + ([fatJetInterpreter.cutString(args.selection)] if args.selection is not None else []))
+selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
 subDirectory     =  '-'.join( [ c[0] for c in preselection] + ([args.selection] if args.selection is not None else []))
 if subDirectory  == '': 
     subDirectory = 'inc'
@@ -317,32 +282,73 @@ plots.append(Plot( name = "genb_mass",
   binning   =  [50,0,10],
 ))
 
+plots.append(Plot( name = "deltaR_jet_Q1_wide",
+  texX = "#DeltaR(gen-jet, Q1)", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_Q1, 
+  binning   =  [60,0,6],
+))
+plots.append(Plot( name = "deltaR_jet_Q2_wide",
+  texX = "#DeltaR(gen-jet, Q2)", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_Q2,
+  binning   =  [60,0,6],
+))
+
+plots.append(Plot( name = "deltaR_jet_W_wide",
+  texX = "#DeltaR(gen-jet, W)", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_W,
+  binning   =  [60,0,6],
+))
+
+plots.append(Plot( name = "deltaR_jet_b_wide",
+  texX = "#DeltaR(gen-jet, b)", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_b,
+  binning   =  [60,0,6],
+))
+
+plots.append(Plot( name = "deltaR_jet_t_wide",
+  texX = "#DeltaR(gen-jet, t)", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_top,
+  binning   =  [60,0,6],
+))
+
+plots.append(Plot( name = "deltaR_jet_maxQ1Q2b",
+  texX = "max #DeltaR(gen-jet, [Q1, Q2, b])", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_maxQ1Q2b,
+  binning   =  [60,0,.6],
+))
+
 plots.append(Plot( name = "deltaR_jet_Q1",
   texX = "#DeltaR(gen-jet, Q1)", texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_jet_Q1, 
-  binning   =  [60,0,6],
+  attribute = lambda event, sample: event.dR_genJet_Q1, 
+  binning   =  [60,0,.6],
 ))
 plots.append(Plot( name = "deltaR_jet_Q2",
   texX = "#DeltaR(gen-jet, Q2)", texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_jet_Q2,
-  binning   =  [60,0,6],
+  attribute = lambda event, sample: event.dR_genJet_Q2,
+  binning   =  [60,0,.6],
 ))
 
 plots.append(Plot( name = "deltaR_jet_W",
   texX = "#DeltaR(gen-jet, W)", texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_jet_W,
-  binning   =  [60,0,6],
+  attribute = lambda event, sample: event.dR_genJet_W,
+  binning   =  [60,0,.6],
 ))
 
 plots.append(Plot( name = "deltaR_jet_b",
   texX = "#DeltaR(gen-jet, b)", texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_jet_b,
-  binning   =  [60,0,6],
+  attribute = lambda event, sample: event.dR_genJet_b,
+  binning   =  [60,0,.6],
 ))
 
 plots.append(Plot( name = "deltaR_jet_t",
   texX = "#DeltaR(gen-jet, t)", texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_jet_top,
+  attribute = lambda event, sample: event.dR_genJet_top,
+  binning   =  [60,0,6],
+))
+
+plots.append(Plot( name = "deltaR_jet_maxQ1Q2b",
+  texX = "max #DeltaR(gen-jet, [Q1, Q2, b])", texY = 'Number of Events',
+  attribute = lambda event, sample: event.dR_genJet_maxQ1Q2b,
   binning   =  [60,0,6],
 ))
 

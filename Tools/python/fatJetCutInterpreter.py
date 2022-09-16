@@ -8,23 +8,10 @@ jetSelection    = "nJetGood"
 bJetSelectionM  = "nBTag"
 
 special_cuts = {
-    "photon" :   "(recoPhoton_pt[0]>20)",
-    "singlelep": "(nrecoLep>=1)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>25)<=1",
-    "dilep" :    "(nrecoLep>=2)&&(recoLep_pt[0]>25)&&Sum$(recoLep_pt>15)>=2&&Sum$(recoLep_pt>25)<=2",
-    "WHJet" :    "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
-    "realW" :    "WH_nu_E>0",
-    #"protectWH" :    "sqrt(acos(cos(H_phi-WH_W_phi)**2+(H_eta-WH_W_eta)**2)<5.5",
-    "ZHJet" :    "Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4&&recoJet_bTag>=1)>=2&&Sum$(recoJet_pt>25&&abs(recoJet_eta)<2.4)<=3",
-    "trilep":    "(nrecoLep>=3)&&(recoLep_pt[0]>40&&recoLep_pt[1]>20&&recoLep_pt[2]>10)",
-    "onZ"   :    "abs(recoZ_mass-91.2)<10",
-    "onH"   :    "(H_dijet_mass>90&&H_dijet_mass<150)",
-    "LepGBB":    "(sqrt(acos(cos(recoLep_phi[0]-recoPhoton_phi[0]))**2+(recoLep_eta[0]-recoPhoton_eta[0])**2)>2.5)",
-    "odd":       "(evt%2==1)",
-    "even":      "(evt%2==0)",
   }
 
-continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt"), ("ptZ", "recoZ_pt"), ("ptW", "WH_W_pt")]
-discrete_variables  = [ ("njet", "nrecoJet"), ("btag", "nBTag") ]
+continous_variables = [ ("genTopPt", "genTop_pt") , ("maxDR", "dR_genJet_maxQ1Q2b") ] #[ ("", "sqrt(acos(cos(genTop_phi-genb_phi))**2 + (genTop_eta-genb_phi)**2) ")]
+discrete_variables  = [ ]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.

@@ -168,6 +168,8 @@ variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
 variables += ["gen_theta/F", "gen_phi/F"]
 variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
 
+variables += ["dR_genJet_Q1/F", "dR_genJet_Q2/F", "dR_genJet_W/F", "dR_genJet_b/F", "dR_genJet_top/F", "dR_genJet_maxQ1Q2b/F"]
+
 variables += ["label_lin_0/I", "label_lin_1/I", "label_lin_2/I", "label_lin_3/I"]
 variables += ["label_quad_0/I", "label_quad_1/I", "label_quad_2/I", "label_quad_3/I"]
 
@@ -472,6 +474,14 @@ def filler( event ):
             event.genJet_isPhoton       = matched_genJet.isPhoton()
 
             event.gen_cand_sum_pt = sum([c.pt() for c in gen_particles],0)
+
+            event.dR_genJet_Q1  = deltaR( {'phi':event.genQ1_phi, 'eta':event.genQ1_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_Q2  = deltaR( {'phi':event.genQ2_phi, 'eta':event.genQ2_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_W   = deltaR( {'phi':event.genW_phi, 'eta':event.genW_eta},     {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_b   = deltaR( {'phi':event.genb_phi, 'eta':event.genb_eta},     {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_top = deltaR( {'phi':event.genTop_phi, 'eta':event.genTop_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+
+            event.dR_genJet_maxQ1Q2b = max( [ event.dR_genJet_Q1, event.dR_genJet_Q2, event.dR_genJet_b ] )
 
             count = 0 
             for cat in categories:

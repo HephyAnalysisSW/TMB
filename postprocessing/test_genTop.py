@@ -24,6 +24,16 @@ logger.info( "Coefficients: %i (%s), order: %i number of weights: %i", len(weigh
 
 max_n = -1
 
+import fastjet
+ak8 = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.8, fastjet.E_scheme)
+#sd  = fastjet.SoftDrop(,,0.8);
+
+sd = ROOT.SoftDropWrapper(0.0, 0.1, 0.8, 200)
+ns = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 )
+
+def make_pseudoJet( obj ):
+    return fastjet.PseudoJet( obj.px(), obj.py(), obj.pz(), obj.energy() )
+
 def interpret_weight(weight_id):
     str_s = weight_id.split('_')
     res={}
@@ -42,8 +52,10 @@ jet_read_varnames   =  varnames( jet_read_vars )
 
 # from here on GEN specific:
 #GEN = FWLiteSample.fromFiles("GEN", ["/users/robert.schoefbeck/CMS/CMSSW_10_6_27/src/Samples/cfg/GEN_LO_0j_102X.root"])
-GEN = FWLiteSample.fromFiles("GEN", ["root://cms-xrd-global.cern.ch//store/user/schoef/PNet/PNet/220904_093006/0000/GEN_LO_0j_102X_27.root"])
-logger.info("Compute parametrisation from GEN relying on the same sequence of weights as in the card file.")
+GEN = FWLiteSample.fromDirectory("tschRefPointNoWidthRW", "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint-noWidthRW/")
+GEN.reduceFiles(to=1)
+GEN.reweight_pkl = "/groups/hephy/cms/robert.schoefbeck/ParticleNet/GEN/t-sch-RefPoint-noWidthRW/t-sch-RefPoint-noWidthRW_reweight_card.pkl"
+#GEN = FWLiteSample.fromFiles("GEN", ["root://cms-xrd-global.cern.ch//store/user/schoef/PNet/PNet/220904_093006/0000/GEN_LO_0j_102X_27.root"])
 
 products = {
     'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
@@ -207,3 +219,33 @@ while fwliteReader.run( ):
             cat['cands'] = filter( cat['func'], gen_particles )
 
         assert sum( map( len, [ cat['cands'] for cat in categories] ) ) == len( gen_particles ), "Missing a gen particle in categorization!!"
+
+        clustSeq      = fastjet.ClusterSequence( map( make_pseudoJet, matched_genJet.getJetConstituentsQuick() ), ak8 )
+        sortedJets    = fastjet.sorted_by_pt(clustSeq.inclusive_jets())
+
+        genCandsVec = ROOT.vector("TLorentzVector")()
+        for p in matched_genJet.getJetConstituentsQuick() :
+            genCandsVec.push_back( ROOT.TLorentzVector( p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E()) )
+        gensdjets = sd.result( genCandsVec )
+        if gensdjets.size()>=1:
+            p.m() # softdrop mass
+
+        maxTau = 7
+        nsub1 = nSub1.getTau( maxTau, genCandsVec )
+        for i in range(len(nsub1)): print 'tau'+str(i), round(nsub1[i], 3)
+
+        assert False, ""
+
+#        if len(sortedJets)>=1
+#            sd_jet = sd(sortedJets[0]);
+#        genjetAK8sdmass[ngenjetAK8] = sd_jet.m();
+#        Nsubjettiness nsub1_beta1(1,OnePass_WTA_KT_Axes(), UnnormalizedMeasure(1.));
+#        genjetAK8tau1[ngenjetAK8] = nsub1_beta1(sd_jet);
+#        Nsubjettiness nsub2_beta1(2,OnePass_WTA_KT_Axes(), UnnormalizedMeasure(1.));
+#        genjetAK8tau2[ngenjetAK8] = nsub2_beta1(sd_jet);
+#        Nsubjettiness nsub3_beta1(3,OnePass_WTA_KT_Axes(), UnnormalizedMeasure(1.));
+#        genjetAK8tau3[ngenjetAK8] = nsub3_beta1(sd_jet);
+
+
+        assert False, ""
+
