@@ -27,6 +27,46 @@ from TMB.Tools.DelphesProducer        import DelphesProducer
 from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
 from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
 
+# CMSSW FastJet, Wrappers
+#import fastjet
+#ak8 = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.8, fastjet.E_scheme)
+softDrop       = ROOT.SoftDropWrapper(0.0, 0.1, 0.8, 200)
+nSubjettiness  = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 )
+
+ecf  = ROOT.ECFWrapper()
+ecfs = [
+ ('ecf1',       ( 1, 1., 1., "ECF" )),
+ ('ecf2',       ( 2, 1., 1., "ECF" )),
+ ('ecf3',       ( 3, 1., 1., "ECF" )),
+ ('ecfC1',      ( 1, 1., 1., "C" )),
+ ('ecfC2',      ( 2, 1., 1., "C" )),
+ ('ecfC3',      ( 3, 1., 1., "C" )),
+ ('ecfD',       ( 2, 1., 1., "D" )),
+ ('ecfDbeta2',  ( 2, 2., 2., "D" )),
+ ('ecfM1',      ( 1, 1., 1., "M" )),
+ ('ecfM2',      ( 2, 1., 1., "M" )),
+ ('ecfM3',      ( 3, 1., 1., "M" )),
+ ('ecfM1beta2', ( 1, 2., 2., "M" )),
+ ('ecfM2beta2', ( 2, 2., 2., "M" )),
+ ('ecfM3beta2', ( 3, 2., 2., "M" )),
+ ('ecfN1',      ( 1, 1., 1., "N" )),
+ ('ecfN2',      ( 2, 1., 1., "N" )),
+ ('ecfN3',      ( 3, 1., 1., "N" )),
+ ('ecfN1beta2', ( 1, 2., 2., "N" )),
+ ('ecfN2beta2', ( 2, 2., 2., "N" )),
+ ('ecfN3beta2', ( 3, 2., 2., "N" )),
+ ('ecfU1',      ( 1, 1., 1., "U" )),
+ ('ecfU2',      ( 2, 1., 1., "U" )),
+ ('ecfU3',      ( 3, 1., 1., "U" )),
+ ('ecfU1beta2', ( 1, 2., 2., "U" )),
+ ('ecfU2beta2', ( 2, 2., 2., "U" )),
+ ('ecfU3beta2', ( 3, 2., 2., "U" )),
+]
+
+for _, args in ecfs:
+    ecf.addECF( *args )
+
+
 #from TMB.Tools.UpgradeJECUncertainty  import UpgradeJECUncertainty 
 #
 # Arguments
@@ -167,6 +207,14 @@ variables += ["genW_pt/F", "genW_eta/F", "genW_phi/F", "genW_mass/F"]
 variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
 variables += ["gen_theta/F", "gen_phi/F"]
 variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
+
+variables += ['genJet_SDmass/F', 
+              'genJet_SDsubjet0_eta/F', 'genJet_SDsubjet0_deltaEta/F', 'genJet_SDsubjet0_phi/F', 'genJet_SDsubjet0_deltaPhi/F', 'genJet_SDsubjet0_deltaR/F', 'genJet_SDsubjet0_mass/F', 
+              'genJet_SDsubjet1_eta/F', 'genJet_SDsubjet1_deltaEta/F', 'genJet_SDsubjet1_phi/F', 'genJet_SDsubjet1_deltaPhi/F', 'genJet_SDsubjet1_deltaR/F', 'genJet_SDsubjet1_mass/F', 
+              'genJet_tau1/F', 'genJet_tau2/F', 'genJet_tau3/F', 'genJet_tau4/F', 'genJet_tau21/F', 'genJet_tau32/F']
+
+for i_ecf, (name, _) in enumerate( ecfs ):
+    variables.append( "genJet_%s/F"%name )
 
 variables += ["dR_genJet_Q1/F", "dR_genJet_Q2/F", "dR_genJet_W/F", "dR_genJet_b/F", "dR_genJet_top/F", "dR_genJet_maxQ1Q2b/F"]
 
@@ -501,6 +549,47 @@ def filler( event ):
                     fill_vector_collection( event, cat['name'], cand_ch_varnames, cands_list)
                 count+=len(cands)
             assert count == len( gen_particles ), "Missing a gen particle in categorization!!"
+
+            #clustSeq      = fastjet.ClusterSequence( map( make_pseudoJet, matched_genJet.getJetConstituentsQuick() ), ak8 )
+            #sortedJets    = fastjet.sorted_by_pt(clustSeq.inclusive_jets())
+
+            # softdrop
+            genCandsVec = ROOT.vector("TLorentzVector")()
+            for p in matched_genJet.getJetConstituentsQuick() :
+                genCandsVec.push_back( ROOT.TLorentzVector( p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E()) )
+            genSDJets = softDrop.result( genCandsVec )
+            if genSDJets.size()>=1:
+                genSDJet = genSDJets[0]
+                event.genJet_SDmass = genSDJet.m() # softdrop mass
+
+                genSDSubJets = genSDJet.pieces()
+                if len(genSDSubJets)>0:
+                    event.genJet_SDsubjet0_eta      = genSDSubJets[0].eta()
+                    event.genJet_SDsubjet0_deltaEta = genSDSubJets[0].eta() - matched_genJet.eta()
+                    event.genJet_SDsubjet0_phi      = genSDSubJets[0].phi()
+                    event.genJet_SDsubjet0_deltaPhi = deltaPhi(genSDSubJets[0].phi(), matched_genJet.phi(), returnAbs=False)
+                    event.genJet_SDsubjet0_deltaR   = sqrt( event.genJet_SDsubjet0_deltaPhi**2 + event.genJet_SDsubjet0_deltaEta**2 ) 
+                    event.genJet_SDsubjet0_mass     = genSDSubJets[0].m()
+                if len(genSDSubJets)>1:
+                    event.genJet_SDsubjet1_eta      = genSDSubJets[1].eta()
+                    event.genJet_SDsubjet1_deltaEta = genSDSubJets[1].eta() - matched_genJet.eta()
+                    event.genJet_SDsubjet1_phi      = genSDSubJets[1].phi()
+                    event.genJet_SDsubjet1_deltaPhi = deltaPhi(genSDSubJets[1].phi(), matched_genJet.phi(), returnAbs=False)
+                    event.genJet_SDsubjet1_deltaR   = sqrt( event.genJet_SDsubjet1_deltaPhi**2 + event.genJet_SDsubjet1_deltaEta**2 ) 
+                    event.genJet_SDsubjet1_mass     = genSDSubJets[1].m()
+            
+            ns_tau = nSubjettiness.getTau( 4, genCandsVec )
+            event.genJet_tau1 = ns_tau[0]
+            event.genJet_tau2 = ns_tau[1]
+            event.genJet_tau3 = ns_tau[2]
+            event.genJet_tau4 = ns_tau[3]
+            event.genJet_tau21 = ns_tau[1]/ns_tau[0]
+            event.genJet_tau32 = ns_tau[2]/ns_tau[1]
+
+            ecf.setParticles( genCandsVec )
+            result = ecf.result()
+            for i_ecf, (name, _) in enumerate( ecfs ):
+                setattr( event, "genJet_%s"%name, result[i_ecf] )
 
             # only fill if we have everything. This is a per-top ntuple, not per-events
             maker.fill()

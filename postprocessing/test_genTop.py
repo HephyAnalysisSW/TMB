@@ -27,9 +27,43 @@ max_n = -1
 import fastjet
 ak8 = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.8, fastjet.E_scheme)
 #sd  = fastjet.SoftDrop(,,0.8);
-
 sd = ROOT.SoftDropWrapper(0.0, 0.1, 0.8, 200)
 ns = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 )
+
+ecf  = ROOT.ECFWrapper()
+ecfs = [ 
+ ('ecf1',       ( 1, 1., 1., "ECF" )),
+ ('ecf2',       ( 2, 1., 1., "ECF" )),
+ ('ecf3',       ( 3, 1., 1., "ECF" )),
+ ('ecfC1',      ( 1, 1., 1., "C" )),
+ ('ecfC2',      ( 2, 1., 1., "C" )),
+ ('ecfC3',      ( 3, 1., 1., "C" )),
+ ('ecfD',       ( 2, 1., 1., "D" )),
+ ('ecfDbeta2',  ( 2, 2., 2., "D" )),
+ ('ecfM1',      ( 1, 1., 1., "M" )),
+ ('ecfM2',      ( 2, 1., 1., "M" )),
+ ('ecfM3',      ( 3, 1., 1., "M" )),
+ ('ecfM1beta2', ( 1, 2., 2., "M" )),
+ ('ecfM2beta2', ( 2, 2., 2., "M" )),
+ ('ecfM3beta2', ( 3, 2., 2., "M" )),
+ ('ecfN1',      ( 1, 1., 1., "N" )),
+ ('ecfN2',      ( 2, 1., 1., "N" )),
+ ('ecfN3',      ( 3, 1., 1., "N" )),
+ ('ecfN1beta2', ( 1, 2., 2., "N" )),
+ ('ecfN2beta2', ( 2, 2., 2., "N" )),
+ ('ecfN3beta2', ( 3, 2., 2., "N" )),
+ ('ecfU1',      ( 1, 1., 1., "U" )),
+ ('ecfU2',      ( 2, 1., 1., "U" )),
+ ('ecfU3',      ( 3, 1., 1., "U" )),
+ ('ecfU1beta2', ( 1, 2., 2., "U" )),
+ ('ecfU2beta2', ( 2, 2., 2., "U" )),
+ ('ecfU3beta2', ( 3, 2., 2., "U" )),
+]
+
+for _, args in ecfs:
+    ecf.addECF( *args )
+
+assert False, ""
 
 def make_pseudoJet( obj ):
     return fastjet.PseudoJet( obj.px(), obj.py(), obj.pz(), obj.energy() )
@@ -224,17 +258,31 @@ while fwliteReader.run( ):
         sortedJets    = fastjet.sorted_by_pt(clustSeq.inclusive_jets())
 
         genCandsVec = ROOT.vector("TLorentzVector")()
+        #genCandsPseudoVec = ROOT.vector("fastjet::PseudoJet")()
         for p in matched_genJet.getJetConstituentsQuick() :
             genCandsVec.push_back( ROOT.TLorentzVector( p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E()) )
+            #genCandsPseudoVec.push_back(fastjet.PseudoJet( p.px(), p.py(), p.pz(), p.energy() ))
+
+        ecf.setParticles( genCandsVec )
+        result = ecf.result()
+        for i_ecf, (name, _) in enumerate( ecfs ):
+            print name, result[i_ecf]
+ 
         gensdjets = sd.result( genCandsVec )
         if gensdjets.size()>=1:
-            p.m() # softdrop mass
+            sdJet = gensdjets[0]
+            sd_mass = sdJet.m() # softdrop mass
+        
+            print "Softdrop mass", sd_mass
 
-        maxTau = 7
-        nsub1 = nSub1.getTau( maxTau, genCandsVec )
-        for i in range(len(nsub1)): print 'tau'+str(i), round(nsub1[i], 3)
+            for i_subjet, subjet in enumerate(sdJet.pieces()):
+                print "subjet", i_subjet, subjet.pt(), subjet.eta(), subjet.eta() - matched_genJet.eta(), subjet.phi(), subjet.phi() - matched_genJet.phi()
 
-        assert False, ""
+            maxTau = 5
+            ns_tau = ns.getTau( maxTau, genCandsVec )
+            for i in range(len(ns_tau)): print 'tau'+str(i), round(ns_tau[i], 3)
+
+        print
 
 #        if len(sortedJets)>=1
 #            sd_jet = sd(sortedJets[0]);
@@ -246,6 +294,4 @@ while fwliteReader.run( ):
 #        Nsubjettiness nsub3_beta1(3,OnePass_WTA_KT_Axes(), UnnormalizedMeasure(1.));
 #        genjetAK8tau3[ngenjetAK8] = nsub3_beta1(sd_jet);
 
-
-        assert False, ""
 
