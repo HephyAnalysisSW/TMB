@@ -58,7 +58,7 @@ sample.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 eft_configs = [
     {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
-    {'color':ROOT.kMagenta-4,   'param':{'ctWRe':3},   'tex':"c_{tW}^{Re}=5",   'binning':[20,-1.5,1.5]},
+    {'color':ROOT.kMagenta-4,   'param':{'ctWRe':3},   'tex':"c_{tW}^{Re}=3",   'binning':[20,-1.5,1.5]},
     {'color':ROOT.kMagenta+2,   'param':{'ctWIm':5},   'tex':"c_{tW}^{Im}=5",   'binning':[20,-1.5,1.5]},
     {'color':ROOT.kGreen-4,     'param':{'cHtbRe':5},  'tex':"c_{Htb}^{Re}=5",  'binning':[20,-1.5,1.5]},
     {'color':ROOT.kGreen+2,     'param':{'cHtbIm':5},  'tex':"c_{Htb}^{Im}=5",  'binning':[20,-1.5,1.5]},

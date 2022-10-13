@@ -63,8 +63,6 @@ ecfs = [
 for _, args in ecfs:
     ecf.addECF( *args )
 
-assert False, ""
-
 def make_pseudoJet( obj ):
     return fastjet.PseudoJet( obj.px(), obj.py(), obj.pz(), obj.energy() )
 
@@ -281,6 +279,8 @@ while fwliteReader.run( ):
             maxTau = 5
             ns_tau = ns.getTau( maxTau, genCandsVec )
             for i in range(len(ns_tau)): print 'tau'+str(i), round(ns_tau[i], 3)
+        else:
+            assert False, ""
 
         print
 

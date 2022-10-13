@@ -227,8 +227,8 @@ categories = [
     {'name':'e',   'func':lambda p:abs(p.pdgId())==11}, #electrons 
     {'name':'mu',  'func':lambda p:abs(p.pdgId())==13}, #muons 
     {'name':'ph',  'func':lambda p:p.pdgId()==22}, #photons 
-    {'name':'chh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()!=0 }, #photons 
-    {'name':'neh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()==0 }, #photons 
+    {'name':'chh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()!=0 }, #charged hadrons 
+    {'name':'neh', 'func':lambda p:abs(p.pdgId())>100 and p.charge()==0 }, # neutral hadrons
 ]
 
 cand_vars           =  "pt/F,etarel/F,phirel/F,eta/F,phi/F,pdgId/I"
@@ -583,8 +583,8 @@ def filler( event ):
             event.genJet_tau2 = ns_tau[1]
             event.genJet_tau3 = ns_tau[2]
             event.genJet_tau4 = ns_tau[3]
-            event.genJet_tau21 = ns_tau[1]/ns_tau[0]
-            event.genJet_tau32 = ns_tau[2]/ns_tau[1]
+            event.genJet_tau21 = ns_tau[1]/ns_tau[0] if ns_tau[0]>0 else 0
+            event.genJet_tau32 = ns_tau[2]/ns_tau[1] if ns_tau[1]>0 else 0
 
             ecf.setParticles( genCandsVec )
             result = ecf.result()
