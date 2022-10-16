@@ -9,7 +9,7 @@ import copy
 from RootTools.core.standard     import *
 
 # helpers
-from TMB.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
+from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
 #from tWZ.Tools.objectSelection  import isBJet, isAnalysisJet
 from Analysis.Tools.WeightInfo       import WeightInfo
 
@@ -54,7 +54,7 @@ sequence = []
 FIs = {
 }
 
-from TMB.Tools.objectSelection import isBJet
+from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
@@ -100,11 +100,11 @@ all_mva_variables = {
      "mva_jet2_eta"              :(lambda event, sample: event.JetGood_eta[2]         if event.nJetGood >=3 else -10),
      "mva_jet2_btagDeepFlavB"        :(lambda event, sample: event.JetGood_btagDeepFlavB[2]   if (event.nJetGood >=3 and event.JetGood_btagDeepFlavB[2]>-10) else -10),
 
-     "mva_jet3_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=4 else 0),
-     "mva_jet4_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=5 else 0),
-     "mva_jet5_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=6 else 0),
-     "mva_jet6_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=7 else 0),
-     "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=8 else 0),
+     "mva_jet3_pt"               :(lambda event, sample: event.JetGood_pt[3]          if event.nJetGood >=4 else 0),
+     "mva_jet4_pt"               :(lambda event, sample: event.JetGood_pt[4]          if event.nJetGood >=5 else 0),
+     "mva_jet5_pt"               :(lambda event, sample: event.JetGood_pt[5]          if event.nJetGood >=6 else 0),
+     "mva_jet6_pt"               :(lambda event, sample: event.JetGood_pt[6]          if event.nJetGood >=7 else 0),
+     "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[7]          if event.nJetGood >=8 else 0),
 }
 
 def lstm_jets(event, sample):
@@ -143,6 +143,7 @@ def predict_inputs( event, sample, jet_lstm = False):
 
 #define training samples for multiclassification
 import TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp as samples
+#import tttt.samples.nano_mc_private_UL20_RunII_postProcessed_dilep as samples
 
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( samples.TTLep )
@@ -164,5 +165,5 @@ assert len(training_samples)==len(set([s.name for s in training_samples])), "tra
 
 # training selection
 
-from TMB.Tools.cutInterpreter import cutInterpreter
+from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( 'dilepVL-ht400' )
