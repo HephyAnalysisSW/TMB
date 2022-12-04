@@ -23,8 +23,9 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 lstm_jets_maxN   = 10
-lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
+
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
@@ -142,28 +143,28 @@ def predict_inputs( event, sample, jet_lstm = False):
         return   flat_variables
 
 #define training samples for multiclassification
-import TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp as samples
+#import TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp as samples
 #import tttt.samples.nano_mc_private_UL20_RunII_postProcessed_dilep as samples
 
-# ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
-TTLep_bb    = copy.deepcopy( samples.TTLep )
-TTLep_bb.name = "TTLep_bb"
-TTLep_bb.texName = samples.TTLep.name+" (b#overline{b})"
-TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
-TTLep_cc    = copy.deepcopy( samples.TTLep )
-TTLep_cc.name = "TTLep_cc"
-TTLep_cc.texName = samples.TTLep.name+" (c#overline{c})"
-TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
-TTLep_other = copy.deepcopy( samples.TTLep )
-TTLep_other.name = "TTLep_other"
-TTLep_other.texName = samples.TTLep.name+" (other)"
-TTLep_other.setSelectionString( "genTtbarId%100<40" )
-
-training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
-
-assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
-
-# training selection
-
-from tttt.Tools.cutInterpreter import cutInterpreter
-selectionString = cutInterpreter.cutString( 'dilepVL-ht400' )
+## ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+#TTLep_bb    = copy.deepcopy( samples.TTLep )
+#TTLep_bb.name = "TTLep_bb"
+#TTLep_bb.texName = samples.TTLep.name+" (b#overline{b})"
+#TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+#TTLep_cc    = copy.deepcopy( samples.TTLep )
+#TTLep_cc.name = "TTLep_cc"
+#TTLep_cc.texName = samples.TTLep.name+" (c#overline{c})"
+#TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+#TTLep_other = copy.deepcopy( samples.TTLep )
+#TTLep_other.name = "TTLep_other"
+#TTLep_other.texName = samples.TTLep.name+" (other)"
+#TTLep_other.setSelectionString( "genTtbarId%100<40" )
+#
+#training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
+#
+#assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
+#
+## training selection
+#
+#from tttt.Tools.cutInterpreter import cutInterpreter
+#selectionString = cutInterpreter.cutString( 'dilepVL-ht400' )
