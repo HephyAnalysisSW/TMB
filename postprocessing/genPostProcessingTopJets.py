@@ -220,7 +220,7 @@ variables += ["dR_genJet_Q1/F", "dR_genJet_Q2/F", "dR_genJet_W/F", "dR_genJet_b/
 
 variables += ["gen_cand_sum_pt/F"]
 
-variables += [VectorTreeVariable.fromString("ctwRe[coeff/F]", nMax=3 )]
+variables += [VectorTreeVariable.fromString("ctWRe[coeff/F]", nMax=3 )]
 
 
 categories = [
@@ -372,7 +372,8 @@ def filler( event ):
                 setattr( event, "target_"+target_coeff[n-1], coeff[n]/coeff[0] )
         # lumi weight / w0
 
-    event.ctWRe_coeff[0] = event.p_C[0]
+    event.nctWRe = 3
+    event.ctWRe_coeff[0] = event.p_C[0]*10**6
     index_lin  = weightInfo.combinations.index(('ctWRe',))
     event.ctWRe_coeff[1] = event.p_C[index_lin]/event.p_C[0]
     index_quad = weightInfo.combinations.index(('ctWRe','ctWRe'))
