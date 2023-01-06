@@ -1,73 +1,28 @@
 #!/usr/bin/env python
-''' Make flat ntuple from GEN data tier 
+'''  produce fat jet ntuple 
 '''
 #
 # Standard imports and batch mode
 #
+import os, sys, imp
 import ROOT
-import os, sys
 ROOT.gROOT.SetBatch(True)
-import itertools
-from math                                import sqrt, cos, sin, pi, acos, cosh, sinh
-import imp
+from math                             import sqrt, cos, sin, pi, acos, cosh, sinh
 
 #RootTools
-from RootTools.core.standard             import *
+from RootTools.core.standard          import *
 
 #Analysis
 from Analysis.Tools.WeightInfo        import WeightInfo
-from Analysis.Tools.leptonJetArbitration    import cleanJetsAndLeptons
+from Analysis.Tools.HyperPoly         import HyperPoly
 
 # TMB
 from TMB.Tools.user                   import skim_output_directory
 from TMB.Tools.GenSearch              import GenSearch
-from TMB.Tools.helpers                import deltaPhi, deltaR, deltaR2, cosThetaStar, closestOSDLMassToMZ, checkRootFile
-from TMB.Tools.HyperPoly              import HyperPoly
+from TMB.Tools.helpers                import deltaPhi, deltaR, checkRootFile
 from TMB.Tools.DelphesProducer        import DelphesProducer
-from TMB.Tools.genObjectSelection     import isGoodGenJet, isGoodGenLepton, isGoodGenPhoton, genJetId
-from TMB.Tools.DelphesObjectSelection import isGoodRecoMuon, isGoodRecoElectron, isGoodRecoLepton, isGoodRecoJet, isGoodRecoPhoton
+from TMB.Tools.genObjectSelection     import genJetId
 
-# CMSSW FastJet, Wrappers
-#import fastjet
-#ak8 = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.8, fastjet.E_scheme)
-softDrop       = ROOT.SoftDropWrapper(0.0, 0.1, 0.8, 200)
-nSubjettiness  = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 )
-
-ecf  = ROOT.ECFWrapper()
-ecfs = [
- ('ecf1',       ( 1, 1., 1., "ECF" )),
- ('ecf2',       ( 2, 1., 1., "ECF" )),
- ('ecf3',       ( 3, 1., 1., "ECF" )),
- ('ecfC1',      ( 1, 1., 1., "C" )),
- ('ecfC2',      ( 2, 1., 1., "C" )),
- ('ecfC3',      ( 3, 1., 1., "C" )),
- ('ecfD',       ( 2, 1., 1., "D" )),
- ('ecfDbeta2',  ( 2, 2., 2., "D" )),
- ('ecfM1',      ( 1, 1., 1., "M" )),
- ('ecfM2',      ( 2, 1., 1., "M" )),
- ('ecfM3',      ( 3, 1., 1., "M" )),
- ('ecfM1beta2', ( 1, 2., 2., "M" )),
- ('ecfM2beta2', ( 2, 2., 2., "M" )),
- ('ecfM3beta2', ( 3, 2., 2., "M" )),
- ('ecfN1',      ( 1, 1., 1., "N" )),
- ('ecfN2',      ( 2, 1., 1., "N" )),
- ('ecfN3',      ( 3, 1., 1., "N" )),
- ('ecfN1beta2', ( 1, 2., 2., "N" )),
- ('ecfN2beta2', ( 2, 2., 2., "N" )),
- ('ecfN3beta2', ( 3, 2., 2., "N" )),
- ('ecfU1',      ( 1, 1., 1., "U" )),
- ('ecfU2',      ( 2, 1., 1., "U" )),
- ('ecfU3',      ( 3, 1., 1., "U" )),
- ('ecfU1beta2', ( 1, 2., 2., "U" )),
- ('ecfU2beta2', ( 2, 2., 2., "U" )),
- ('ecfU3beta2', ( 3, 2., 2., "U" )),
-]
-
-for _, args in ecfs:
-    ecf.addECF( *args )
-
-
-#from TMB.Tools.UpgradeJECUncertainty  import UpgradeJECUncertainty 
 #
 # Arguments
 # 
@@ -79,12 +34,13 @@ argParser.add_argument('--overwrite',          action='store',      nargs='?', c
 argParser.add_argument('--targetDir',          action='store',      default='v1')
 argParser.add_argument('--sample',             action='store',      default='tt1LepHad', help="Name of the sample loaded from fwlite_benchmarks. Only if no inputFiles are specified")
 argParser.add_argument('--inputFiles',         action='store',      nargs = '*', default=[])
-argParser.add_argument('--delphesEra',         action='store',      default = None, choices = ["RunII", "RunIICentral", "RunIInoDelphesIso", "RunIIPileUp", "PhaseII"], help="specify delphes era")
+argParser.add_argument('--delphesEra',         action='store',      default = None, choices = ["RunII", "ATLAS", "RunIICentral", "RunIInoDelphesIso", "RunIIPileUp", "PhaseII"], help="specify delphes era")
 argParser.add_argument('--addReweights',       action='store_true',   help="Add reweights?")
 argParser.add_argument('--nJobs',              action='store',      nargs='?', type=int, default=1,  help="Maximum number of simultaneous jobs.")
 argParser.add_argument('--job',                action='store',      nargs='?', type=int, default=0,  help="Run only job i")
 argParser.add_argument('--removeDelphesFiles', action='store_true',   help="remove Delphes file after postprocessing?")
 argParser.add_argument('--interpolationOrder', action='store',      nargs='?', type=int, default=2,  help="Interpolation order for EFT weights.")
+argParser.add_argument('--trainingCoefficients', action='store',    nargs='?', default=['ctWRe', 'ctWIm'],  help="Training vectors for particle net")
 args = argParser.parse_args()
 
 #
@@ -121,14 +77,56 @@ if not os.path.exists( output_directory ):
         pass
     logger.info( "Created output directory %s", output_directory )
 
-# upgrade JEC
-# upgradeJECUncertainty = UpgradeJECUncertainty()
+# output file & log files
+output_filename =  os.path.join(output_directory, sample.name + '.root')
+_logger.   add_fileHandler( output_filename.replace('.root', '.log'), args.logLevel )
+_logger_rt.add_fileHandler( output_filename.replace('.root', '_rt.log'), args.logLevel )
 
-# variables
+# CMSSW FastJet & CMSSW wrappers
+# The FastJet-contrib wrappers (ECF and Nsubjettiness) are in https://github.com/HephyAnalysisSW/NanoAODJMARTools.git
+import fastjet
+ak8 = fastjet.JetDefinition(fastjet.antikt_algorithm, 0.8, fastjet.E_scheme)
+softDrop       = ROOT.SoftDropWrapper(0.0, 0.1, 0.8, 200)
+nSubjettiness  = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 )
+
+# Energy correlators
+ecf  = ROOT.ECFWrapper()
+ecfs = [
+ ('ecf1',       ( 1, 1., 1., "ECF" )),
+ ('ecf2',       ( 2, 1., 1., "ECF" )),
+ ('ecf3',       ( 3, 1., 1., "ECF" )),
+ ('ecfC1',      ( 1, 1., 1., "C" )),
+ ('ecfC2',      ( 2, 1., 1., "C" )),
+ ('ecfC3',      ( 3, 1., 1., "C" )),
+ ('ecfD',       ( 2, 1., 1., "D" )),
+ ('ecfDbeta2',  ( 2, 2., 2., "D" )),
+ ('ecfM1',      ( 1, 1., 1., "M" )),
+ ('ecfM2',      ( 2, 1., 1., "M" )),
+ ('ecfM3',      ( 3, 1., 1., "M" )),
+ ('ecfM1beta2', ( 1, 2., 2., "M" )),
+ ('ecfM2beta2', ( 2, 2., 2., "M" )),
+ ('ecfM3beta2', ( 3, 2., 2., "M" )),
+ ('ecfN1',      ( 1, 1., 1., "N" )),
+ ('ecfN2',      ( 2, 1., 1., "N" )),
+ ('ecfN3',      ( 3, 1., 1., "N" )),
+ ('ecfN1beta2', ( 1, 2., 2., "N" )),
+ ('ecfN2beta2', ( 2, 2., 2., "N" )),
+ ('ecfN3beta2', ( 3, 2., 2., "N" )),
+ ('ecfU1',      ( 1, 1., 1., "U" )),
+ ('ecfU2',      ( 2, 1., 1., "U" )),
+ ('ecfU3',      ( 3, 1., 1., "U" )),
+ ('ecfU1beta2', ( 1, 2., 2., "U" )),
+ ('ecfU2beta2', ( 2, 2., 2., "U" )),
+ ('ecfU3beta2', ( 3, 2., 2., "U" )),
+]
+
+for _, args_ in ecfs:
+    ecf.addECF( *args_ )
+
+# variables (to be stored)
 variables = []
 
 # Load reweight pickle file if supposed to keep weights. 
-extra_variables = []
 if args.addReweights:
     weightInfo = WeightInfo( sample.reweight_pkl )
     weightInfo.set_order( args.interpolationOrder ) 
@@ -138,14 +136,14 @@ if args.addReweights:
     # weights from base base points 
     weight_base      = TreeVariable.fromString( "weight[base/F]")
     weight_base.nMax = weightInfo.nid
-    extra_variables.append(weight_base)
+    variables.append(weight_base)
 
     # coefficients for the weight parametrization
     param_vector      = TreeVariable.fromString( "p[C/F]" )
     param_vector.nMax = HyperPoly.get_ndof(weightInfo.nvar, args.interpolationOrder)
     hyperPoly         = HyperPoly( args.interpolationOrder )
-    extra_variables.append(param_vector)
-    extra_variables.append(TreeVariable.fromString( "chi2_ndof/F"))
+    variables.append(param_vector)
+    variables.append(TreeVariable.fromString( "chi2_ndof/F"))
     def interpret_weight(weight_id):
         str_s = weight_id.rstrip('_nlo').split('_')
         res={}
@@ -169,24 +167,19 @@ if args.nJobs>1:
     n_files_after  = len(sample.files)
     logger.info( "Running job %i/%i over %i files from a total of %i.", args.job, args.nJobs, n_files_after, n_files_before)
 
-max_jet_abseta = 5.1
-
-products = {
-    'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
-    'gen':{'type':'GenEventInfoProduct', 'label':'generator'},
-    'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
-    'ak8GenJets':{'type':'vector<reco::GenJet>', 'label':("ak8GenJetsNoNu")},
-}
-
+# small helpers
 def varnames( vec_vars ):
     return [v.split('/')[0] for v in vec_vars.split(',')]
-
-def vecSumPt(*args):
-    return sqrt( sum([o['pt']*cos(o['phi']) for o in args],0.)**2 + sum([o['pt']*sin(o['phi']) for o in args],0.)**2 )
 
 def addIndex( collection ):
     for i  in range(len(collection)):
         collection[i]['index'] = i
+
+def fill_vector_collection( event, collection_name, collection_varnames, objects):
+    setattr( event, "n"+collection_name, len(objects) )
+    for i_obj, obj in enumerate(objects):
+        for var in collection_varnames:
+            getattr(event, collection_name+"_"+var)[i_obj] = obj[var]
 
 # EDM standard variables
 variables  += ["run/I", "lumi/I", "evt/l"]
@@ -199,15 +192,15 @@ if args.addReweights:
     # Lumi weight 1fb / w_0
     variables.append("ref_lumiweight1fb/F")
 
-variables += ["partonTop_pt/F", "partonTop_eta/F", "partonTop_phi/F", "partonTop_mass/F", "partonTop_pdgId/I"]
-variables += ["genQ1_pt/F", "genQ1_eta/F", "genQ1_phi/F", "genQ1_mass/F", "genQ1_pdgId/I"]
-variables += ["genQ2_pt/F", "genQ2_eta/F", "genQ2_phi/F", "genQ2_mass/F", "genQ2_pdgId/I"]
-variables += ["genb_pt/F", "genb_eta/F", "genb_phi/F", "genb_mass/F", "genb_pdgId/I"]
-variables += ["genW_pt/F", "genW_eta/F", "genW_phi/F", "genW_mass/F"]
-variables += ["genTop_pt/F", "genTop_eta/F", "genTop_phi/F", "genTop_mass/F"]
-variables += ["gen_theta/F", "gen_phi/F"]
-variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
+variables += ["partonTop_pt/F",  "partonTop_eta/F",  "partonTop_phi/F",  "partonTop_mass/F", "partonTop_pdgId/I"]
+variables += ["parton_q1_pt/F",  "parton_q1_eta/F",  "parton_q1_phi/F",  "parton_q1_mass/F", "parton_q1_pdgId/I"]
+variables += ["parton_q2_pt/F",  "parton_q2_eta/F",  "parton_q2_phi/F",  "parton_q2_mass/F", "parton_q2_pdgId/I"]
+variables += ["parton_b_pt/F",   "parton_b_eta/F",   "parton_b_phi/F",   "parton_b_mass/F",  "parton_b_pdgId/I"]
+variables += ["parton_W_pt/F",   "parton_W_eta/F",   "parton_W_phi/F",   "parton_W_mass/F"]
+variables += ["parton_top_pt/F", "parton_top_eta/F", "parton_top_phi/F", "parton_top_mass/F"]
+variables += ["parton_top_theta/F", "parton_top_phi/F"]
 
+variables += ["genJet_pt/F", "genJet_eta/F", "genJet_phi/F", "genJet_mass/F", "genJet_nConstituents/I", "genJet_isMuon/I", "genJet_isElectron/I", "genJet_isPhoton/I"]
 variables += ['genJet_SDmass/F', 
               'genJet_SDsubjet0_eta/F', 'genJet_SDsubjet0_deltaEta/F', 'genJet_SDsubjet0_phi/F', 'genJet_SDsubjet0_deltaPhi/F', 'genJet_SDsubjet0_deltaR/F', 'genJet_SDsubjet0_mass/F', 
               'genJet_SDsubjet1_eta/F', 'genJet_SDsubjet1_deltaEta/F', 'genJet_SDsubjet1_phi/F', 'genJet_SDsubjet1_deltaPhi/F', 'genJet_SDsubjet1_deltaR/F', 'genJet_SDsubjet1_mass/F', 
@@ -216,12 +209,14 @@ variables += ['genJet_SDmass/F',
 for i_ecf, (name, _) in enumerate( ecfs ):
     variables.append( "genJet_%s/F"%name )
 
-variables += ["dR_genJet_Q1/F", "dR_genJet_Q2/F", "dR_genJet_W/F", "dR_genJet_b/F", "dR_genJet_top/F", "dR_genJet_maxQ1Q2b/F"]
+variables += ["dR_genJet_q1/F", "dR_genJet_q2/F", "dR_genJet_W/F", "dR_genJet_b/F", "dR_genJet_top/F", "dR_genJet_maxq1q2b/F"]
 
 variables += ["gen_cand_sum_pt/F"]
 
-variables += [VectorTreeVariable.fromString("ctWRe[coeff/F]", nMax=3 )]
-
+if args.addReweights:
+    # for each Wilson coefficient listed in args.trainingCoefficients, store a separate length-3 ntuple of ('w0'*10**6, 'w1', 'w2') to facilitate particle-net training 
+    for coefficient in args.trainingCoefficients:    
+        variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]
 
 categories = [
     {'name':'e',   'func':lambda p:abs(p.pdgId())==11}, #electrons 
@@ -241,28 +236,29 @@ for cat in categories:
     else:
         variables.append( VectorTreeVariable.fromString("%s[%s]"%(cat['name'], cand_ch_vars), nMax=1000 ) )
 
-def fill_vector_collection( event, collection_name, collection_varnames, objects):
-    setattr( event, "n"+collection_name, len(objects) )
-    for i_obj, obj in enumerate(objects):
-        for var in collection_varnames:
-            getattr(event, collection_name+"_"+var)[i_obj] = obj[var]
-def fill_vector( event, collection_name, collection_varnames, obj):
-    for var in collection_varnames:
-        try:
-            setattr(event, collection_name+"_"+var, obj[var] )
-        except TypeError as e:
-            logger.error( "collection_name %s var %s obj[var] %r", collection_name, var,  obj[var] )
-            raise e
-        except KeyError as e:
-            logger.error( "collection_name %s var %s obj[var] %r", collection_name, var,  obj[var] )
-            raise e
-
 logger.info( "Running over files: %s", ", ".join(sample.files ) )
 
+readers = []
+
+# FWLite reader 
+products = {
+    'lhe':{'type':'LHEEventProduct', 'label':("externalLHEProducer")},
+    'gen':{'type':'GenEventInfoProduct', 'label':'generator'},
+    'gp':{'type':'vector<reco::GenParticle>', 'label':("genParticles")},
+    'ak8GenJets':{'type':'vector<reco::GenJet>', 'label':("ak8GenJetsNoNu")},
+}
+
+fwliteReader = sample.fwliteReader( products = products )
+readers.append( fwliteReader )
+
+# Delphes reader if we run Delphes
 if args.delphesEra is not None:
     if args.delphesEra == 'RunII':
         from TMB.Tools.DelphesReader          import DelphesReader
         delphesCard = 'delphes_card_CMS'
+    elif args.delphesEra == 'ATLAS':
+        from TMB.Tools.DelphesReaderEFlow     import DelphesReader
+        delphesCard = 'delphes_card_ATLAS'
     elif args.delphesEra == 'RunIICentral':
         from TMB.Tools.DelphesReader          import DelphesReader
         delphesCard = 'delphes_card_CMS_Central'
@@ -275,14 +271,7 @@ if args.delphesEra is not None:
     elif args.delphesEra == 'PhaseII':
         from TMB.Tools.DelphesReaderCMSHLLHC  import DelphesReader
         delphesCard = 'CMS_PhaseII/CMS_PhaseII_200PU_v03'
-readers = []
 
-# FWLite reader if this is an EDM file
-fwliteReader = sample.fwliteReader( products = products )
-readers.append( fwliteReader )
-
-# Delphes reader if we read Delphes
-if args.delphesEra is not None:
     delphes_file = os.path.join( output_directory, 'delphes', sample.name+'.root' )
     if      ( not os.path.exists( delphes_file )) or \
             ( os.path.exists( delphes_file ) and not checkRootFile( delphes_file, checkForObjects=["Delphes"])) or \
@@ -293,33 +282,20 @@ if args.delphesEra is not None:
     delphesReader = DelphesReader( Sample.fromFiles( delphes_file, delphes_file, treeName = "Delphes" ) ) # RootTools version
     readers.append( delphesReader )
 
-def addTLorentzVector( p_dict ):
-    ''' add a TLorentz 4D Vector for further calculations
-    '''
-    p_dict['vecP4'] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), p_dict['pt']*cosh(p_dict['eta']) )
-
+# TreeMaker initialisation
 tmp_dir     = ROOT.gDirectory
-#post_fix = '_%i'%args.job if args.nJobs > 1 else ''
-output_filename =  os.path.join(output_directory, sample.name + '.root')
-
-_logger.   add_fileHandler( output_filename.replace('.root', '.log'), args.logLevel )
-_logger_rt.add_fileHandler( output_filename.replace('.root', '_rt.log'), args.logLevel )
-
 if os.path.exists( output_filename ) and checkRootFile( output_filename, checkForObjects=["Events"]) and args.overwrite =='none' :
     logger.info( "File %s found. Quit.", output_filename )
     sys.exit(0)
-
 output_file = ROOT.TFile( output_filename, 'recreate')
 output_file.cd()
 maker = TreeMaker(
     #sequence  = [ filler ],
-    variables = [ (TreeVariable.fromString(x) if type(x)==str else x) for x in variables ] + extra_variables,
+    variables = [ (TreeVariable.fromString(x) if type(x)==str else x) for x in variables ],
     treeName = "Events"
     )
-
 tmp_dir.cd()
 
-gRandom = ROOT.TRandom3()
 def filler( event ):
 
     event.run, event.lumi, event.evt = fwliteReader.evt
@@ -352,7 +328,6 @@ def filler( event ):
         ref_point_coordinates = [weightInfo.ref_point_coordinates[var] for var in weightInfo.variables]
 
         # Initialize with Reference Point
-
         if not hyperPoly.initialized: 
             #print "evt,run,lumi", event.run, event.lumi, event.evt
             #print "ref point", ref_point_coordinates, "param_points", param_points
@@ -370,14 +345,19 @@ def filler( event ):
             event.p_C[n] = coeff[n]
             if n>0:
                 setattr( event, "target_"+target_coeff[n-1], coeff[n]/coeff[0] )
-        # lumi weight / w0
 
-    event.nctWRe = 3
-    event.ctWRe_coeff[0] = event.p_C[0]*10**6
-    index_lin  = weightInfo.combinations.index(('ctWRe',))
-    event.ctWRe_coeff[1] = event.p_C[index_lin]/event.p_C[0]
-    index_quad = weightInfo.combinations.index(('ctWRe','ctWRe'))
-    event.ctWRe_coeff[2] = event.p_C[index_quad]/event.p_C[0]
+        # convinience coefficient vectors for particlenet training
+        for coefficient in args.trainingCoefficients:
+            setattr(event, "n"+coefficient, 3)
+            getattr(event, coefficient+"_coeff")[0] = event.p_C[0]*10**6
+            index_lin  = weightInfo.combinations.index((coefficient,))
+            index_quad = weightInfo.combinations.index((coefficient, coefficient))
+            getattr(event, coefficient+"_coeff")[1] = event.p_C[index_lin]/event.p_C[0] 
+            getattr(event, coefficient+"_coeff")[2] = event.p_C[index_quad]/event.p_C[0] 
+
+    # genJets
+    ak8GenJets = fwliteReader.products['ak8GenJets']
+    genJets = filter( genJetId, ak8GenJets )
 
     # All gen particles
     gp        = fwliteReader.products['gp']
@@ -388,10 +368,6 @@ def filler( event ):
 
     # all gen-tops
     gen_tops = filter( lambda p:abs(p.pdgId())==6 and search.isLast(p), gp)
-
-    # jets
-    ak8GenJets = fwliteReader.products['ak8GenJets']
-    genJets = filter( genJetId, ak8GenJets )
 
     # hadronic gen_tops
     W, hadronic_gen_top = None, None
@@ -432,23 +408,23 @@ def filler( event ):
         event.partonTop_mass = hadronic_gen_top.mass()
         event.partonTop_pdgId= hadronic_gen_top.pdgId()
 
-        event.genQ1_pt   = quark1.pt()
-        event.genQ1_eta  = quark1.eta()
-        event.genQ1_phi  = quark1.phi()
-        event.genQ1_mass = quark1.mass()
-        event.genQ1_pdgId= quark1.pdgId()
+        event.parton_q1_pt   = quark1.pt()
+        event.parton_q1_eta  = quark1.eta()
+        event.parton_q1_phi  = quark1.phi()
+        event.parton_q1_mass = quark1.mass()
+        event.parton_q1_pdgId= quark1.pdgId()
 
-        event.genQ2_pt   = quark2.pt()
-        event.genQ2_eta  = quark2.eta()
-        event.genQ2_phi  = quark2.phi()
-        event.genQ2_mass = quark2.mass()
-        event.genQ2_pdgId= quark2.pdgId()
+        event.parton_q2_pt   = quark2.pt()
+        event.parton_q2_eta  = quark2.eta()
+        event.parton_q2_phi  = quark2.phi()
+        event.parton_q2_mass = quark2.mass()
+        event.parton_q2_pdgId= quark2.pdgId()
 
-        event.genb_pt    = b.pt()
-        event.genb_eta   = b.eta()
-        event.genb_phi   = b.phi()
-        event.genb_mass  = b.mass()
-        event.genb_pdgId = b.pdgId()
+        event.parton_b_pt    = b.pt()
+        event.parton_b_eta   = b.eta()
+        event.parton_b_phi   = b.phi()
+        event.parton_b_mass  = b.mass()
+        event.parton_b_pdgId = b.pdgId()
 
         # 4-vectors
         vec_quark1, vec_quark2, vec_b, vec_W, vec_top = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
@@ -459,15 +435,15 @@ def filler( event ):
         vec_t = vec_quark1 + vec_quark2 + vec_b
         vec_W = vec_quark1 + vec_quark2
 
-        event.genW_pt   = vec_W.Pt()
-        event.genW_eta  = vec_W.Eta()
-        event.genW_phi  = vec_W.Phi()
-        event.genW_mass = vec_W.M()
+        event.parton_W_pt   = vec_W.Pt()
+        event.parton_W_eta  = vec_W.Eta()
+        event.parton_W_phi  = vec_W.Phi()
+        event.parton_W_mass = vec_W.M()
         
-        event.genTop_pt   = vec_t.Pt()
-        event.genTop_eta  = vec_t.Eta()
-        event.genTop_phi  = vec_t.Phi()
-        event.genTop_mass = vec_t.M()
+        event.parton_top_pt   = vec_t.Pt()
+        event.parton_top_eta  = vec_t.Eta()
+        event.parton_top_phi  = vec_t.Phi()
+        event.parton_top_mass = vec_t.M()
 
         # compute theta and phi
         beam = ROOT.TLorentzVector()
@@ -484,21 +460,51 @@ def filler( event ):
         sign_flip =  1 if ( ((n_scatter.Cross(n_decay))*(vec_W.Vect())) > 0 ) else -1
 
         try:
-            event.gen_phi = sign_flip*acos(n_scatter.Dot(n_decay))
+            event.parton_top_phi = sign_flip*acos(n_scatter.Dot(n_decay))
         except ValueError:
-            event.gen_phi = -100
+            event.parton_top_phi = -100
 
         boost_W = vec_W.BoostVector()
 
         vec_quark1.Boost(-boost_W)
 
-        gen_theta = float('nan')
+        parton_top_theta = float('nan')
         try:
-            event.gen_theta = (vec_W).Angle(vec_quark1.Vect())
+            event.parton_top_theta = (vec_W).Angle(vec_quark1.Vect())
         except ValueError:
-            event.gen_theta = -100
+            event.parton_top_theta = -100
 
-        #print "theta,phi",gen_theta,gen_phi
+        #print "theta,phi",parton_top_theta,parton_top_phi
+
+        # Reco quantities
+        #if args.delphesEra is not None:
+
+            #charged, electron, muon = [], [], []
+            #for p in delphesReader.EFlowTrack():
+            #    if abs(p['pdgId'])==11:
+            #        electron.append( p )
+            #    elif abs(p['pdgId'])==13:
+            #        muon.append(p)
+            #    else:
+            #        charged.append(p)
+            #neutral = delphesReader.EFlowNeutralHadron()
+            #photon  = delphesReader.EFlowPhoton()
+
+            #eflow = charged+electron+muon+neutral+photon
+
+            #clustSeq      = fastjet.ClusterSequence( map( lambda p: fastjet.PseudoJet( p['pt']*cos(p['phi']), p['pt']*sin(p['phi']), p['pt']*sinh(p['eta']), p['pt']*cosh(p['eta']) ), eflow ), ak8 )
+            #delphesJets   = fastjet.sorted_by_pt(clustSeq.inclusive_jets())
+            #for i_delphesjet, delphesJet in enumerate(delphesJets):
+            #    print i_delphesjet, delphesJet.pt(), delphesJet.eta(), delphesJet.phi() 
+
+            #print
+
+            #print "charged", charged
+            #print "neutral", neutral
+            #print "photon", photon
+            #print "electron", electron
+            #print "muon", muon
+            #print
 
         # match gen jet
         matched_genJet = next( (j for j in genJets if deltaR( {'eta':j.eta(),'phi':j.phi()}, {'eta':hadronic_gen_top.eta(), 'phi':hadronic_gen_top.phi()}) < 0.6), None)
@@ -517,13 +523,13 @@ def filler( event ):
 
             event.gen_cand_sum_pt = sum([c.pt() for c in gen_particles],0)
 
-            event.dR_genJet_Q1  = deltaR( {'phi':event.genQ1_phi, 'eta':event.genQ1_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-            event.dR_genJet_Q2  = deltaR( {'phi':event.genQ2_phi, 'eta':event.genQ2_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-            event.dR_genJet_W   = deltaR( {'phi':event.genW_phi, 'eta':event.genW_eta},     {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-            event.dR_genJet_b   = deltaR( {'phi':event.genb_phi, 'eta':event.genb_eta},     {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
-            event.dR_genJet_top = deltaR( {'phi':event.genTop_phi, 'eta':event.genTop_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_q1  = deltaR( {'phi':event.parton_q1_phi,  'eta':event.parton_q1_eta},  {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_q2  = deltaR( {'phi':event.parton_q2_phi,  'eta':event.parton_q2_eta},  {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_W   = deltaR( {'phi':event.parton_W_phi,   'eta':event.parton_W_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_b   = deltaR( {'phi':event.parton_b_phi,   'eta':event.parton_b_eta},   {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
+            event.dR_genJet_top = deltaR( {'phi':event.parton_top_phi, 'eta':event.parton_top_eta}, {'phi':event.genJet_phi, 'eta':event.genJet_eta} )
 
-            event.dR_genJet_maxQ1Q2b = max( [ event.dR_genJet_Q1, event.dR_genJet_Q2, event.dR_genJet_b ] )
+            event.dR_genJet_maxq1q2b = max( [ event.dR_genJet_q1, event.dR_genJet_q2, event.dR_genJet_b ] )
 
             count = 0 
             for cat in categories:

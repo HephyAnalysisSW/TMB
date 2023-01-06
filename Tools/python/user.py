@@ -6,7 +6,7 @@ if os.environ['USER'] in ['robert.schoefbeck']:
     #results_directory                   = "/mnt/hephy/cms/robert.schoefbeck/TMB/results/"
     results_directory                   = "/groups/hephy/cms/robert.schoefbeck/TMB/results/"
     #skim_output_directory               = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/"
-    skim_output_directory               = "/groups/hephy/cms/robert.schoefbeck/TMB/postprocessed/"
+    skim_output_directory               = "/scratch-cbe/users/robert.schoefbeck/TMB/postprocessed/"
     #mva_directory                       = "/mnt/hephy/cms/robert.schoefbeck/TMB/mva/"
     plot_directory                      = "/groups/hephy/cms/robert.schoefbeck/www/TMB/"
 
