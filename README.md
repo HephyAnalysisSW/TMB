@@ -7,7 +7,7 @@ cmsenv
 git cms-init
 git clone https://github.com/HephyAnalysisSW/TMB
 git clone https://github.com/HephyAnalysisSW/tWZ
-git clone https://github.com/HephyAnalysisSW/Analysis
+git clone --branch UL https://github.com/HephyAnalysisSW/Analysis
 git clone https://github.com/HephyAnalysisSW/Samples
 git clone https://github.com/HephyAnalysisSW/RootTools
 git clone https://github.com/HephyAnalysisSW/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
